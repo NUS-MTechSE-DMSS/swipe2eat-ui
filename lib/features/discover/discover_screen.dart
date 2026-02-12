@@ -2,11 +2,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
-import '../favorites/favorites_screen.dart';
-import '../profile/profile_screen.dart';
+import '../favorites/food_detail_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
-  const DiscoverScreen({super.key});
+  // const DiscoverScreen({super.key});
+  final bool showBottomNav;
+const DiscoverScreen({super.key, this.showBottomNav = true});
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -94,125 +95,119 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Widget build(BuildContext context) {
     final item = _current;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F1),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            _TopBar(
-              onSettingsTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Settings tapped")),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
+    return Container(
+      color: const Color(0xFFFFF8F1),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          _TopBar(
+            onSettingsTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Settings tapped")),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
 
-            Expanded(
-              child: Center(
-                child: item == null
-                    ? const Text(
-                        "No more dishes 🎉",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          final cardWidth = min(
-                            constraints.maxWidth * 0.86,
-                            360.0,
-                          );
-                          final cardHeight = min(
-                            constraints.maxHeight * 0.82,
-                            560.0,
-                          );
+          Expanded(
+            child: Center(
+              child: item == null
+                  ? const Text(
+                      "No more dishes 🎉",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = min(
+                          constraints.maxWidth * 0.86,
+                          360.0,
+                        );
+                        final cardHeight = min(
+                          constraints.maxHeight * 0.82,
+                          560.0,
+                        );
 
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // subtle "next card" peek (optional)
-                              if (_topIndex + 1 < _items.length)
-                                Transform.scale(
-                                  scale: 0.96,
-                                  child: Opacity(
-                                    opacity: 0.45,
-                                    child: _FoodCard(
-                                      item: _items[_topIndex + 1],
-                                      width: cardWidth,
-                                      height: cardHeight,
-                                      showOverlay: false,
-                                    ),
-                                  ),
-                                ),
-
-                              // top draggable card
-                              GestureDetector(
-                                onPanUpdate: (d) {
-                                  setState(() {
-                                    _dragOffset += d.delta;
-                                    _dragRotation =
-                                        (_dragOffset.dx / 800) * 0.6;
-                                  });
-                                },
-                                onPanEnd: (_) {
-                                  final dx = _dragOffset.dx;
-                                  if (dx > 120) {
-                                    _swipeRight();
-                                  } else if (dx < -120) {
-                                    _swipeLeft();
-                                  } else {
-                                    _resetDrag();
-                                  }
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  curve: Curves.easeOut,
-                                  transform: Matrix4.identity()
-                                    ..translate(_dragOffset.dx, _dragOffset.dy)
-                                    ..rotateZ(_dragRotation),
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // subtle "next card" peek (optional)
+                            if (_topIndex + 1 < _items.length)
+                              Transform.scale(
+                                scale: 0.96,
+                                child: Opacity(
+                                  opacity: 0.45,
                                   child: _FoodCard(
-                                    item: item,
+                                    item: _items[_topIndex + 1],
                                     width: cardWidth,
                                     height: cardHeight,
-                                    showOverlay: true,
-                                    overlayDx: _dragOffset.dx,
+                                    showOverlay: false,
                                   ),
                                 ),
                               ),
-                            ],
-                          );
-                        },
-                      ),
-              ),
+
+                              // top draggable card
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => FoodDetailScreen(item: item),
+                                    ),
+                                  );
+                                },
+                                onPanUpdate: (d) {
+                                  setState(() {
+                                    _dragOffset += d.delta;
+                                    _dragRotation = (_dragOffset.dx / 800) * 0.6;
+                                });
+                              },
+                              onPanEnd: (_) {
+                                final dx = _dragOffset.dx;
+                                if (dx > 120) {
+                                  _swipeRight();
+                                } else if (dx < -120) {
+                                  _swipeLeft();
+                                } else {
+                                  _resetDrag();
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOut,
+                                transform: Matrix4.identity()
+                                  ..translate(_dragOffset.dx, _dragOffset.dy)
+                                  ..rotateZ(_dragRotation),
+                                child: _FoodCard(
+                                  item: item,
+                                  width: cardWidth,
+                                  height: cardHeight,
+                                  showOverlay: true,
+                                  overlayDx: _dragOffset.dx,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
             ),
+          ),
 
-            const SizedBox(height: 6),
-            _ActionRow(onNope: _swipeLeft, onLike: _swipeRight),
-            const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          _ActionRow(onNope: _swipeLeft, onLike: _swipeRight),
+          const SizedBox(height: 10),
 
-            // Bottom nav placeholder (we'll make it match your mock next)
+          if (widget.showBottomNav)
             _BottomNavMock(
               active: _NavItem.discover,
               onTap: (item) {
-                if (item == _NavItem.favorites) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
-                  );
-                } else if (item == _NavItem.profile) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                }
-                // discover tap can be ignored because you’re already here
+                // optional: keep old behavior if used standalone
               },
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

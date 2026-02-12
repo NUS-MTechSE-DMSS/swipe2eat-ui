@@ -1,136 +1,117 @@
 import 'package:flutter/material.dart';
 import '../../core/state/favorites_store.dart';
-import '../discover/discover_screen.dart';
-import '../favorites/favorites_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  // const ProfileScreen({super.key});
+  final bool showBottomNav;
+  const ProfileScreen({super.key, this.showBottomNav = true});
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F1),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 14),
+    return Container(
+      color: const Color(0xFFFFF8F1),
+      child: Column(
+        children: [
+          const SizedBox(height: 14),
 
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
-                      ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
                     ),
-                    child: const Icon(Icons.person_rounded, color: Colors.white),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      "Profile",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-                    ),
+                  child: const Icon(Icons.person_rounded, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    "Profile",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProfileCard(),
+                  const SizedBox(height: 18),
+
+                  const Text(
+                    "Your Preferences",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 10),
+
+                  _PrefTile(
+                    icon: Icons.restaurant_menu,
+                    title: "Cuisines",
+                    value: "Japanese, Indian, Korean",
+                    onTap: () {
+                      // TODO: navigate to edit cuisines
+                    },
+                  ),
+                  _PrefTile(
+                    icon: Icons.local_fire_department_rounded,
+                    title: "Spice Level",
+                    value: "Medium",
+                    onTap: () {
+                      // TODO: navigate to spice screen
+                    },
+                  ),
+                  _PrefTile(
+                    icon: Icons.attach_money_rounded,
+                    title: "Budget",
+                    value: "\$\$",
+                    onTap: () {
+                      // TODO: navigate to budget screen
+                    },
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  const Text(
+                    "Account",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 10),
+
+                  _ActionTile(
+                    icon: Icons.edit_rounded,
+                    title: "Edit Preferences",
+                    onTap: () {
+                      // later: deep link to onboarding
+                    },
+                  ),
+                  _ActionTile(
+                    icon: Icons.restart_alt_rounded,
+                    title: "Reset everything",
+                    danger: true,
+                    onTap: () {
+                      _confirmReset(context);
+                    },
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 18),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ProfileCard(),
-                    const SizedBox(height: 18),
-
-                    const Text(
-                      "Your Preferences",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-
-                    _PrefTile(
-                      icon: Icons.restaurant_menu,
-                      title: "Cuisines",
-                      value: "Japanese, Indian, Korean",
-                      onTap: () {
-                        // TODO: navigate to edit cuisines
-                      },
-                    ),
-                    _PrefTile(
-                      icon: Icons.local_fire_department_rounded,
-                      title: "Spice Level",
-                      value: "Medium",
-                      onTap: () {
-                        // TODO: navigate to spice screen
-                      },
-                    ),
-                    _PrefTile(
-                      icon: Icons.attach_money_rounded,
-                      title: "Budget",
-                      value: "\$\$",
-                      onTap: () {
-                        // TODO: navigate to budget screen
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    const Text(
-                      "Account",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-
-                    _ActionTile(
-                      icon: Icons.edit_rounded,
-                      title: "Edit Preferences",
-                      onTap: () {
-                        // later: deep link to onboarding
-                      },
-                    ),
-                    _ActionTile(
-                      icon: Icons.restart_alt_rounded,
-                      title: "Reset everything",
-                      danger: true,
-                      onTap: () {
-                        _confirmReset(context);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom Nav
-            _BottomNav(
-              active: _NavItem.profile,
-              onTap: (item) {
-                if (item == _NavItem.discover) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DiscoverScreen()),
-                  );
-                } else if (item == _NavItem.favorites) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

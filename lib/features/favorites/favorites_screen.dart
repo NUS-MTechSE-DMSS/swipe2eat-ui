@@ -4,7 +4,9 @@ import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
-  const FavoritesScreen({super.key});
+  // const FavoritesScreen({super.key});
+  final bool showBottomNav;
+const FavoritesScreen({super.key, this.showBottomNav = true});
 
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
@@ -15,53 +17,55 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F1),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
-                      ),
-                    ),
-                    child: const Icon(Icons.favorite_rounded, color: Colors.white),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ValueListenableBuilder<List<FoodItem>>(
-                      valueListenable: FavoritesStore.instance.favorites,
-                      builder: (_, favs, __) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Favorites",
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "${favs.length} dishes saved",
-                              style: const TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+    return Container(
+      color: const Color(0xFFFFF8F1),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
                     ),
                   ),
+                  child: const Icon(Icons.favorite_rounded, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ValueListenableBuilder<List<FoodItem>>(
+                    valueListenable: FavoritesStore.instance.favorites,
+                    builder: (_, favs, __) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Favorites",
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "${favs.length} dishes saved",
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                if (!widget.showBottomNav)
+                  const SizedBox.shrink()
+                else
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -75,90 +79,89 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       child: const Icon(Icons.close_rounded),
                     ),
                   )
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // Search
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                boxShadow: const [
+                  BoxShadow(blurRadius: 14, offset: Offset(0, 8), color: Color(0x14000000)),
                 ],
               ),
-
-              const SizedBox(height: 14),
-
-              // Search
-              Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 14, offset: Offset(0, 8), color: Color(0x14000000)),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Color(0xFF9CA3AF)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
-                        decoration: const InputDecoration(
-                          hintText: "Search your favorites...",
-                          border: InputBorder.none,
-                        ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Color(0xFF9CA3AF)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                      decoration: const InputDecoration(
+                        hintText: "Search your favorites...",
+                        border: InputBorder.none,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-              // Grid
-              Expanded(
-                child: ValueListenableBuilder<List<FoodItem>>(
-                  valueListenable: FavoritesStore.instance.favorites,
-                  builder: (_, favs, __) {
-                    final filtered = favs.where((f) {
-                      if (_query.isEmpty) return true;
-                      return f.name.toLowerCase().contains(_query) ||
-                          f.restaurant.toLowerCase().contains(_query) ||
-                          f.tags.any((t) => t.toLowerCase().contains(_query));
-                    }).toList();
+            // Grid
+            Expanded(
+              child: ValueListenableBuilder<List<FoodItem>>(
+                valueListenable: FavoritesStore.instance.favorites,
+                builder: (_, favs, __) {
+                  final filtered = favs.where((f) {
+                    if (_query.isEmpty) return true;
+                    return f.name.toLowerCase().contains(_query) ||
+                        f.restaurant.toLowerCase().contains(_query) ||
+                        f.tags.any((t) => t.toLowerCase().contains(_query));
+                  }).toList();
 
-                    if (filtered.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No favorites yet.\nGo like some food 😄",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
-                        ),
-                      );
-                    }
-
-                    return GridView.builder(
-                      itemCount: filtered.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        childAspectRatio: 0.78,
+                  if (filtered.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No favorites yet.\nGo like some food 😄",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
                       ),
-                      itemBuilder: (context, i) {
-                        final item = filtered[i];
-                        return _FavoriteTile(
-                          item: item,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => FoodDetailScreen(item: item)),
-                            );
-                          },
-                        );
-                      },
                     );
-                  },
-                ),
+                  }
+
+                  return GridView.builder(
+                    itemCount: filtered.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.78,
+                    ),
+                    itemBuilder: (context, i) {
+                      final item = filtered[i];
+                      return _FavoriteTile(
+                        item: item,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => FoodDetailScreen(item: item)),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

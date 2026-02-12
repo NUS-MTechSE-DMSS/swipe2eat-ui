@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../discover/discover_screen.dart';
+import '../../../core/navigation/main_shell.dart';
 
 class DoneScreen extends StatelessWidget {
   final String selectedCuisinesLabel;
@@ -149,7 +150,8 @@ class DoneScreen extends StatelessWidget {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const DiscoverScreen(),
+                            builder: (_) =>
+                                const MainShell(initialTab: MainTab.discover),
                           ),
                           (route) => false,
                         );

@@ -33,16 +33,19 @@ class _MainShellState extends State<MainShell> {
         child: IndexedStack(
           index: _index,
           children: const [
-            // DiscoverScreen(showBottomNav: false),
-            // FavoritesScreen(showBottomNav: false),
-            // ProfileScreen(showBottomNav: false),
+            DiscoverScreen(showBottomNav: false),
+            FavoritesScreen(showBottomNav: false),
+            ProfileScreen(showBottomNav: false),
           ],
         ),
       ),
 
-      bottomNavigationBar: _BottomNav(
-        activeIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: _BottomNav(
+          activeIndex: _index,
+          onTap: (i) => setState(() => _index = i),
+        ),
       ),
     );
   }
