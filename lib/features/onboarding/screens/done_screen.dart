@@ -23,7 +23,7 @@ class DoneScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
           child: Column(
             children: [
-              const _ProgressPills(currentStep: 5, totalSteps: 5),
+              const _ProgressPills(currentStep: 6, totalSteps: 6),
               const SizedBox(height: 26),
 
               const Text(

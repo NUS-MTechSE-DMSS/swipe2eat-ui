@@ -59,7 +59,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(
             children: [
-              const _ProgressPills(currentStep: 2, totalSteps: 5),
+              const _ProgressPills(currentStep: 2, totalSteps: 6),
               const SizedBox(height: 22),
 
               const Text(

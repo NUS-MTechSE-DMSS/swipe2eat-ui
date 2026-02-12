@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'done_screen.dart';
+import 'dietary_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -35,7 +35,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(
             children: [
-              const _ProgressPills(currentStep: 4, totalSteps: 5),
+              const _ProgressPills(currentStep: 4, totalSteps: 6),
               const SizedBox(height: 22),
 
               const Text(
@@ -98,11 +98,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => DoneScreen(
+                                  builder: (_) => DietaryScreen(
                                     selectedBudget: _selected!,
-                                    // We'll keep cuisine + spice optional for now (you’ll pass later)
-                                    selectedCuisinesLabel: "All cuisines",
-                                    selectedSpiceLabel: "Medium",
                                   ),
                                 ),
                               );

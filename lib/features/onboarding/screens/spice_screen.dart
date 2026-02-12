@@ -35,7 +35,7 @@ class _SpiceScreenState extends State<SpiceScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(
             children: [
-              const _ProgressPills(currentStep: 3, totalSteps: 5),
+              const _ProgressPills(currentStep: 3, totalSteps: 6),
               const SizedBox(height: 22),
 
               const Text(
