@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../../models/cuisine_option.dart';
+import 'package:http/http.dart' as http;
 import 'spice_screen.dart';
 
 class CuisineScreen extends StatefulWidget {
@@ -10,20 +11,37 @@ class CuisineScreen extends StatefulWidget {
 }
 
 class _CuisineScreenState extends State<CuisineScreen> {
-  final Set<String> _selected = {};
+  static const String _baseUrl =
+      'https://foods-service-production.up.railway.app';
 
-  final List<_CuisineOption> _options = const [
-    _CuisineOption("Japanese", "🍣"),
-    _CuisineOption("Indian", "🍛"),
-    _CuisineOption("Italian", "🍕"),
-    _CuisineOption("Thai", "🍜"),
-    _CuisineOption("Korean", "🍱"),
-    _CuisineOption("Mexican", "🌮"),
-    _CuisineOption("Vietnamese", "🍲"),
-    _CuisineOption("Chinese", "🥡"),
-    _CuisineOption("Mediterranean", "🥙"),
-    _CuisineOption("American", "🍔"),
-  ];
+  final Set<String> _selected = {};
+  late Future<List<String>> _futureCuisines;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureCuisines = _fetchCuisines();
+  }
+
+  Future<List<String>> _fetchCuisines() async {
+    final uri = Uri.parse('$_baseUrl/api/cuisines');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load cuisines (${res.statusCode})');
+    }
+    final data = jsonDecode(res.body);
+    if (data is List) {
+      final cuisines = <String>[];
+      for (final e in data) {
+        final name = _extractCuisineName(e);
+        if (name != null && name.trim().isNotEmpty) {
+          cuisines.add(name.trim());
+        }
+      }
+      return cuisines;
+    }
+    return const <String>[];
+  }
 
   void _toggle(String name) {
     setState(() {
@@ -76,23 +94,68 @@ class _CuisineScreenState extends State<CuisineScreen> {
               const SizedBox(height: 20),
 
               Expanded(
-                child: GridView.builder(
-                  itemCount: _options.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 2.4,
-                  ),
-                  itemBuilder: (context, i) {
-                    final opt = _options[i];
-                    final selected = _selected.contains(opt.name);
+                child: FutureBuilder<List<String>>(
+                  future: _futureCuisines,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              "Couldn't load cuisines",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _SecondaryButton(
+                              text: "Retry",
+                              onTap: () =>
+                                  setState(() => _futureCuisines = _fetchCuisines()),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-                    return _CuisineTile(
-                      name: opt.name,
-                      emoji: opt.emoji,
-                      isSelected: selected,
-                      onTap: () => _toggle(opt.name),
+                    final cuisines = snapshot.data ?? const <String>[];
+                    if (cuisines.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          "No cuisines available.",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return GridView.builder(
+                      itemCount: cuisines.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: 2.4,
+                      ),
+                      itemBuilder: (context, i) {
+                        final name = cuisines[i];
+                        final selected = _selected.contains(name);
+
+                        return _CuisineTile(
+                          name: name,
+                          emoji: _emojiForCuisine(name),
+                          isSelected: selected,
+                          onTap: () => _toggle(name),
+                        );
+                      },
                     );
                   },
                 ),
@@ -138,6 +201,45 @@ class _CuisineScreenState extends State<CuisineScreen> {
       ),
     );
   }
+}
+
+String _emojiForCuisine(String name) {
+  switch (name.toLowerCase()) {
+    case "japanese":
+      return "🍣";
+    case "indian":
+      return "🍛";
+    case "italian":
+      return "🍕";
+    case "thai":
+      return "🍜";
+    case "korean":
+      return "🍱";
+    case "mexican":
+      return "🌮";
+    case "vietnamese":
+      return "🍲";
+    case "chinese":
+      return "🥡";
+    case "mediterranean":
+      return "🥙";
+    case "western":
+      return "🍔";
+    default:
+      return "🍽️";
+  }
+}
+
+String? _extractCuisineName(dynamic raw) {
+  if (raw is String) return raw;
+  if (raw is Map) {
+    final name = raw['name'] ??
+        raw['label'] ??
+        raw['cuisine'] ??
+        raw['title'];
+    if (name is String) return name;
+  }
+  return null;
 }
 
 /* ------------------- UI PARTS ------------------- */
