@@ -177,9 +177,14 @@ class _CuisineScreenState extends State<CuisineScreen> {
                       enabled: canContinue,
                       onTap: canContinue
                           ? () {
-                              // Navigate to SpiceScreen
-                              Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => const SpiceScreen()),
+                              final cuisinesLabel = _selected.join(", ");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SpiceScreen(
+                                    selectedCuisinesLabel: cuisinesLabel,
+                                  ),
+                                ),
                               );
 
                               ScaffoldMessenger.of(context).showSnackBar(

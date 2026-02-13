@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'budget_screen.dart';
 
 class SpiceScreen extends StatefulWidget {
-  const SpiceScreen({super.key});
+  final String selectedCuisinesLabel;
+
+  const SpiceScreen({
+    super.key,
+    required this.selectedCuisinesLabel,
+  });
 
   @override
   State<SpiceScreen> createState() => _SpiceScreenState();
@@ -96,7 +101,10 @@ class _SpiceScreenState extends State<SpiceScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const BudgetScreen(),
+                                  builder: (_) => BudgetScreen(
+                                    selectedCuisinesLabel: widget.selectedCuisinesLabel,
+                                    selectedSpiceLabel: _selected!,
+                                  ),
                                 ),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(

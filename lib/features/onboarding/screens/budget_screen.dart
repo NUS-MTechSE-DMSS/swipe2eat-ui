@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'dietary_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
-  const BudgetScreen({super.key});
+  final String selectedCuisinesLabel;
+  final String selectedSpiceLabel;
+
+  const BudgetScreen({
+    super.key,
+    required this.selectedCuisinesLabel,
+    required this.selectedSpiceLabel,
+  });
 
   @override
   State<BudgetScreen> createState() => _BudgetScreenState();
@@ -100,6 +107,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => DietaryScreen(
                                     selectedBudget: _selected!,
+                                    selectedCuisinesLabel: widget.selectedCuisinesLabel,
+                                    selectedSpiceLabel: widget.selectedSpiceLabel,
                                   ),
                                 ),
                               );

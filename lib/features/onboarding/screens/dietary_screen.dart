@@ -206,6 +206,10 @@ class _DietaryScreenState extends State<DietaryScreen> {
                                     selectedBudget: widget.selectedBudget,
                                     selectedCuisinesLabel: widget.selectedCuisinesLabel,
                                     selectedSpiceLabel: widget.selectedSpiceLabel,
+                                    selectedDietType: _selectedDietType!,
+                                    selectedAllergensLabel: _selectedAllergens.isEmpty
+                                        ? "None"
+                                        : _selectedAllergens.join(", "),
                                   ),
                                 ),
                               );

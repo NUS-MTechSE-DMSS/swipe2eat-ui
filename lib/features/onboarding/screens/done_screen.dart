@@ -6,12 +6,16 @@ class DoneScreen extends StatelessWidget {
   final String selectedCuisinesLabel;
   final String selectedSpiceLabel;
   final String selectedBudget;
+  final String selectedDietType;
+  final String selectedAllergensLabel;
 
   const DoneScreen({
     super.key,
     required this.selectedCuisinesLabel,
     required this.selectedSpiceLabel,
     required this.selectedBudget,
+    required this.selectedDietType,
+    required this.selectedAllergensLabel,
   });
 
   @override
@@ -73,6 +77,24 @@ class DoneScreen extends StatelessWidget {
                       selectedCuisinesLabel,
                       style: const TextStyle(
                         fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Diet: $selectedDietType",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Allergens: $selectedAllergensLabel",
+                      style: const TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF6B7280),
                       ),
