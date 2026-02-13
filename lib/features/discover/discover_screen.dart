@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../favorites/food_detail_screen.dart';
@@ -14,48 +16,54 @@ const DiscoverScreen({super.key, this.showBottomNav = true});
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
-  // Mock data (replace with Backend API later)
-  final List<FoodItem> _items = [
-    FoodItem(
-      id: "1",
-      name: "Bibimbap",
-      restaurant: "Seoul Garden",
-      imageUrl:
-          "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      rating: 4.7,
-      price: 14.99,
-      distanceLabel: "0.7 mi away",
-      spiceLevel: 2,
-      budgetLevel: 2,
-      tags: ["Korean", "Rice Bowl"],
-    ),
-    FoodItem(
-      id: "2",
-      name: "Spicy Tuna Roll",
-      restaurant: "Sakura Sushi House",
-      imageUrl:
-          "https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      rating: 4.8,
-      price: 16.99,
-      distanceLabel: "0.3 mi away",
-      spiceLevel: 1,
-      budgetLevel: 2,
-      tags: ["Japanese", "Sushi"],
-    ),
-    FoodItem(
-      id: "3",
-      name: "Butter Chicken",
-      restaurant: "Taj Mahal Kitchen",
-      imageUrl:
-          "https://images.pexels.com/photos/7625056/pexels-photo-7625056.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      rating: 4.9,
-      price: 18.99,
-      distanceLabel: "0.5 mi away",
-      spiceLevel: 2,
-      budgetLevel: 2,
-      tags: ["Indian", "Curry"],
-    ),
-  ];
+  //  Mock food Data
+  //  final List<FoodItem> _items = [
+  //   FoodItem(
+  //     id: "1",
+  //     name: "Bibimbap",
+  //     restaurant: "Seoul Garden",
+  //     imageUrl:
+  //         "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  //     rating: 4.7,
+  //     price: 14.99,
+  //     distanceLabel: "0.7 mi away",
+  //     spiceLevel: 2,
+  //     budgetLevel: 2,
+  //     tags: ["Korean", "Rice Bowl"],
+  //   ),
+  //   FoodItem(
+  //     id: "2",
+  //     name: "Spicy Tuna Roll",
+  //     restaurant: "Sakura Sushi House",
+  //     imageUrl:
+  //         "https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  //     rating: 4.8,
+  //     price: 16.99,
+  //     distanceLabel: "0.3 mi away",
+  //     spiceLevel: 1,
+  //     budgetLevel: 2,
+  //     tags: ["Japanese", "Sushi"],
+  //   ),
+  //   FoodItem(
+  //     id: "3",
+  //     name: "Butter Chicken",
+  //     restaurant: "Taj Mahal Kitchen",
+  //     imageUrl:
+  //         "https://images.pexels.com/photos/7625056/pexels-photo-7625056.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  //     rating: 4.9,
+  //     price: 18.99,
+  //     distanceLabel: "0.5 mi away",
+  //     spiceLevel: 2,
+  //     budgetLevel: 2,
+  //     tags: ["Indian", "Curry"],
+  //   ),
+  // ];
+  static const String _baseUrl =
+      'https://foods-service-production.up.railway.app';
+
+  final List<FoodItem> _items = [];
+  bool _loading = true;
+  String? _error;
 
   int _topIndex = 0;
 
@@ -65,6 +73,41 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   FoodItem? get _current =>
       _topIndex < _items.length ? _items[_topIndex] : null;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFoods();
+  }
+
+  Future<void> _fetchFoods() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final uri = Uri.parse('$_baseUrl/api/foods');
+      final res = await http.get(uri);
+      if (res.statusCode != 200) {
+        throw Exception('Failed to load foods (${res.statusCode})');
+      }
+      final data = jsonDecode(res.body);
+      final list = _extractList(data);
+      final foods = list.map(_foodFromJson).whereType<FoodItem>().toList();
+      setState(() {
+        _items
+          ..clear()
+          ..addAll(foods);
+        _topIndex = 0;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   void _resetDrag() {
     setState(() {
@@ -111,88 +154,125 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
           Expanded(
             child: Center(
-              child: item == null
-                  ? const Text(
-                      "No more dishes 🎉",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cardWidth = min(
-                          constraints.maxWidth * 0.86,
-                          360.0,
-                        );
-                        final cardHeight = min(
-                          constraints.maxHeight * 0.82,
-                          560.0,
-                        );
-
-                        return Stack(
-                          alignment: Alignment.center,
+              child: _loading
+                  ? const CircularProgressIndicator()
+                  : _error != null
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // subtle "next card" peek (optional)
-                            if (_topIndex + 1 < _items.length)
-                              Transform.scale(
-                                scale: 0.96,
-                                child: Opacity(
-                                  opacity: 0.45,
-                                  child: _FoodCard(
-                                    item: _items[_topIndex + 1],
-                                    width: cardWidth,
-                                    height: cardHeight,
-                                    showOverlay: false,
-                                  ),
-                                ),
+                            const Text(
+                              "Couldn't load foods",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF6B7280),
                               ),
-
-                              // top draggable card
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => FoodDetailScreen(item: item),
-                                    ),
-                                  );
-                                },
-                                onPanUpdate: (d) {
-                                  setState(() {
-                                    _dragOffset += d.delta;
-                                    _dragRotation = (_dragOffset.dx / 800) * 0.6;
-                                });
-                              },
-                              onPanEnd: (_) {
-                                final dx = _dragOffset.dx;
-                                if (dx > 120) {
-                                  _swipeRight();
-                                } else if (dx < -120) {
-                                  _swipeLeft();
-                                } else {
-                                  _resetDrag();
-                                }
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                curve: Curves.easeOut,
-                                transform: Matrix4.identity()
-                                  ..translate(_dragOffset.dx, _dragOffset.dy)
-                                  ..rotateZ(_dragRotation),
-                                child: _FoodCard(
-                                  item: item,
-                                  width: cardWidth,
-                                  height: cardHeight,
-                                  showOverlay: true,
-                                  overlayDx: _dragOffset.dx,
+                            ),
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onTap: _fetchFoods,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                ),
+                                child: const Text(
+                                  "Retry",
+                                  style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
+                        )
+                      : item == null
+                          ? const Text(
+                              "No more dishes 🎉",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final cardWidth = min(
+                                  constraints.maxWidth * 0.86,
+                                  360.0,
+                                );
+                                final cardHeight = min(
+                                  constraints.maxHeight * 0.82,
+                                  560.0,
+                                );
+
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    if (_topIndex + 1 < _items.length)
+                                      Transform.scale(
+                                        scale: 0.96,
+                                        child: Opacity(
+                                          opacity: 0.45,
+                                          child: _FoodCard(
+                                            item: _items[_topIndex + 1],
+                                            width: cardWidth,
+                                            height: cardHeight,
+                                            showOverlay: false,
+                                          ),
+                                        ),
+                                      ),
+
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                FoodDetailScreen(item: item),
+                                          ),
+                                        );
+                                      },
+                                      onPanUpdate: (d) {
+                                        setState(() {
+                                          _dragOffset += d.delta;
+                                          _dragRotation =
+                                              (_dragOffset.dx / 800) * 0.6;
+                                        });
+                                      },
+                                      onPanEnd: (_) {
+                                        final dx = _dragOffset.dx;
+                                        if (dx > 120) {
+                                          _swipeRight();
+                                        } else if (dx < -120) {
+                                          _swipeLeft();
+                                        } else {
+                                          _resetDrag();
+                                        }
+                                      },
+                                      child: AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 180),
+                                        curve: Curves.easeOut,
+                                        transform: Matrix4.identity()
+                                          ..translate(
+                                              _dragOffset.dx, _dragOffset.dy)
+                                          ..rotateZ(_dragRotation),
+                                        child: _FoodCard(
+                                          item: item,
+                                          width: cardWidth,
+                                          height: cardHeight,
+                                          showOverlay: true,
+                                          overlayDx: _dragOffset.dx,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
             ),
           ),
 
@@ -211,6 +291,85 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       ),
     );
   }
+}
+
+List<dynamic> _extractList(dynamic data) {
+  if (data is List) return data;
+  if (data is Map && data['data'] is List) return data['data'] as List;
+  if (data is Map && data['foods'] is List) return data['foods'] as List;
+  return const <dynamic>[];
+}
+
+FoodItem? _foodFromJson(dynamic raw) {
+  if (raw is! Map) return null;
+
+  String? readString(String key) {
+    final v = raw[key];
+    return (v is String && v.trim().isNotEmpty) ? v.trim() : null;
+  }
+
+  double readDouble(String key, {double fallback = 0}) {
+    final v = raw[key];
+    if (v is num) return v.toDouble();
+    if (v is String) {
+      final parsed = double.tryParse(v);
+      if (parsed != null) return parsed;
+    }
+    return fallback;
+  }
+
+  final id = readString('id') ?? DateTime.now().toString();
+  final name = readString('name') ?? "Unknown Dish";
+  final restaurant = readString('restaurantName') ?? "Unknown";
+  final rating = readDouble('rating', fallback: 4.5);
+  final price = readDouble('price', fallback: 14.99);
+  final description = readString('description') ??
+      "A delicious pick based on your preferences.";
+
+  final imageKey = readString('imageKey');
+  final imageUrl = _imageUrlFromKey(imageKey) ??
+      "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200";
+
+  const String distanceLabel = "0.7 mi away";
+  const int spiceLevel = 2;
+
+  int budgetLevel;
+  if (price <= 10) {
+    budgetLevel = 1;
+  } else if (price <= 20) {
+    budgetLevel = 2;
+  } else {
+    budgetLevel = 3;
+  }
+
+  List<String> tags = const [];
+  final cuisineRaw = raw['cuisine'];
+  if (cuisineRaw is List) {
+    tags = cuisineRaw.map((e) => e.toString()).toList();
+  }
+
+  return FoodItem(
+    id: id,
+    name: name,
+    restaurant: restaurant,
+    imageUrl: imageUrl,
+    rating: rating,
+    price: price,
+    description: description,
+    distanceLabel: distanceLabel,
+    spiceLevel: spiceLevel,
+    budgetLevel: budgetLevel,
+    tags: tags,
+  );
+}
+
+String? _imageUrlFromKey(String? imageKey) {
+  if (imageKey == null || imageKey.trim().isEmpty) return null;
+  final key = imageKey.trim();
+  if (key.startsWith('http://') || key.startsWith('https://')) {
+    return key;
+  }
+  return null;
 }
 
 /* ------------------- TOP BAR ------------------- */

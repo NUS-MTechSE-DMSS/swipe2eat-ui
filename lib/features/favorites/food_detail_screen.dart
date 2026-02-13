@@ -121,10 +121,12 @@ class FoodDetailScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      "A delicious pick based on your preferences. "
-                      "Later we’ll plug in real descriptions from your data source/API.",
-                      style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w600),
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
 
                     const Spacer(),
