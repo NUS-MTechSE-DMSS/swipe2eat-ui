@@ -46,7 +46,7 @@ COPY --chown=flutter:flutter . .
 # Build web release (with optimization flags)
 RUN flutter build web --release \
     --no-tree-shake-icons \
-    --dart-define=FLUTTER_WEB_CANVASKIT_URL=https://cdn.jsdelivr.net/npm/[email protected]/
+    --dart-define=FLUTTER_WEB_CANVASKIT_URL=https://cdn.jsdelivr.net/npm/canvaskit-wasm@latest/
 
 # ============ RUNTIME STAGE ============
 FROM nginx:1.27-alpine
