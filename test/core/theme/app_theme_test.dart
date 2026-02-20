@@ -61,11 +61,6 @@ void main() {
       expect(theme.useMaterial3, true);
     });
 
-    test('theme has font family set', () {
-      final theme = appTheme();
-      expect(theme.fontFamily, 'Inter');
-    });
-
     test('theme has text theme defined', () {
       final theme = appTheme();
       expect(theme.textTheme, isNotNull);
@@ -90,12 +85,8 @@ void main() {
 
     test('theme applies to scaffold background', () {
       final theme = appTheme();
-      final app = MaterialApp(
-        theme: theme,
-        home: const Scaffold(),
-      );
-
-      expect(find.byType(Scaffold), findsOneWidget);
+      expect(theme.scaffoldBackgroundColor, isNotNull);
+      expect(theme.scaffoldBackgroundColor, equals(AppColors.background));
     });
   });
 
@@ -166,8 +157,9 @@ void main() {
       final theme2 = appTheme();
 
       expect(theme1.scaffoldBackgroundColor, equals(theme2.scaffoldBackgroundColor));
-      expect(theme1.fontFamily, equals(theme2.fontFamily));
       expect(theme1.useMaterial3, equals(theme2.useMaterial3));
+      expect(theme1.textTheme.headlineMedium?.fontWeight,
+          equals(theme2.textTheme.headlineMedium?.fontWeight));
     });
   });
 

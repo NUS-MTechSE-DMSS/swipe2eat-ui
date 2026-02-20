@@ -245,7 +245,7 @@ void main() {
       expect(store.favorites.value, isEmpty);
     });
 
-    test('ValueNotifier notifies listeners on changes', (WidgetTester tester) {
+    test('ValueNotifier notifies listeners on changes', () {
       final foodItem = FoodItem(
         id: '1',
         name: 'Bibimbap',
