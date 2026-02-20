@@ -15,11 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN git clone --depth 1 --branch ${FLUTTER_VERSION} https://github.com/flutter/flutter.git ${FLUTTER_HOME}
 
+# Avoid running flutter as root
+RUN useradd -m flutter
+USER flutter
+
 WORKDIR /app
-COPY pubspec.yaml pubspec.lock ./
+COPY --chown=flutter:flutter pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
-COPY . .
+COPY --chown=flutter:flutter . .
 RUN flutter build web --release
 
 FROM nginx:1.27-alpine
