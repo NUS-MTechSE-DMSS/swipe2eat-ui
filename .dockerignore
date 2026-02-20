@@ -9,7 +9,6 @@ android
 linux
 macos
 windows
-web
 test
 node_modules
 *.iml
