@@ -1,0 +1,67 @@
+# Git and version control
+.git
+.github
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode
+.idea
+*.iml
+*.iws
+*.ipr
+.workspace
+*.swp
+*.swo
+*~
+
+# Build and generated artifacts
+build/
+.dart_tool
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+web/  # Exclude web folder from COPY, we'll build it
+
+# Platform-specific directories (we only need web)
+ios/
+android/
+windows/
+linux/
+macos/
+
+# Testing and development
+test/
+.coverage
+coverage/
+.env
+.env.local
+*.log
+
+# Node and package managers (if any)
+node_modules/
+.npm
+.yarn
+package-lock.json
+yarn.lock
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.tmp/
+
+# Docker files (avoid recursive copies)
+Dockerfile
+Dockerfile.railway
+docker-compose.yml
+.dockerignore
+
+# Railway and deployment
+railway.json
+DEPLOY.md
