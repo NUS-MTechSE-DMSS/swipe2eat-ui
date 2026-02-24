@@ -62,7 +62,9 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 
 # Use the existing nginx user (pre-installed in alpine)
 # This avoids the "unknown user/group" error when trying to create www-data
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx && \
+    mkdir -p /var/run/nginx && \
+    chown -R nginx:nginx /var/run/nginx
 
 USER nginx
 

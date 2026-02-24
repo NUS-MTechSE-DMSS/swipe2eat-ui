@@ -1,6 +1,8 @@
 # Nginx configuration optimized for Flutter web SPA deployment
 # Handles routing, caching, compression, and security headers
 
+pid /var/run/nginx/nginx.pid;
+
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
