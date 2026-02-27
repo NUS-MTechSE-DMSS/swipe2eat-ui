@@ -59,13 +59,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   //   ),
   // ];
   static const String _baseUrl =
-      'https://foods-service-production.up.railway.app';
+      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
 
   final List<FoodItem> _items = [];
   bool _loading = true;
   String? _error;
 
   int _topIndex = 0;
+
+  // TODO: Get these from user preferences once onboarding data is saved
+  // For now, using default values to fetch food list
+  List<String> _selectedCuisines = ['Chinese', 'Thai', 'Western'];
+  String _selectedBudget = 'low'; // 'low', 'mid', 'high'
 
   // drag state
   Offset _dragOffset = Offset.zero;
@@ -86,8 +91,23 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _error = null;
     });
     try {
-      final uri = Uri.parse('$_baseUrl/api/foods');
-      final res = await http.get(uri);
+      // Build query parameters
+      final queryParams = <String, dynamic>{
+        'budget': _selectedBudget,
+      };
+      
+      // Add multiple cuisine parameters
+      final uri = Uri.parse('$_baseUrl/food').replace(
+        queryParameters: queryParams,
+      );
+      
+      // Manually build the URL with multiple 'cuisines' parameters
+      final cuisineParams = _selectedCuisines
+          .map((c) => 'cuisines=${Uri.encodeComponent(c)}')
+          .join('&');
+      final fullUrl = '${uri.toString()}&$cuisineParams';
+      
+      final res = await http.get(Uri.parse(fullUrl));
       if (res.statusCode != 200) {
         throw Exception('Failed to load foods (${res.statusCode})');
       }

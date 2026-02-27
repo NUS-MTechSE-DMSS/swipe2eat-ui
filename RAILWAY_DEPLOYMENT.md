@@ -6,12 +6,7 @@
 
 ## 📋 Quick Start (3 Steps)
 
-1. **Prepare & Push**
-   ```bash
-   git add .
-   git commit -m "Add Railway deployment files"
-   git push origin main
-   ```
+
 2. **Deploy**
    - Go to https://railway.app
    - Click "New Project" → "Deploy from GitHub"

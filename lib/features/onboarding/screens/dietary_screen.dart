@@ -21,7 +21,7 @@ class DietaryScreen extends StatefulWidget {
 
 class _DietaryScreenState extends State<DietaryScreen> {
   //currently using dietary-prefs railway deploy link replace with actual
-  static const String _baseUrl = 'https://dietary-service-production.up.railway.app';
+  static const String _baseUrl = 'https://dietary-service-production-48d4.up.railway.app/dietary';
 
   late Future<_DietaryOptions> _future;
   String? _selectedDietType;
