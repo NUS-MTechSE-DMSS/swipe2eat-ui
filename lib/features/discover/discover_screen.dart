@@ -80,6 +80,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   static const String _prefsSpiceKey = 'prefs.spice';
   static const String _prefsDietTypeKey = 'prefs.dietType';
   static const String _prefsAllergensKey = 'prefs.allergens';
+  static const String _prefsTempUserIdKey = 'prefs.tempUserId';
 
   // drag state
   Offset _dragOffset = Offset.zero;
@@ -137,6 +138,40 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       // TODO: Add Cognito ID token when auth is implemented
       // 'Authorization': 'Bearer $cognitoIdToken',
     };
+  }
+
+  /// TODO: Replace with Cognito user id when auth is implemented.
+  Future<String?> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_prefsTempUserIdKey);
+    if (existing != null && existing.trim().isNotEmpty) {
+      return existing.trim();
+    }
+    const fallback = '22222222-2222-2222-2222-222222222222';
+    await prefs.setString(_prefsTempUserIdKey, fallback);
+    return fallback;
+  }
+
+  Future<void> _sendSwipePreference({
+    required FoodItem item,
+    required bool liked,
+  }) async {
+    final userId = await _getUserId();
+    if (userId == null || userId.trim().isEmpty) {
+      return;
+    }
+    final uri = Uri.parse('$_baseUrl/preference/food/swipe');
+    final headers = _buildAuthHeaders();
+    final payload = jsonEncode({
+      'userId': userId,
+      'foodId': item.id,
+      'status': liked,
+    });
+    try {
+      await http.post(uri, headers: headers, body: payload);
+    } catch (_) {
+      // Best-effort; ignore failures for now.
+    }
   }
 
   Future<void> _fetchFoods() async {
@@ -206,6 +241,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void _completeSwipe({required bool isRight}) {
     final item = _current;
     if (item == null) return;
+
+    _sendSwipePreference(item: item, liked: isRight);
 
     if (isRight) {
       FavoritesStore.instance.add(item); //  store liked item -- API call
