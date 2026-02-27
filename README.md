@@ -1,16 +1,43 @@
 # Swipe2Eat UI
 
-A Flutter application for discovering and saving food items through an intuitive swipe-based interface.
+A Flutter application for discovering and saving food items through an intuitive swipe-based interface, with full backend integration for preferences, user authentication, and food discovery APIs.
 
 ## Table of Contents
 
+- [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+- [Configuration](#configuration)
 - [Running the App](#running-the-app)
 - [Project Structure](#project-structure)
+- [API Integration](#api-integration)
 - [Dependencies](#dependencies)
 - [Troubleshooting](#troubleshooting)
 - [Resources](#resources)
+
+## Features
+
+### 🍽️ Core Features
+- **Swipe-based Food Discovery**: Tinder-style interface for browsing restaurants and dishes
+- **User Preferences**: Customize cuisine preferences, budget, spice level, and dietary restrictions
+- **Favorites Management**: Save and manage favorite dishes
+- **User Profile**: View and edit personal preferences
+- **Responsive Design**: Works seamlessly on iOS, Android, and Web
+
+### 🔄 Backend Integration
+- **Food Discovery API**: Fetches restaurants based on user preferences (cuisines, budget, spice level, dietary restrictions, allergens)
+- **Preference Persistence**: Saves user preferences locally and syncs with backend
+- **Swipe Tracking**: Records user interactions (likes/dislikes) for personalized recommendations
+- **Favorites Sync**: Loads and displays user's liked items from backend
+- **AWS Cognito Ready**: Built-in infrastructure for user authentication (Cognito integration pending)
+
+### 💾 Local Storage
+- **SharedPreferences Integration**: Persists user preferences across app sessions
+  - Cuisines selection
+  - Budget level (low/medium/high)
+  - Spice preference (Mild/Medium/Hot)
+  - Dietary type and allergens
+  - Temporary user ID
 
 ## Prerequisites
 
@@ -71,6 +98,8 @@ flutter pub get
 ```
 
 This fetches all required packages specified in `pubspec.yaml`:
+- **http**: HTTP client for API calls
+- **shared_preferences**: Local storage for user preferences
 - **provider**: State management (v6.1.2)
 - **google_fonts**: Custom fonts support (v6.2.1)
 - **cupertino_icons**: iOS-style icons (v1.0.8)
@@ -82,6 +111,29 @@ cd ios
 pod install
 cd ..
 ```
+
+## Configuration
+
+### Backend API Endpoint
+
+The app is configured to connect to the AWS ALB endpoint. Update the base URL in the following services if needed:
+
+- `lib/core/services/preferences_service.dart`
+- `lib/features/discover/discover_screen.dart`
+- `lib/features/favorites/favorites_screen.dart`
+- `lib/features/onboarding/screens/dietary_screen.dart`
+
+**Current API Base URL:**
+```
+http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com
+```
+
+### User ID Configuration
+
+The app uses a temporary user ID stored in SharedPreferences. This will be replaced with actual AWS Cognito user IDs once authentication is implemented.
+
+**Storage Key:** `prefs.tempUserId`
+**Default Fallback:** `22222222-2222-2222-2222-222222222222`
 
 ## Running the App
 
@@ -144,27 +196,105 @@ Other supported platforms: `firefox`, `edge`
 
 ```
 lib/
-├── main.dart              # App entry point
-├── app.dart               # App configuration
-├── core/                  # Core utilities
-│   ├── navigation/        # Navigation setup
-│   ├── state/             # State management
-│   ├── theme/             # Theme configuration
-│   └── widgets/           # Reusable widgets
-└── features/              # Feature modules
-    ├── discover/          # Discovery feature
-    ├── favorites/         # Favorites feature
-    ├── onboarding/        # Onboarding flow
-    └── profile/           # User profile
-└── models/                # Data models
-    ├── cuisine_option.dart
-    └── food_item.dart
+├── main.dart                           # App entry point
+├── app.dart                            # App configuration and routes
+├── core/                               # Core utilities and services
+│   ├── navigation/
+│   │   └── main_shell.dart            # Bottom navigation shell
+│   ├── services/
+│   │   └── preferences_service.dart   # API & local storage for preferences
+│   ├── state/
+│   │   └── favorites_store.dart       # In-memory favorites state management
+│   ├── theme/
+│   │   ├── app_theme.dart
+│   │   └── app_colors.dart
+│   └── widgets/
+│       └── gradient_button.dart       # Reusable gradient button
+└── features/
+    ├── auth/                           # Authentication screens
+    │   └── screens/
+    │       ├── sign_in_screen.dart    # Sign in with validations
+    │       └── sign_up_screen.dart    # Sign up with validations
+    ├── discover/                       # Food discovery feature
+    │   └── discover_screen.dart       # Swipeable food cards with API integration
+    ├── favorites/                      # Favorites management
+    │   ├── favorites_screen.dart      # Display liked foods from API
+    │   └── food_detail_screen.dart    # Food item details
+    ├── onboarding/                     # Onboarding flow
+    │   └── screens/
+    │       ├── welcome_screen.dart
+    │       ├── cuisine_screen.dart    # Select cuisines (hardcoded list)
+    │       ├── budget_screen.dart     # Select budget (map to API values)
+    │       ├── spice_screen.dart      # Select spice level
+    │       ├── dietary_screen.dart    # Select diet type & allergens with API fallback
+    │       └── done_screen.dart
+    └── profile/                        # User profile
+        └── profile_screen.dart        # Show preferences + edit dialog
+└── models/
+    └── food_item.dart                 # Food data model with flexible parsing
 ```
+
+## API Integration
+
+### Overview
+
+The app integrates with a backend API for food discovery, preference management, and user interactions.
+
+### Endpoints
+
+#### Food Discovery
+```
+GET /food?cuisines=Thai&cuisines=Chinese&budget=low&spice=Medium&dietType=Vegetarian&allergens=Peanut
+```
+Returns paginated list of restaurants and dishes matching user preferences.
+
+#### Dietary Options
+```
+GET /dietary/options
+```
+Returns available diet types and allergens. **2-second timeout with local fallback values.**
+
+#### Swipe Preferences (Tracking)
+```
+POST /preference/food/swipe
+Body: { "userId": "...", "foodId": "...", "status": true }
+```
+Records user interaction with food items (like/dislike).
+
+#### Get User Favorites
+```
+GET /preference/food/users/{userId}
+```
+Retrieves list of foods liked by the user.
+
+#### Update User Preferences
+```
+PUT /preference/users/{userId}
+Body: { "cuisines": [...], "budget": "low" }
+```
+Updates user's cuisine and budget preferences.
+
+### Response Parsing
+
+The app handles flexible API responses:
+- **Cuisine field**: Supports both string and array formats
+- **Budget values**: Maps user-friendly labels to API values (low/medium/high)
+- **Error handling**: Graceful fallbacks with local cached data where possible
+- **Timeouts**: 2-second timeout on dietary API with hardcoded fallback options
+
+### Authentication (In Progress)
+
+TODO: AWS Cognito integration for:
+- User sign in/sign up
+- ID token management
+- Bearer token in Authorization headers
 
 ## Dependencies
 
 ### Core Dependencies
 - **flutter**: Flutter SDK for UI development
+- **http**: ^1.1.0 - HTTP client for API calls
+- **shared_preferences**: ^2.2.3 - Local data persistence
 - **provider**: v6.1.2 - State management and dependency injection
 - **google_fonts**: v6.2.1 - Access to Google Fonts
 - **cupertino_icons**: v1.0.8 - iOS-style icons
@@ -174,6 +304,49 @@ lib/
 - **flutter_lints**: v6.0.0 - Linting rules for code quality
 
 For a complete list, see `pubspec.yaml`.
+
+## Development Commands
+
+### Code Quality
+```bash
+# Run analysis
+flutter analyze
+
+# Format code
+dart format lib/
+```
+
+### Testing
+```bash
+# Run all tests
+flutter test
+
+# Run specific test file
+flutter test test/widget_test.dart
+```
+
+### Hot Reload / Hot Restart
+```bash
+# Hot reload (preserves state)
+r
+
+# Hot restart (clears state)
+R
+```
+
+### Building for Release
+```bash
+# iOS
+flutter build ios --release
+
+# Android
+flutter build apk --release
+# or for App Bundle:
+flutter build appbundle --release
+
+# Web
+flutter build web --release
+```
 
 ## Troubleshooting
 
@@ -208,39 +381,16 @@ flutter doctor --android-licenses  # For Android
 flutter devices
 ```
 
-## Development Commands
+### API Connection Issues
+- Verify the backend API is running and accessible
+- Check network connectivity
+- Verify the API base URL in service classes matches your backend
+- Some endpoints have timeouts (dietary API: 2 seconds) - check server response time
 
-### Code Quality
-```bash
-# Run analysis
-flutter analyze
-
-# Format code
-dart format lib/
-```
-
-### Testing
-```bash
-# Run all tests
-flutter test
-
-# Run specific test file
-flutter test test/widget_test.dart
-```
-
-### Building for Release
-```bash
-# iOS
-flutter build ios --release
-
-# Android
-flutter build apk --release
-# or for App Bundle:
-flutter build appbundle --release
-
-# Web
-flutter build web --release
-```
+### Preferences Not Persisting
+- Ensure SharedPreferences has been initialized: `await SharedPreferences.getInstance()`
+- Check that preference keys are not being modified between screens
+- Clear app data and reinstall if needed: `flutter clean && flutter pub get`
 
 ## Resources
 
@@ -249,6 +399,9 @@ flutter build web --release
 - [Flutter Packages](https://pub.dev/flutter)
 - [State Management with Provider](https://pub.dev/packages/provider)
 - [Material Design Guidelines](https://material.io/design)
+- [HTTP Package Documentation](https://pub.dev/packages/http)
+- [SharedPreferences Documentation](https://pub.dev/packages/shared_preferences)
+- [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
 
 ## Contributing
 
