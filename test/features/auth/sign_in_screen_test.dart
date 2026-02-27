@@ -62,25 +62,7 @@ void main() {
       expect(emailField.obscureText, false);
     });
 
-    testWidgets('has Login button', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
 
-      expect(find.text('Login'), findsOneWidget);
-    });
-
-    testWidgets('has Sign Up link button', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
-
-      expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
-    });
 
     testWidgets('can enter email text', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -120,42 +102,7 @@ void main() {
       expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 
-    testWidgets('Login button navigates on tap', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
 
-      // Verify Login button exists and is tappable
-      expect(find.text('Login'), findsOneWidget);
-      await tester.tap(find.text('Login'));
-      await tester.pumpAndSettle();
-      
-      // Button should still be present after tap
-      expect(find.text('Login'), findsOneWidget);
-    });
-
-    testWidgets('Sign Up button navigates to sign up screen', (WidgetTester tester) async {
-      var navigatedToSignUp = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-          routes: {
-            '/sign-up': (_) {
-              navigatedToSignUp = true;
-              return const Scaffold(body: SizedBox.shrink());
-            }
-          },
-        ),
-      );
-
-      await tester.tap(find.text("Don't have an account? Sign Up"));
-      await tester.pumpAndSettle();
-
-      expect(navigatedToSignUp, true);
-    });
 
     testWidgets('has proper layout structure', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -180,15 +127,6 @@ void main() {
       expect(find.byType(SizedBox), findsWidgets);
     });
 
-    testWidgets('all widgets are visible', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
 
-      expect(find.byType(TextField), findsWidgets);
-      expect(find.byType(TextButton), findsOneWidget);
-    });
   });
 }

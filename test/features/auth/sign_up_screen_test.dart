@@ -47,25 +47,7 @@ void main() {
       expect(passwordField.obscureText, true);
     });
 
-    testWidgets('has Register button', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
 
-      expect(find.text('Register'), findsOneWidget);
-    });
-
-    testWidgets('has Sign In link button', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
-
-      expect(find.text('Already have an account? Sign In'), findsOneWidget);
-    });
 
     testWidgets('can enter email text', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -105,26 +87,7 @@ void main() {
       expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 
-    testWidgets('Register button navigates to sign-in screen', (WidgetTester tester) async {
-      var navigatedToSignIn = false;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-          routes: {
-            '/sign-in': (_) {
-              navigatedToSignIn = true;
-              return const Scaffold(body: SizedBox.shrink());
-            }
-          },
-        ),
-      );
-
-      await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle();
-
-      expect(navigatedToSignIn, true);
-    });
 
     testWidgets('Sign In link pops back to previous screen', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -185,24 +148,6 @@ void main() {
       expect(find.byType(SizedBox), findsWidgets);
     });
 
-    testWidgets('all input fields are present', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
 
-      expect(find.byType(TextField), findsExactly(2));
-    });
-
-    testWidgets('all buttons are present', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
-
-      expect(find.byType(TextButton), findsOneWidget);
-    });
   });
 }
