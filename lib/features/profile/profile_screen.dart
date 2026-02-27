@@ -1,11 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
 
-class ProfileScreen extends StatelessWidget {
-  // const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
   final bool showBottomNav;
   const ProfileScreen({super.key, this.showBottomNav = true});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _cuisinesDisplay = "Loading...";
+  String _spiceDisplay = "Loading...";
+  String _budgetDisplay = "Loading...";
+
+  static const String _prefsCuisinesKey = 'prefs.cuisines';
+  static const String _prefsBudgetKey = 'prefs.budget';
+  static const String _prefsBudgetLabelKey = 'prefs.budgetLabel';
+  static const String _prefsSpiceKey = 'prefs.spice';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+    // Listen for preference updates
+    PreferencesService.preferencesUpdated.addListener(_onPreferencesUpdated);
+  }
+
+  @override
+  void dispose() {
+    PreferencesService.preferencesUpdated.removeListener(_onPreferencesUpdated);
+    super.dispose();
+  }
+
+  void _onPreferencesUpdated() {
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    final cuisines = prefs.getStringList(_prefsCuisinesKey) ?? [];
+    final budget = prefs.getString(_prefsBudgetLabelKey) ?? prefs.getString(_prefsBudgetKey) ?? "Not set";
+    final spice = prefs.getString(_prefsSpiceKey) ?? "Not set";
+
+    if (mounted) {
+      setState(() {
+        _cuisinesDisplay = cuisines.isNotEmpty ? cuisines.join(", ") : "Not set";
+        _budgetDisplay = _getBudgetDisplay(budget);
+        _spiceDisplay = spice;
+      });
+    }
+  }
+
+  String _getBudgetDisplay(String budget) {
+    switch (budget.toLowerCase()) {
+      case 'low':
+      case 'budget friendly':
+        return "\$";
+      case 'medium':
+      case 'mid range':
+        return "\$\$";
+      case 'high':
+      case 'premium':
+        return "\$\$\$";
+      default:
+        return budget;
+    }
+  }
 
 
   @override
@@ -63,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
                   _PrefTile(
                     icon: Icons.restaurant_menu,
                     title: "Cuisines",
-                    value: "Japanese, Indian, Korean",
+                    value: _cuisinesDisplay,
                     onTap: () {
                       // TODO: navigate to edit cuisines
                     },
@@ -71,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
                   _PrefTile(
                     icon: Icons.local_fire_department_rounded,
                     title: "Spice Level",
-                    value: "Medium",
+                    value: _spiceDisplay,
                     onTap: () {
                       // TODO: navigate to spice screen
                     },
@@ -79,7 +143,7 @@ class ProfileScreen extends StatelessWidget {
                   _PrefTile(
                     icon: Icons.attach_money_rounded,
                     title: "Budget",
-                    value: "\$\$",
+                    value: _budgetDisplay,
                     onTap: () {
                       // TODO: navigate to budget screen
                     },
