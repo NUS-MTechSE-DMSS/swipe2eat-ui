@@ -16,6 +16,10 @@ class FavoritesStore {
     favorites.value = list;
   }
 
+  void setAll(List<FoodItem> items) {
+    favorites.value = List<FoodItem>.from(items);
+  }
+
   void removeById(String id) {
     final list = List<FoodItem>.from(favorites.value);
     list.removeWhere((x) => x.id == id);

@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
 import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
@@ -14,6 +17,70 @@ const FavoritesScreen({super.key, this.showBottomNav = true});
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   String _query = "";
+  bool _loading = true;
+  String? _error;
+
+  static const String _baseUrl =
+      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
+  static const String _prefsTempUserIdKey = 'prefs.tempUserId';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFavorites();
+  }
+
+  Future<String?> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_prefsTempUserIdKey);
+    if (existing != null && existing.trim().isNotEmpty) {
+      return existing.trim();
+    }
+    const fallback = '22222222-2222-2222-2222-222222222222';
+    await prefs.setString(_prefsTempUserIdKey, fallback);
+    return fallback;
+  }
+
+  Map<String, String> _buildAuthHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      // TODO: Add Cognito ID token when auth is implemented
+      // 'Authorization': 'Bearer $cognitoIdToken',
+    };
+  }
+
+  Future<void> _fetchFavorites() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final userId = await _getUserId();
+      if (userId == null || userId.trim().isEmpty) {
+        throw Exception('Missing user id');
+      }
+      final uri = Uri.parse('$_baseUrl/preference/food/users/$userId');
+      final res = await http.get(uri, headers: _buildAuthHeaders());
+      if (res.statusCode != 200) {
+        throw Exception('Failed to load favorites (${res.statusCode})');
+      }
+      final data = jsonDecode(res.body);
+      final list = _extractList(data);
+      final items = list
+          .map((e) => _foodFromPreferenceJson(e))
+          .whereType<FoodItem>()
+          .toList();
+      FavoritesStore.instance.setAll(items);
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +187,44 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               child: ValueListenableBuilder<List<FoodItem>>(
                 valueListenable: FavoritesStore.instance.favorites,
                 builder: (_, favs, __) {
+                  if (_loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (_error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "Couldn't load favorites",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: _fetchFavorites,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
+                              child: const Text(
+                                "Retry",
+                                style: TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   final filtered = favs.where((f) {
                     if (_query.isEmpty) return true;
                     return f.name.toLowerCase().contains(_query) ||
@@ -166,6 +271,94 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
+}
+
+List<dynamic> _extractList(dynamic data) {
+  if (data is List) return data;
+  if (data is Map && data['data'] is List) return data['data'] as List;
+  if (data is Map && data['foods'] is List) return data['foods'] as List;
+  return const <dynamic>[];
+}
+
+FoodItem? _foodFromPreferenceJson(dynamic raw) {
+  if (raw is Map && raw['food'] is Map) {
+    return _foodFromJson(raw['food']);
+  }
+  return _foodFromJson(raw);
+}
+
+FoodItem? _foodFromJson(dynamic raw) {
+  if (raw is! Map) return null;
+
+  String? readString(String key) {
+    final v = raw[key];
+    return (v is String && v.trim().isNotEmpty) ? v.trim() : null;
+  }
+
+  double readDouble(String key, {double fallback = 0}) {
+    final v = raw[key];
+    if (v is num) return v.toDouble();
+    if (v is String) {
+      final parsed = double.tryParse(v);
+      if (parsed != null) return parsed;
+    }
+    return fallback;
+  }
+
+  final id = readString('id') ?? DateTime.now().toString();
+  final name = readString('name') ?? 'Unknown Dish';
+  final restaurant = readString('restaurantName') ?? 'Unknown';
+  final rating = readDouble('rating', fallback: 4.5);
+  final price = readDouble('price', fallback: 14.99);
+  final description = readString('description') ??
+      'A delicious pick based on your preferences.';
+
+  final imageKey = readString('imageKey');
+  final imageUrl = _imageUrlFromKey(imageKey) ??
+      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200';
+
+  const String distanceLabel = '0.7 mi away';
+  const int spiceLevel = 2;
+
+  int budgetLevel;
+  if (price <= 10) {
+    budgetLevel = 1;
+  } else if (price <= 20) {
+    budgetLevel = 2;
+  } else {
+    budgetLevel = 3;
+  }
+
+  List<String> tags = const [];
+  final cuisineRaw = raw['cuisine'];
+  if (cuisineRaw is List) {
+    tags = cuisineRaw.map((e) => e.toString()).toList();
+  } else if (cuisineRaw is String && cuisineRaw.trim().isNotEmpty) {
+    tags = [cuisineRaw.trim()];
+  }
+
+  return FoodItem(
+    id: id,
+    name: name,
+    restaurant: restaurant,
+    imageUrl: imageUrl,
+    rating: rating,
+    price: price,
+    description: description,
+    distanceLabel: distanceLabel,
+    spiceLevel: spiceLevel,
+    budgetLevel: budgetLevel,
+    tags: tags,
+  );
+}
+
+String? _imageUrlFromKey(String? imageKey) {
+  if (imageKey == null || imageKey.trim().isEmpty) return null;
+  final key = imageKey.trim();
+  if (key.startsWith('http://') || key.startsWith('https://')) {
+    return key;
+  }
+  return null;
 }
 
 class _FavoriteTile extends StatelessWidget {
