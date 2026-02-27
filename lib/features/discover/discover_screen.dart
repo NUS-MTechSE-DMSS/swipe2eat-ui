@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../favorites/food_detail_screen.dart';
@@ -67,10 +68,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   int _topIndex = 0;
 
-  // TODO: Get these from user preferences once onboarding data is saved
-  // For now, using default values to fetch food list
+  // Defaults used when no local preferences are saved yet
   List<String> _selectedCuisines = ['Chinese', 'Thai', 'Western'];
-  String _selectedBudget = 'low'; // 'low', 'mid', 'high'
+  String _selectedBudget = 'low'; // 'low', 'medium', 'high'
+  String _selectedSpice = 'Medium';
+  String _selectedDietType = 'None';
+  List<String> _selectedAllergens = const [];
+
+  static const String _prefsCuisinesKey = 'prefs.cuisines';
+  static const String _prefsBudgetKey = 'prefs.budget';
+  static const String _prefsSpiceKey = 'prefs.spice';
+  static const String _prefsDietTypeKey = 'prefs.dietType';
+  static const String _prefsAllergensKey = 'prefs.allergens';
 
   // drag state
   Offset _dragOffset = Offset.zero;
@@ -82,7 +91,52 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchFoods();
+    _initLoad();
+  }
+
+  Future<void> _initLoad() async {
+    await _loadPreferences();
+    await _fetchFoods();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cuisines = prefs.getStringList(_prefsCuisinesKey);
+    final budget = prefs.getString(_prefsBudgetKey);
+    final spice = prefs.getString(_prefsSpiceKey);
+    final dietType = prefs.getString(_prefsDietTypeKey);
+    final allergens = prefs.getStringList(_prefsAllergensKey);
+    if (!mounted) return;
+    setState(() {
+      if (cuisines != null && cuisines.isNotEmpty) {
+        _selectedCuisines = cuisines;
+      }
+      if (budget != null && budget.trim().isNotEmpty) {
+        _selectedBudget = budget.trim();
+      }
+      if (spice != null && spice.trim().isNotEmpty) {
+        _selectedSpice = spice.trim();
+      }
+      if (dietType != null && dietType.trim().isNotEmpty) {
+        _selectedDietType = dietType.trim();
+      }
+      if (allergens != null && allergens.isNotEmpty) {
+        _selectedAllergens = allergens;
+      }
+    });
+  }
+
+  /// Builds HTTP headers with AWS Cognito authentication.
+  /// TODO: When Cognito is implemented:
+  /// 1. Get the ID token from Cognito (via Amazon Cognito Identity SDK)
+  /// 2. Add it to the Authorization header: "Authorization": "Bearer $idToken"
+  /// 3. Replace the placeholder below with actual token retrieval
+  Map<String, String> _buildAuthHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      // TODO: Add Cognito ID token when auth is implemented
+      // 'Authorization': 'Bearer $cognitoIdToken',
+    };
   }
 
   Future<void> _fetchFoods() async {
@@ -91,23 +145,33 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _error = null;
     });
     try {
-      // Build query parameters
-      final queryParams = <String, dynamic>{
-        'budget': _selectedBudget,
-      };
-      
-      // Add multiple cuisine parameters
-      final uri = Uri.parse('$_baseUrl/food').replace(
-        queryParameters: queryParams,
-      );
-      
-      // Manually build the URL with multiple 'cuisines' parameters
-      final cuisineParams = _selectedCuisines
-          .map((c) => 'cuisines=${Uri.encodeComponent(c)}')
-          .join('&');
-      final fullUrl = '${uri.toString()}&$cuisineParams';
-      
-      final res = await http.get(Uri.parse(fullUrl));
+      final baseUri = Uri.parse('$_baseUrl/food');
+      final params = <String>[
+        'budget=${Uri.encodeQueryComponent(_selectedBudget)}',
+      ];
+      if (_selectedCuisines.isNotEmpty) {
+        params.addAll(
+          _selectedCuisines
+              .map((c) => 'cuisines=${Uri.encodeQueryComponent(c)}'),
+        );
+      }
+      if (_selectedSpice.trim().isNotEmpty) {
+        params.add('spice=${Uri.encodeQueryComponent(_selectedSpice)}');
+      }
+      if (_selectedDietType.trim().isNotEmpty && _selectedDietType != 'None') {
+        params.add('dietType=${Uri.encodeQueryComponent(_selectedDietType)}');
+      }
+      if (_selectedAllergens.isNotEmpty) {
+        params.addAll(
+          _selectedAllergens
+              .map((a) => 'allergens=${Uri.encodeQueryComponent(a)}'),
+        );
+      }
+      final query = params.join('&');
+      final uri = baseUri.replace(query: query);
+      final headers = _buildAuthHeaders();
+
+      final res = await http.get(uri, headers: headers);
       if (res.statusCode != 200) {
         throw Exception('Failed to load foods (${res.statusCode})');
       }

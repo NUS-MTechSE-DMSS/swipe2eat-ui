@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'budget_screen.dart';
 
 class SpiceScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class SpiceScreen extends StatefulWidget {
 
 class _SpiceScreenState extends State<SpiceScreen> {
   String? _selected; // "Mild" | "Medium" | "Hot"
+
+  static const String _prefsSpiceKey = 'prefs.spice';
 
   @override
   Widget build(BuildContext context) {
@@ -96,19 +99,21 @@ class _SpiceScreenState extends State<SpiceScreen> {
                       text: "Continue",
                       enabled: canContinue,
                       onTap: canContinue
-                          ? () {
-                              // TODO: Navigate to BudgetScreen next
+                          ? () async {
+                              final selected = _selected!;
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString(_prefsSpiceKey, selected);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => BudgetScreen(
                                     selectedCuisinesLabel: widget.selectedCuisinesLabel,
-                                    selectedSpiceLabel: _selected!,
+                                    selectedSpiceLabel: selected,
                                   ),
                                 ),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Spice: $_selected")),
+                                SnackBar(content: Text("Spice: $selected")),
                               );
                             }
                           : null,

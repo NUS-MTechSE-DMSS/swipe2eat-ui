@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'done_screen.dart';
 
 class DietaryScreen extends StatefulWidget {
@@ -23,6 +24,9 @@ class _DietaryScreenState extends State<DietaryScreen> {
   //currently using dietary-prefs railway deploy link replace with actual
   static const String _baseUrl = 'https://dietary-service-production-48d4.up.railway.app/dietary';
 
+  static const String _prefsDietTypeKey = 'prefs.dietType';
+  static const String _prefsAllergensKey = 'prefs.allergens';
+
   late Future<_DietaryOptions> _future;
   String? _selectedDietType;
   final Set<String> _selectedAllergens = {};
@@ -35,12 +39,28 @@ class _DietaryScreenState extends State<DietaryScreen> {
 
   Future<_DietaryOptions> _fetchOptions() async {
     final uri = Uri.parse('$_baseUrl/options');
-    final res = await http.get(uri);
+    final headers = _buildAuthHeaders();
+    final res = await http.get(uri, headers: headers).timeout(
+      const Duration(seconds: 2),
+    );
     if (res.statusCode != 200) {
       throw Exception('Failed to load options (${res.statusCode})');
     }
     final data = jsonDecode(res.body) as Map<String, dynamic>;
     return _DietaryOptions.fromJson(data);
+  }
+
+  /// Builds HTTP headers with AWS Cognito authentication.
+  /// TODO: When Cognito is implemented:
+  /// 1. Get the ID token from Cognito (via Amazon Cognito Identity SDK)
+  /// 2. Add it to the Authorization header: "Authorization": "Bearer $idToken"
+  /// 3. Replace the placeholder below with actual token retrieval
+  Map<String, String> _buildAuthHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      // TODO: Add Cognito ID token when auth is implemented
+      // 'Authorization': 'Bearer $cognitoIdToken',
+    };
   }
 
   void _toggleAllergen(String allergen) {
@@ -100,29 +120,9 @@ class _DietaryScreenState extends State<DietaryScreen> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              "Couldn't load options",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _SecondaryButton(
-                              text: "Retry",
-                              onTap: () => setState(() => _future = _fetchOptions()),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    final options = snapshot.data!;
+                    
+                    // Use fallback data if API fails, or use fetched data
+                    final options = snapshot.data ?? _DietaryOptions.fallback;
                     return SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +198,17 @@ class _DietaryScreenState extends State<DietaryScreen> {
                       text: "Continue",
                       enabled: canContinue,
                       onTap: canContinue
-                          ? () {
+                          ? () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString(
+                                _prefsDietTypeKey,
+                                _selectedDietType!,
+                              );
+                              final allergens = _selectedAllergens.toList()..sort();
+                              await prefs.setStringList(
+                                _prefsAllergensKey,
+                                allergens,
+                              );
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -242,6 +252,26 @@ class _DietaryOptions {
       allergens: List<String>.from(json['allergens'] ?? const []),
     );
   }
+
+  // Fallback data when API is unavailable
+  static const _DietaryOptions fallback = _DietaryOptions(
+    dietType: [
+      'Omnivore',
+      'Vegetarian',
+      'Vegan',
+      'Halal',
+      'Kosher',
+    ],
+    allergens: [
+      'Peanut',
+      'Dairy',
+      'Gluten',
+      'Shellfish',
+      'Soy',
+      'Sesame',
+      'Tree Nuts',
+    ],
+  );
 }
 
 /* ------------------- UI PARTS ------------------- */

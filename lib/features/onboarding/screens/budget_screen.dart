@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dietary_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
@@ -17,6 +18,22 @@ class BudgetScreen extends StatefulWidget {
 
 class _BudgetScreenState extends State<BudgetScreen> {
   String? _selected; // "Budget Friendly" | "Mid Range" | "Premium"
+
+  static const String _prefsBudgetKey = 'prefs.budget';
+  static const String _prefsBudgetLabelKey = 'prefs.budgetLabel';
+
+  String _budgetToApiValue(String label) {
+    switch (label) {
+      case "Budget Friendly":
+        return "low";
+      case "Mid Range":
+        return "medium";
+      case "Premium":
+        return "high";
+      default:
+        return "low";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,12 +118,19 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)], // CTA stays orange/red
                       ),
                       onTap: canContinue
-                          ? () {
+                          ? () async {
+                              final selected = _selected!;
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString(
+                                _prefsBudgetKey,
+                                _budgetToApiValue(selected),
+                              );
+                              await prefs.setString(_prefsBudgetLabelKey, selected);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => DietaryScreen(
-                                    selectedBudget: _selected!,
+                                    selectedBudget: selected,
                                     selectedCuisinesLabel: widget.selectedCuisinesLabel,
                                     selectedSpiceLabel: widget.selectedSpiceLabel,
                                   ),

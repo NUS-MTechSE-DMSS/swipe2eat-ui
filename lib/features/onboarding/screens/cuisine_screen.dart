@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'spice_screen.dart';
 
 class CuisineScreen extends StatefulWidget {
@@ -10,6 +11,8 @@ class CuisineScreen extends StatefulWidget {
 
 class _CuisineScreenState extends State<CuisineScreen> {
   final Set<String> _selected = {};
+
+  static const String _prefsCuisinesKey = 'prefs.cuisines';
   
   // Hardcoded list of cuisines
   static const List<String> _cuisines = [
@@ -115,8 +118,11 @@ class _CuisineScreenState extends State<CuisineScreen> {
                       text: "Continue",
                       enabled: canContinue,
                       onTap: canContinue
-                          ? () {
-                              final cuisinesLabel = _selected.join(", ");
+                          ? () async {
+                              final cuisines = _selected.toList()..sort();
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setStringList(_prefsCuisinesKey, cuisines);
+                              final cuisinesLabel = cuisines.join(", ");
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -129,7 +135,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    "Selected: ${_selected.join(", ")}",
+                                    "Selected: $cuisinesLabel",
                                   ),
                                 ),
                               );
