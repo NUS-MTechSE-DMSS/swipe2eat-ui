@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/state/favorites_store.dart';
+import '../../core/services/preferences_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   // const ProfileScreen({super.key});
@@ -96,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.edit_rounded,
                     title: "Edit Preferences",
                     onTap: () {
-                      // later: deep link to onboarding
+                      _showEditPreferencesDialog(context);
                     },
                   ),
                   _ActionTile(
@@ -143,6 +144,54 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditPreferencesDialog(BuildContext context) async {
+    final prefs = await PreferencesService.getLocalPreferences();
+    final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
+    final currentBudget = prefs['budget'] ?? 'low';
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (_) => _PreferencesDialog(
+        initialCuisines: currentCuisines,
+        initialBudget: currentBudget,
+        onSave: (cuisines, budget) async {
+          // First, try to sync with backend
+          final synced = await PreferencesService.updatePreferences(
+            cuisines: cuisines,
+            budget: budget,
+          );
+
+          // If sync was successful, fetch latest preferences from backend
+          if (synced) {
+            await PreferencesService.fetchPreferencesFromBackend();
+          } else {
+            // Save locally if sync failed
+            await PreferencesService.saveLocalPreferences(
+              cuisines: cuisines,
+              budget: budget,
+            );
+          }
+
+          if (context.mounted) {
+            Navigator.pop(context); // Close dialog
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  synced
+                      ? "Preferences updated and discover screen refreshed"
+                      : "Preferences saved locally (sync failed)",
+                ),
+              ),
+            );
+          }
+        },
       ),
     );
   }
@@ -362,6 +411,155 @@ class _BottomNav extends StatelessWidget {
               style: const TextStyle(color: Color(0xFFFF6B4A), fontWeight: FontWeight.w900)),
         ],
       ),
+    );
+  }
+}
+
+class _PreferencesDialog extends StatefulWidget {
+  final List<String> initialCuisines;
+  final String initialBudget;
+  final Function(List<String> cuisines, String budget) onSave;
+
+  const _PreferencesDialog({
+    required this.initialCuisines,
+    required this.initialBudget,
+    required this.onSave,
+  });
+
+  @override
+  State<_PreferencesDialog> createState() => _PreferencesDialogState();
+}
+
+class _PreferencesDialogState extends State<_PreferencesDialog> {
+  late Set<String> _selectedCuisines;
+  late String _selectedBudget;
+  bool _saving = false;
+
+  static const List<String> cuisineOptions = [
+    'Thai',
+    'Chinese',
+    'Western',
+    'Japanese',
+    'Indian',
+    'Italian',
+    'Korean',
+    'Vietnamese',
+    'Mediterranean',
+    'Malay',
+    'Asian',
+  ];
+
+  static const List<String> budgetOptions = ['low', 'medium', 'high'];
+  static const Map<String, String> budgetLabels = {
+    'low': 'Budget Friendly',
+    'medium': 'Mid Range',
+    'high': 'Premium',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCuisines = Set.from(widget.initialCuisines);
+    _selectedBudget = widget.initialBudget;
+  }
+
+  void _toggleCuisine(String cuisine) {
+    setState(() {
+      if (_selectedCuisines.contains(cuisine)) {
+        _selectedCuisines.remove(cuisine);
+      } else {
+        _selectedCuisines.add(cuisine);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Preferences'),
+      scrollable: true,
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cuisines',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: cuisineOptions.map((cuisine) {
+                  final selected = _selectedCuisines.contains(cuisine);
+                  return FilterChip(
+                    label: Text(cuisine),
+                    selected: selected,
+                    onSelected: (_) => _toggleCuisine(cuisine),
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFFFFF2E7),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: selected ? const Color(0xFFFF6B4A) : const Color(0xFF111827),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Budget',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: budgetOptions.map((budget) {
+                  final selected = _selectedBudget == budget;
+                  return FilterChip(
+                    label: Text(budgetLabels[budget]!),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _selectedBudget = budget),
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFFFFF2E7),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: selected ? const Color(0xFFFF6B4A) : const Color(0xFF111827),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _saving
+              ? null
+              : () async {
+                  setState(() => _saving = true);
+                  await widget.onSave(
+                    _selectedCuisines.toList()..sort(),
+                    _selectedBudget,
+                  );
+                },
+          child: _saving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
     );
   }
 }

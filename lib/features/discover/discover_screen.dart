@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
+import '../../core/services/preferences_service.dart';
 import '../favorites/food_detail_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
@@ -92,6 +93,21 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void initState() {
     super.initState();
+    _initLoad();
+    
+    // Listen for preferences updates and refresh food list
+    PreferencesService.preferencesUpdated.addListener(_onPreferencesUpdated);
+  }
+
+  @override
+  void dispose() {
+    // Clean up the listener when the widget is disposed
+    PreferencesService.preferencesUpdated.removeListener(_onPreferencesUpdated);
+    super.dispose();
+  }
+
+  void _onPreferencesUpdated() {
+    // Reload preferences and refresh food list
     _initLoad();
   }
 
