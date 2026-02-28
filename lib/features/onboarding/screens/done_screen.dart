@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../discover/discover_screen.dart';
 import '../../../core/navigation/main_shell.dart';
 
 class DoneScreen extends StatelessWidget {
@@ -23,172 +22,193 @@ class DoneScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F1),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-          child: Column(
-            children: [
-              const _ProgressPills(currentStep: 6, totalSteps: 6),
-              const SizedBox(height: 26),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const _ProgressPills(currentStep: 6, totalSteps: 6),
+                        const SizedBox(height: 26),
 
-              const Text(
-                "You're all set!",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Let's find your next meal",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(height: 26),
-
-              Container(
-                height: 140,
-                width: 140,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(34),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      blurRadius: 28,
-                      offset: Offset(0, 10),
-                      color: Color(0x22000000),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 62,
-                ),
-              ),
-              const SizedBox(height: 26),
-
-              _InfoCard(
-                title: "Your preferences",
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 2),
-                    Text(
-                      selectedCuisinesLabel,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Diet: $selectedDietType",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Allergens: $selectedAllergensLabel",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _MiniCard(
-                      title: "Spice Level",
-                      value: selectedSpiceLabel,
-                      tint: const Color(0xFFFFF2E7),
-                      valueColor: const Color(0xFFFF6B4A),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _MiniCard(
-                      title: "Budget",
-                      value: selectedBudget == "Mid Range"
-                          ? r"$$"
-                          : selectedBudget == "Budget Friendly"
-                          ? r"$"
-                          : r"$$$",
-                      tint: const Color(0xFFEFFDF4),
-                      valueColor: const Color(0xFF16A34A),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 18,
-                    color: Color(0xFF6B7280),
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    "Using your current location",
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _SecondaryButton(
-                      text: "Back",
-                      onTap: () => Navigator.pop(context),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _GradientButton(
-                      text: "Start Swiping",
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
-                      ),
-                      onTap: () {
-                        // TODO: Navigate to Discover screen (swipe screen)
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const MainShell(initialTab: MainTab.discover),
+                        const Text(
+                          "You're all set!",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w900,
                           ),
-                          (route) => false,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Go to Discover Screen 🚀"),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Let's find your next meal",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF6B7280),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 26),
+
+                        Container(
+                          height: 140,
+                          width: 140,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(34),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 28,
+                                offset: Offset(0, 10),
+                                color: Color(0x22000000),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.white,
+                            size: 62,
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+
+                        _InfoCard(
+                          title: "Your preferences",
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 2),
+                              Text(
+                                selectedCuisinesLabel,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Diet: $selectedDietType",
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Allergens: $selectedAllergensLabel",
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MiniCard(
+                                title: "Spice Level",
+                                value: selectedSpiceLabel,
+                                tint: const Color(0xFFFFF2E7),
+                                valueColor: const Color(0xFFFF6B4A),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _MiniCard(
+                                title: "Budget",
+                                value: selectedBudget == "Mid Range"
+                                    ? r"$$"
+                                    : selectedBudget == "Budget Friendly"
+                                    ? r"$"
+                                    : r"$$$",
+                                tint: const Color(0xFFEFFDF4),
+                                valueColor: const Color(0xFF16A34A),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 18),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 18,
+                              color: Color(0xFF6B7280),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              "Using your current location",
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const Spacer(),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SecondaryButton(
+                                text: "Back",
+                                onTap: () => Navigator.pop(context),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _GradientButton(
+                                text: "Start Swiping",
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF4ADE80),
+                                    Color(0xFF22C55E),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // TODO: Navigate to Discover screen (swipe screen)
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const MainShell(
+                                        initialTab: MainTab.discover,
+                                      ),
+                                    ),
+                                    (route) => false,
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Go to Discover Screen 🚀"),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
