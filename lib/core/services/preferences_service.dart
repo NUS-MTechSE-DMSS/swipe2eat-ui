@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/auth/services/token_storage.dart';
 
 class PreferencesService {
   static const String _baseUrl =
@@ -15,16 +16,19 @@ class PreferencesService {
   static final preferencesUpdated = ValueNotifier<int>(0);
 
   /// Builds HTTP headers with AWS Cognito authentication.
-  /// TODO: When Cognito is implemented:
-  /// 1. Get the ID token from Cognito (via Amazon Cognito Identity SDK)
-  /// 2. Add it to the Authorization header: "Authorization": "Bearer $idToken"
-  /// 3. Replace the placeholder below with actual token retrieval
-  static Map<String, String> _buildAuthHeaders() {
-    return {
+  /// Includes the ID token from Cognito for backend API authorization
+  static Future<Map<String, String>> _buildAuthHeaders() async {
+    final headers = {
       'Content-Type': 'application/json',
-      // TODO: Add Cognito ID token when auth is implemented
-      // 'Authorization': 'Bearer $cognitoIdToken',
     };
+
+    // Add Cognito ID token if available
+    final authHeader = await TokenStorage.getAuthorizationHeader();
+    if (authHeader != null) {
+      headers['Authorization'] = authHeader;
+    }
+
+    return headers;
   }
 
   /// Gets the temporary user id from local storage
@@ -52,7 +56,7 @@ class PreferencesService {
       }
 
       final uri = Uri.parse('$_baseUrl/preference/users/$userId');
-      final headers = _buildAuthHeaders();
+      final headers = await _buildAuthHeaders();
       final payload = jsonEncode({
         'cuisines': cuisines,
         'budget': budget,
@@ -100,7 +104,7 @@ class PreferencesService {
       }
 
       final uri = Uri.parse('$_baseUrl/preference/users/$userId');
-      final res = await http.get(uri, headers: _buildAuthHeaders());
+      final res = await http.get(uri, headers: await _buildAuthHeaders());
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as Map<String, dynamic>;

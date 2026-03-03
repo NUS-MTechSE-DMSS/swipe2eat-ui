@@ -1,6 +1,8 @@
 // Sign Up Screen
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../services/cognito_service.dart';
+// import 'confirmation_screen.dart'; // TODO: Enable when email verification is needed
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -43,8 +45,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
     }
     return null;
   }
@@ -69,27 +71,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual authentication with AWS Cognito
-      // 1. Use AWS Cognito SDK to sign up
-      // 2. Send verification email
-      // 3. Navigate to sign in screen
-      
-      // Simulate network delay
-      await Future.delayed(const Duration(seconds: 1));
+      // Call AWS Cognito SignUp API
+      final result = await CognitoService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created! Please sign in.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/sign-in');
+        if (result['success'] == true) {
+          // Account created successfully - navigate to sign in
+          // TODO: Enable email verification in the future if needed
+          // if (result['requiresConfirmation'] == true) {
+          //   Navigator.push(context, MaterialPageRoute(
+          //     builder: (_) => ConfirmationScreen(email: _emailController.text.trim()),
+          //   ));
+          // }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please sign in.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/sign-in');
+        } else {
+          // Show error from Cognito
+          setState(() {
+            _generalError = result['error'] ?? 'Sign up failed. Please try again.';
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _generalError = 'Sign up failed. Please try again.';
+          _generalError = 'An unexpected error occurred. Please try again.';
         });
       }
     } finally {
