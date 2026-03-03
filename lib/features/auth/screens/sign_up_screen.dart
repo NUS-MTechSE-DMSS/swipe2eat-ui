@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../services/cognito_service.dart';
-// import 'confirmation_screen.dart'; // TODO: Enable when email verification is needed
+import 'confirmation_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -79,21 +79,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (mounted) {
         if (result['success'] == true) {
-          // Account created successfully - navigate to sign in
-          // TODO: Enable email verification in the future if needed
-          // if (result['requiresConfirmation'] == true) {
-          //   Navigator.push(context, MaterialPageRoute(
-          //     builder: (_) => ConfirmationScreen(email: _emailController.text.trim()),
-          //   ));
-          // }
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created! Please sign in.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pushReplacementNamed(context, '/sign-in');
+          // Check if email verification is required
+          if (result['requiresConfirmation'] == true) {
+            // Navigate to confirmation screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ConfirmationScreen(
+                  email: _emailController.text.trim(),
+                ),
+              ),
+            );
+          } else {
+            // Account created without confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account created! Please sign in.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacementNamed(context, '/sign-in');
+          }
         } else {
           // Show error from Cognito
           setState(() {

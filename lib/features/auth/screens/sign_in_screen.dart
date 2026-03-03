@@ -1,6 +1,8 @@
 // Sign In Screen
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../services/cognito_service.dart';
+import '../services/token_storage.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -56,22 +58,36 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual authentication with AWS Cognito
-      // 1. Use AWS Cognito SDK to sign in
-      // 2. Get ID token and store in SharedPreferences
-      // 3. Navigate to main app
-      
-      // Simulate network delay
-      await Future.delayed(const Duration(seconds: 1));
+      // Call AWS Cognito Sign In API
+      final result = await CognitoService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (mounted) {
-        // For now, go directly to the main app
-        Navigator.pushReplacementNamed(context, '/');
+        if (result['success'] == true) {
+          // Store tokens
+          await TokenStorage.saveTokens(
+            idToken: result['idToken'],
+            accessToken: result['accessToken'],
+            refreshToken: result['refreshToken'],
+            email: _emailController.text.trim(),
+          );
+
+          // Navigate to main app
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/');
+          }
+        } else {
+          setState(() {
+            _generalError = result['error'] ?? 'Sign in failed. Please try again.';
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _generalError = 'Login failed. Please try again.';
+          _generalError = 'An unexpected error occurred. Please try again.';
         });
       }
     } finally {
@@ -263,32 +279,40 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Sign Up Link
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don't have an account? ",
+                // Forgot Password & Sign Up Links
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        // TODO: Implement forgot password flow
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Forgot password feature coming soon'),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Forgot Password?',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6B7280),
-                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFFF6B4A),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/sign-up'),
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFFFF6B4A),
-                            fontWeight: FontWeight.w700,
-                          ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/sign-up'),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFFF6B4A),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
