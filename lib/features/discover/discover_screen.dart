@@ -7,6 +7,7 @@ import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
 import '../favorites/food_detail_screen.dart';
+import '../auth/services/token_storage.dart';
 
 class DiscoverScreen extends StatefulWidget {
   // const DiscoverScreen({super.key});
@@ -144,16 +145,16 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   /// Builds HTTP headers with AWS Cognito authentication.
-  /// TODO: When Cognito is implemented:
-  /// 1. Get the ID token from Cognito (via Amazon Cognito Identity SDK)
-  /// 2. Add it to the Authorization header: "Authorization": "Bearer $idToken"
-  /// 3. Replace the placeholder below with actual token retrieval
-  Map<String, String> _buildAuthHeaders() {
-    return {
+  /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
+  Future<Map<String, String>> _buildAuthHeaders() async {
+    final headers = {
       'Content-Type': 'application/json',
-      // TODO: Add Cognito ID token when auth is implemented
-      // 'Authorization': 'Bearer $cognitoIdToken',
     };
+    final authHeader = await TokenStorage.getAuthorizationHeader();
+    if (authHeader != null) {
+      headers['Authorization'] = authHeader;
+    }
+    return headers;
   }
 
   /// TODO: Replace with Cognito user id when auth is implemented.
@@ -177,7 +178,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       return;
     }
     final uri = Uri.parse('$_baseUrl/preference/food/swipe');
-    final headers = _buildAuthHeaders();
+    final headers = await _buildAuthHeaders();
     final payload = jsonEncode({
       'userId': userId,
       'foodId': item.id,
@@ -220,7 +221,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       }
       final query = params.join('&');
       final uri = baseUri.replace(query: query);
-      final headers = _buildAuthHeaders();
+      final headers = await _buildAuthHeaders();
 
       final res = await http.get(uri, headers: headers);
       if (res.statusCode != 200) {

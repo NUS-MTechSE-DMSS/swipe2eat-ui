@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
 import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
+import '../auth/services/token_storage.dart';
 
 class FavoritesScreen extends StatefulWidget {
   // const FavoritesScreen({super.key});
@@ -41,12 +42,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return fallback;
   }
 
-  Map<String, String> _buildAuthHeaders() {
-    return {
+  /// Builds HTTP headers with AWS Cognito authentication.
+  /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
+  Future<Map<String, String>> _buildAuthHeaders() async {
+    final headers = {
       'Content-Type': 'application/json',
-      // TODO: Add Cognito ID token when auth is implemented
-      // 'Authorization': 'Bearer $cognitoIdToken',
     };
+    final authHeader = await TokenStorage.getAuthorizationHeader();
+    if (authHeader != null) {
+      headers['Authorization'] = authHeader;
+    }
+    return headers;
   }
 
   Future<void> _fetchFavorites() async {
@@ -60,7 +66,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         throw Exception('Missing user id');
       }
       final uri = Uri.parse('$_baseUrl/preference/food/users/$userId');
-      final res = await http.get(uri, headers: _buildAuthHeaders());
+      final res = await http.get(uri, headers: await _buildAuthHeaders());
       if (res.statusCode != 200) {
         throw Exception('Failed to load favorites (${res.statusCode})');
       }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'done_screen.dart';
+import '../../auth/services/token_storage.dart';
 
 class DietaryScreen extends StatefulWidget {
   final String selectedBudget;
@@ -39,7 +40,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
 
   Future<_DietaryOptions> _fetchOptions() async {
     final uri = Uri.parse('$_baseUrl/options');
-    final headers = _buildAuthHeaders();
+    final headers = await _buildAuthHeaders();
     final res = await http.get(uri, headers: headers).timeout(
       const Duration(seconds: 2),
     );
@@ -51,16 +52,16 @@ class _DietaryScreenState extends State<DietaryScreen> {
   }
 
   /// Builds HTTP headers with AWS Cognito authentication.
-  /// TODO: When Cognito is implemented:
-  /// 1. Get the ID token from Cognito (via Amazon Cognito Identity SDK)
-  /// 2. Add it to the Authorization header: "Authorization": "Bearer $idToken"
-  /// 3. Replace the placeholder below with actual token retrieval
-  Map<String, String> _buildAuthHeaders() {
-    return {
+  /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
+  Future<Map<String, String>> _buildAuthHeaders() async {
+    final headers = {
       'Content-Type': 'application/json',
-      // TODO: Add Cognito ID token when auth is implemented
-      // 'Authorization': 'Bearer $cognitoIdToken',
     };
+    final authHeader = await TokenStorage.getAuthorizationHeader();
+    if (authHeader != null) {
+      headers['Authorization'] = authHeader;
+    }
+    return headers;
   }
 
   void _toggleAllergen(String allergen) {
