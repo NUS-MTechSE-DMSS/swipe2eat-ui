@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
+import '../auth/services/token_storage.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool showBottomNav;
@@ -37,6 +38,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _onPreferencesUpdated() {
     _loadPreferences();
+  }
+
+  Future<void> _handleLogout() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Clear all tokens
+      await TokenStorage.clearTokens();
+      
+      // Clear favorites
+      FavoritesStore.instance.clear();
+      
+      // Navigate to sign-in screen and remove all previous routes
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/sign-in',
+          (route) => false,
+        );
+      }
+    }
   }
 
   Future<void> _loadPreferences() async {
@@ -171,6 +209,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       _confirmReset(context);
                     },
+                  ),
+                  _ActionTile(
+                    icon: Icons.logout_rounded,
+                    title: "Logout",
+                    danger: true,
+                    onTap: _handleLogout,
                   ),
                 ],
               ),
