@@ -83,7 +83,12 @@ class FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResp
   @override
   StreamSubscription<List<int>> listen(void Function(List<int>)? onData,
       {Function? onError, void Function()? onDone, bool? cancelOnError}) {
-    return _stream.listen(onData as void Function(List<int>)?, onError: onError as void Function(Object, StackTrace)?, onDone: onDone, cancelOnError: cancelOnError);
+    return _stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
   }
 
   @override

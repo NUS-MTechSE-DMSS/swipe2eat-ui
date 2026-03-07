@@ -14,6 +14,7 @@ class CognitoService {
     required String email,
     required String password,
     String? name,
+    String? city,
   }) async {
     try {
       final headers = {
@@ -34,6 +35,11 @@ class CognitoService {
             {
               'Name': 'name',
               'Value': name,
+            },
+          if (city != null && city.isNotEmpty)
+            {
+              'Name': 'custom:city',
+              'Value': city,
             },
         ],
       };

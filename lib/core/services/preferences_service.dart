@@ -7,7 +7,6 @@ import '../../features/auth/services/token_storage.dart';
 class PreferencesService {
   static const String _baseUrl =
       'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
-  static const String _prefsTempUserIdKey = 'prefs.tempUserId';
   static const String _prefsCuisinesKey = 'prefs.cuisines';
   static const String _prefsBudgetKey = 'prefs.budget';
 
@@ -31,16 +30,46 @@ class PreferencesService {
     return headers;
   }
 
-  /// Gets the temporary user id from local storage
-  static Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString(_prefsTempUserIdKey);
-    if (existing != null && existing.trim().isNotEmpty) {
-      return existing.trim();
+  /// Checks if the user has saved preferences on the backend
+  /// This is used to determine if user needs to go through onboarding
+  /// Returns true if user has preferences, false otherwise
+  /// Handles all error cases (404, 400, network errors) by returning false
+  static Future<bool> hasUserPreferences() async {
+    try {
+      final cognitoUserId = await TokenStorage.getUserId();
+      if (cognitoUserId == null || cognitoUserId.trim().isEmpty) {
+        return false;
+      }
+
+      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
+      final res = await http.get(uri, headers: await _buildAuthHeaders()).timeout(
+        const Duration(seconds: 5),
+      );
+
+      // 200 with valid preferences
+      if (res.statusCode == 200) {
+        try {
+          final json = jsonDecode(res.body) as Map<String, dynamic>;
+          
+          // Check if cuisines and budget exist (minimum required fields)
+          final cuisines = json['cuisines'];
+          final budget = json['budget'];
+          
+          if (cuisines != null && budget != null) {
+            return true;
+          }
+        } catch (_) {
+          // Invalid JSON response
+          return false;
+        }
+      }
+      
+      // 404, 400+, or other errors -> user needs onboarding
+      return false;
+    } catch (_) {
+      // Network errors or timeouts -> default to onboarding (safe default)
+      return false;
     }
-    const fallback = '22222222-2222-2222-2222-222222222222';
-    await prefs.setString(_prefsTempUserIdKey, fallback);
-    return fallback;
   }
 
   /// Updates preferences on the backend (cuisines and budget)
@@ -50,12 +79,13 @@ class PreferencesService {
     required String budget,
   }) async {
     try {
-      final userId = await getUserId();
-      if (userId == null || userId.trim().isEmpty) {
+      // Use Cognito userId from TokenStorage
+      final cognitoUserId = await TokenStorage.getUserId();
+      if (cognitoUserId == null || cognitoUserId.trim().isEmpty) {
         return false;
       }
 
-      final uri = Uri.parse('$_baseUrl/preference/users/$userId');
+      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
       final headers = await _buildAuthHeaders();
       final payload = jsonEncode({
         'cuisines': cuisines,
@@ -98,12 +128,13 @@ class PreferencesService {
   /// Returns the fetched preferences map if successful
   static Future<Map<String, dynamic>?> fetchPreferencesFromBackend() async {
     try {
-      final userId = await getUserId();
-      if (userId == null || userId.trim().isEmpty) {
+      // Use Cognito userId from TokenStorage
+      final cognitoUserId = await TokenStorage.getUserId();
+      if (cognitoUserId == null || cognitoUserId.trim().isEmpty) {
         return null;
       }
 
-      final uri = Uri.parse('$_baseUrl/preference/users/$userId');
+      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
       final res = await http.get(uri, headers: await _buildAuthHeaders());
 
       if (res.statusCode == 200) {

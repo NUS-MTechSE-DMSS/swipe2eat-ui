@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
 import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
@@ -23,23 +22,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   static const String _baseUrl =
       'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
-  static const String _prefsTempUserIdKey = 'prefs.tempUserId';
 
   @override
   void initState() {
     super.initState();
     _fetchFavorites();
-  }
-
-  Future<String?> _getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString(_prefsTempUserIdKey);
-    if (existing != null && existing.trim().isNotEmpty) {
-      return existing.trim();
-    }
-    const fallback = '22222222-2222-2222-2222-222222222222';
-    await prefs.setString(_prefsTempUserIdKey, fallback);
-    return fallback;
   }
 
   /// Builds HTTP headers with AWS Cognito authentication.
@@ -61,7 +48,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       _error = null;
     });
     try {
-      final userId = await _getUserId();
+      final userId = await TokenStorage.getUserId();
       if (userId == null || userId.trim().isEmpty) {
         throw Exception('Missing user id');
       }

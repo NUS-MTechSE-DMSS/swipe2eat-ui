@@ -5,7 +5,6 @@ import 'package:swipe2eat_ui/core/state/favorites_store.dart';
 import 'package:swipe2eat_ui/models/food_item.dart';
 import 'dart:io';
 import 'dart:async';
-import 'dart:convert';
 import '../../test_helpers/network_image_stub.dart';
 
 void main() {

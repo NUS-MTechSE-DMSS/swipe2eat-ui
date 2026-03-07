@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../services/cognito_service.dart';
 import '../services/token_storage.dart';
+import '../../../core/services/preferences_service.dart';
+import '../../../core/services/user_service.dart';
+import '../../../core/navigation/main_shell.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -66,17 +69,42 @@ class _SignInScreenState extends State<SignInScreen> {
 
       if (mounted) {
         if (result['success'] == true) {
+          final idToken = result['idToken'];
+          
+          // Extract userId from JWT token
+          final userId = TokenStorage.extractUserIdFromToken(idToken);
+          
           // Store tokens
           await TokenStorage.saveTokens(
-            idToken: result['idToken'],
+            idToken: idToken,
             accessToken: result['accessToken'],
             refreshToken: result['refreshToken'],
+            userId: userId,
             email: _emailController.text.trim(),
           );
 
-          // Navigate to main app
+          // Create user in backend database (idempotent operation)
+          // Backend extracts user ID from JWT and creates user record if it doesn't exist
+          await UserService.createUserInBackend();
+
+          // Check if user has saved preferences on backend
+          final hasPreferences = await PreferencesService.hasUserPreferences();
+
+          // Navigate based on preferences status
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/');
+            if (hasPreferences) {
+              // Returning user with preferences - go directly to main app
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MainShell(initialTab: MainTab.discover),
+                ),
+                (route) => false,
+              );
+            } else {
+              // First time user or no preferences - go to onboarding
+              Navigator.pushReplacementNamed(context, '/');
+            }
           }
         } else {
           setState(() {

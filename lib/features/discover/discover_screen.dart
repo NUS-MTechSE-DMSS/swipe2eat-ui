@@ -10,7 +10,6 @@ import '../favorites/food_detail_screen.dart';
 import '../auth/services/token_storage.dart';
 
 class DiscoverScreen extends StatefulWidget {
-  // const DiscoverScreen({super.key});
   final bool showBottomNav;
 const DiscoverScreen({super.key, this.showBottomNav = true});
 
@@ -19,48 +18,6 @@ const DiscoverScreen({super.key, this.showBottomNav = true});
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
-  //  Mock food Data
-  //  final List<FoodItem> _items = [
-  //   FoodItem(
-  //     id: "1",
-  //     name: "Bibimbap",
-  //     restaurant: "Seoul Garden",
-  //     imageUrl:
-  //         "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  //     rating: 4.7,
-  //     price: 14.99,
-  //     distanceLabel: "0.7 mi away",
-  //     spiceLevel: 2,
-  //     budgetLevel: 2,
-  //     tags: ["Korean", "Rice Bowl"],
-  //   ),
-  //   FoodItem(
-  //     id: "2",
-  //     name: "Spicy Tuna Roll",
-  //     restaurant: "Sakura Sushi House",
-  //     imageUrl:
-  //         "https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  //     rating: 4.8,
-  //     price: 16.99,
-  //     distanceLabel: "0.3 mi away",
-  //     spiceLevel: 1,
-  //     budgetLevel: 2,
-  //     tags: ["Japanese", "Sushi"],
-  //   ),
-  //   FoodItem(
-  //     id: "3",
-  //     name: "Butter Chicken",
-  //     restaurant: "Taj Mahal Kitchen",
-  //     imageUrl:
-  //         "https://images.pexels.com/photos/7625056/pexels-photo-7625056.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  //     rating: 4.9,
-  //     price: 18.99,
-  //     distanceLabel: "0.5 mi away",
-  //     spiceLevel: 2,
-  //     budgetLevel: 2,
-  //     tags: ["Indian", "Curry"],
-  //   ),
-  // ];
   static const String _baseUrl =
       'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
 
@@ -76,13 +33,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   String _selectedSpice = 'Medium';
   String _selectedDietType = 'None';
   List<String> _selectedAllergens = const [];
+  String _locationLabel = 'Your city';
 
   static const String _prefsCuisinesKey = 'prefs.cuisines';
   static const String _prefsBudgetKey = 'prefs.budget';
   static const String _prefsSpiceKey = 'prefs.spice';
   static const String _prefsDietTypeKey = 'prefs.dietType';
   static const String _prefsAllergensKey = 'prefs.allergens';
-  static const String _prefsTempUserIdKey = 'prefs.tempUserId';
 
   // drag state
   Offset _dragOffset = Offset.zero;
@@ -113,8 +70,32 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Future<void> _initLoad() async {
+    await _loadUserCityFromToken();
     await _loadPreferences();
     await _fetchFoods();
+  }
+
+  Future<void> _loadUserCityFromToken() async {
+    try {
+      final idToken = await TokenStorage.getIdToken();
+      if (idToken == null || idToken.isEmpty) return;
+      final parts = idToken.split('.');
+      if (parts.length != 3) return;
+
+      final normalized = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payload = jsonDecode(decoded);
+      if (payload is! Map) return;
+
+      final city = (payload['custom:city'] ?? payload['city'])?.toString().trim();
+      if (!mounted || city == null || city.isEmpty) return;
+
+      setState(() {
+        _locationLabel = city;
+      });
+    } catch (_) {
+      // Keep fallback location label when city is unavailable.
+    }
   }
 
   Future<void> _loadPreferences() async {
@@ -157,23 +138,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     return headers;
   }
 
-  /// TODO: Replace with Cognito user id when auth is implemented.
-  Future<String?> _getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString(_prefsTempUserIdKey);
-    if (existing != null && existing.trim().isNotEmpty) {
-      return existing.trim();
-    }
-    const fallback = '22222222-2222-2222-2222-222222222222';
-    await prefs.setString(_prefsTempUserIdKey, fallback);
-    return fallback;
-  }
-
   Future<void> _sendSwipePreference({
     required FoodItem item,
     required bool liked,
   }) async {
-    final userId = await _getUserId();
+    final userId = await TokenStorage.getUserId();
     if (userId == null || userId.trim().isEmpty) {
       return;
     }
@@ -282,9 +251,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         children: [
           const SizedBox(height: 10),
           _TopBar(
-            onSettingsTap: () {
+            locationLabel: _locationLabel,
+            onPlaceholderTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Settings tapped")),
+                const SnackBar(content: Text('Settings coming soon')),
               );
             },
           ),
@@ -507,15 +477,17 @@ String? _imageUrlFromKey(String? imageKey) {
   if (key.startsWith('http://') || key.startsWith('https://')) {
     return key;
   }
-  return null;
+  // Append to S3 bucket URL
+  return 'https://swe5006-nus-g3-public-dev-ap-southeast-1-282793424364.s3.ap-southeast-1.amazonaws.com/images/$key';
 }
 
 /* ------------------- TOP BAR ------------------- */
 
 class _TopBar extends StatelessWidget {
-  final VoidCallback onSettingsTap;
+  final String locationLabel;
+  final VoidCallback onPlaceholderTap;
 
-  const _TopBar({required this.onSettingsTap});
+  const _TopBar({required this.locationLabel, required this.onPlaceholderTap});
 
   @override
   Widget build(BuildContext context) {
@@ -535,26 +507,26 @@ class _TopBar extends StatelessWidget {
             child: const Icon(Icons.restaurant, color: Colors.white),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   "Swipe2Eat",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.location_on_outlined,
                       size: 16,
                       color: Color(0xFF6B7280),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      "New York, NY",
-                      style: TextStyle(
+                      locationLabel,
+                      style: const TextStyle(
                         color: Color(0xFF6B7280),
                         fontWeight: FontWeight.w600,
                       ),
@@ -565,7 +537,7 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: onSettingsTap,
+            onTap: onPlaceholderTap,
             child: Container(
               width: 44,
               height: 44,
@@ -574,7 +546,7 @@ class _TopBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: const Icon(Icons.settings_outlined),
+              child: const Icon(Icons.construction_rounded),
             ),
           ),
         ],

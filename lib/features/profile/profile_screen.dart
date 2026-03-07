@@ -461,68 +461,6 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-//bottom naviagtion bar
-
-enum _NavItem { discover, favorites, profile }
-
-class _BottomNav extends StatelessWidget {
-  final _NavItem active;
-  final void Function(_NavItem) onTap;
-
-  const _BottomNav({required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _NavBtn(Icons.restaurant_menu, "Discover", _NavItem.discover),
-          _NavBtn(Icons.favorite_border, "Favorites", _NavItem.favorites),
-          _NavBtn(Icons.person_outline, "Profile", _NavItem.profile),
-        ],
-      ),
-    );
-  }
-
-  Widget _NavBtn(IconData icon, String label, _NavItem item) {
-    final activeBtn = active == item;
-
-    if (!activeBtn) {
-      return GestureDetector(
-        onTap: () => onTap(item),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: const Color(0xFF9CA3AF)),
-            const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700)),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF2E7),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: const Color(0xFFFF6B4A)),
-          const SizedBox(height: 4),
-          Text(label,
-              style: const TextStyle(color: Color(0xFFFF6B4A), fontWeight: FontWeight.w900)),
-        ],
-      ),
-    );
-  }
-}
-
 class _PreferencesDialog extends StatefulWidget {
   final List<String> initialCuisines;
   final String initialBudget;

@@ -8,20 +8,6 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('getUserId returns fallback when no user ID is stored', () async {
-      final userId = await PreferencesService.getUserId();
-      expect(userId, equals('22222222-2222-2222-2222-222222222222'));
-    });
-
-    test('getUserId returns stored user ID when available', () async {
-      final prefs = await SharedPreferences.getInstance();
-      const testId = '11111111-1111-1111-1111-111111111111';
-      await prefs.setString('prefs.tempUserId', testId);
-
-      final userId = await PreferencesService.getUserId();
-      expect(userId, equals(testId));
-    });
-
     test('saveLocalPreferences stores cuisines and budget', () async {
       await PreferencesService.saveLocalPreferences(
         cuisines: ['Thai', 'Japanese', 'Indian'],
@@ -99,14 +85,6 @@ void main() {
       final prefs = await PreferencesService.getLocalPreferences();
       expect(prefs['cuisines'], equals(['Japanese', 'Indian']));
       expect(prefs['budget'], equals('high'));
-    });
-
-    test('getUserId handles whitespace in stored ID', () async {
-      final prefInstance = await SharedPreferences.getInstance();
-      await prefInstance.setString('prefs.tempUserId', '  11111111-1111-1111-1111-111111111111  ');
-
-      final userId = await PreferencesService.getUserId();
-      expect(userId, equals('11111111-1111-1111-1111-111111111111'));
     });
 
     test('budget values map correctly', () async {

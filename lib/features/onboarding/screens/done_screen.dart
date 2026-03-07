@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/navigation/main_shell.dart';
+import '../../../core/services/preferences_service.dart';
 
 class DoneScreen extends StatelessWidget {
   final String selectedCuisinesLabel;
@@ -181,22 +182,38 @@ class DoneScreen extends StatelessWidget {
                                     Color(0xFF22C55E),
                                   ],
                                 ),
-                                onTap: () {
-                                  // TODO: Navigate to Discover screen (swipe screen)
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const MainShell(
-                                        initialTab: MainTab.discover,
+                                onTap: () async {
+                                  // Map display budget label to backend value
+                                  final budgetMap = {
+                                    'Budget Friendly': 'low',
+                                    'Mid Range': 'medium',
+                                    'Premium': 'high',
+                                  };
+                                  final backendBudget = budgetMap[selectedBudget] ?? 'low';
+                                  
+                                  // Save preferences to backend
+                                  await PreferencesService.updatePreferences(
+                                    cuisines: selectedCuisinesLabel.split(', '),
+                                    budget: backendBudget,
+                                  );
+                                  
+                                  // Navigate to main app
+                                  if (context.mounted) {
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const MainShell(
+                                          initialTab: MainTab.discover,
+                                        ),
                                       ),
-                                    ),
-                                    (route) => false,
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Go to Discover Screen 🚀"),
-                                    ),
-                                  );
+                                      (route) => false,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Go to Discover Screen 🚀"),
+                                      ),
+                                    );
+                                  }
                                 },
                               ),
                             ),

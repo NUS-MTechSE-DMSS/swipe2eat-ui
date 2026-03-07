@@ -43,7 +43,7 @@ void main() {
       );
 
       final textFields = find.byType(TextField);
-      final passwordField = tester.widget<TextField>(textFields.at(1));
+      final passwordField = tester.widget<TextField>(textFields.at(2));
       expect(passwordField.obscureText, true);
     });
 
@@ -56,7 +56,7 @@ void main() {
         ),
       );
 
-      final emailField = find.byType(TextField).first;
+      final emailField = find.byType(TextField).at(1);
       await tester.enterText(emailField, 'newuser@example.com');
 
       expect(find.text('newuser@example.com'), findsOneWidget);
@@ -69,7 +69,7 @@ void main() {
         ),
       );
 
-      final passwordField = find.byType(TextField).at(1);
+      final passwordField = find.byType(TextField).at(2);
       await tester.enterText(passwordField, 'newpass123');
 
       expect(find.text('newpass123'), findsOneWidget);
@@ -83,7 +83,7 @@ void main() {
       );
 
       final textFields = find.byType(TextField);
-      final emailField = tester.widget<TextField>(textFields.at(0));
+      final emailField = tester.widget<TextField>(textFields.at(1));
       expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 

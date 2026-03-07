@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../services/cognito_service.dart';
-import 'confirmation_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -13,17 +12,34 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
+  String? _selectedCity;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _isLoading = false;
   String? _generalError;
 
+  // List of cities
+  final List<String> _cities = [
+    'Singapore',
+    'Kuala Lumpur',
+    'Bangkok',
+    'Jakarta',
+    'Manila',
+    'Ho Chi Minh City',
+    'Hanoi',
+    'Phnom Penh',
+    'Yangon',
+    'Vientiane',
+  ];
+
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -37,6 +53,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email';
+    }
+    return null;
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Name is required';
+    }
+    if (value.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  }
+
+  String? _validateCity(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please select a city';
     }
     return null;
   }
@@ -75,31 +108,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final result = await CognitoService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        name: _nameController.text.trim(),
+        city: _selectedCity,
       );
 
       if (mounted) {
         if (result['success'] == true) {
-          // Check if email verification is required
-          if (result['requiresConfirmation'] == true) {
-            // Navigate to confirmation screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ConfirmationScreen(
-                  email: _emailController.text.trim(),
-                ),
-              ),
-            );
-          } else {
-            // Account created without confirmation
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Account created! Please sign in.'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pushReplacementNamed(context, '/sign-in');
-          }
+          // Account created successfully (email verification disabled in Cognito)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please sign in.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/sign-in');
         } else {
           // Show error from Cognito
           setState(() {
@@ -188,6 +210,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 24),
                 ],
 
+                // Name Field
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'John Doe',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF6B7280)),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                  validator: _validateName,
+                  enabled: !_isLoading,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 20),
+
                 // Email Field
                 TextFormField(
                   controller: _emailController,
@@ -222,6 +281,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   validator: _validateEmail,
                   enabled: !_isLoading,
                   textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 20),
+
+                // City Field
+                DropdownButtonFormField<String>(
+                  value: _selectedCity,
+                  decoration: InputDecoration(
+                    labelText: 'City',
+                    hintText: 'Select your city',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF6B7280)),
+                  ),
+                  items: _cities.map((String city) {
+                    return DropdownMenuItem<String>(
+                      value: city,
+                      child: Text(city),
+                    );
+                  }).toList(),
+                  onChanged: _isLoading ? null : (String? newValue) {
+                    setState(() {
+                      _selectedCity = newValue;
+                    });
+                  },
+                  validator: _validateCity,
                 ),
                 const SizedBox(height: 20),
 

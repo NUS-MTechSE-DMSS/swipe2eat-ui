@@ -1,6 +1,6 @@
-class _CuisineOption {
+class CuisineOption {
   final String name;
   final String emoji;
 
-  const _CuisineOption(this.name, this.emoji);
+  const CuisineOption(this.name, this.emoji);
 }

@@ -1,4 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../../../core/services/user_service.dart';
 
 /// Service for storing and retrieving AWS Cognito authentication tokens
 class TokenStorage {
@@ -74,15 +76,44 @@ class TokenStorage {
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_emailKey);
+    
+    // Clear user backend creation flag
+    await UserService.clearUserCreatedFlag();
   }
 
   /// Get authorization header value for API requests
-  /// Returns "Bearer <idToken>" or null if not logged in
+  /// Returns Bearer token or null if not logged in
   static Future<String?> getAuthorizationHeader() async {
     final idToken = await getIdToken();
     if (idToken != null && idToken.isNotEmpty) {
       return 'Bearer $idToken';
     }
     return null;
+  }
+
+  /// Extract userId (sub claim) from JWT IdToken
+  /// Returns null if token is invalid or userId cannot be extracted
+  static String? extractUserIdFromToken(String idToken) {
+    try {
+      // JWT format: header.payload.signature
+      final parts = idToken.split('.');
+      if (parts.length != 3) {
+        return null;
+      }
+
+      // Decode the payload (second part)
+      final payload = parts[1];
+      
+      // Add padding if needed for base64 decoding
+      var normalized = base64Url.normalize(payload);
+      var decoded = utf8.decode(base64Url.decode(normalized));
+      
+      final payloadMap = jsonDecode(decoded) as Map<String, dynamic>;
+      
+      // Extract 'sub' claim which is the userId in Cognito
+      return payloadMap['sub'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

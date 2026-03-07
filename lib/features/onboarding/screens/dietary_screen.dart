@@ -23,7 +23,9 @@ class DietaryScreen extends StatefulWidget {
 
 class _DietaryScreenState extends State<DietaryScreen> {
   //currently using dietary-prefs railway deploy link replace with actual
-  static const String _baseUrl = 'https://dietary-service-production-48d4.up.railway.app/dietary';
+  //static const String _baseUrl = 'https://dietary-service-production-48d4.up.railway.app/dietary';
+  //provided by dietary service owner 
+  static const String _baseUrl = 'http://54.255.48.54:8080/dietary';
 
   static const String _prefsDietTypeKey = 'prefs.dietType';
   static const String _prefsAllergensKey = 'prefs.allergens';
