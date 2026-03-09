@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../services/cognito_service.dart';
+import 'confirmation_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -114,14 +115,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (mounted) {
         if (result['success'] == true) {
-          // Account created successfully (email verification disabled in Cognito)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created! Please sign in.'),
-              backgroundColor: Colors.green,
+          // Account created successfully - navigate to confirmation screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ConfirmationScreen(email: _emailController.text.trim()),
             ),
           );
-          Navigator.pushReplacementNamed(context, '/sign-in');
         } else {
           // Show error from Cognito
           setState(() {

@@ -36,9 +36,10 @@ class CognitoService {
               'Name': 'name',
               'Value': name,
             },
+          // NOTE: custom:City attribute configured in AWS Cognito User Pool (case-sensitive)
           if (city != null && city.isNotEmpty)
             {
-              'Name': 'custom:city',
+              'Name': 'custom:City',
               'Value': city,
             },
         ],
@@ -79,7 +80,12 @@ class CognitoService {
           } else if (errorType.contains('InvalidPasswordException')) {
             userFriendlyMessage = 'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and special characters';
           } else if (errorType.contains('InvalidParameterException')) {
-            userFriendlyMessage = 'Invalid email or password format';
+            // Check if it's a custom attribute schema error
+            if (errorMessage.contains('custom:') || errorMessage.contains('schema')) {
+              userFriendlyMessage = 'Custom attribute error. Please verify custom:City attribute exists in Cognito User Pool settings';
+            } else {
+              userFriendlyMessage = 'Invalid email or password format';
+            }
           } else if (errorType.contains('TooManyRequestsException')) {
             userFriendlyMessage = 'Too many requests. Please try again later';
           }

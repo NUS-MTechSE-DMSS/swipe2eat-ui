@@ -87,7 +87,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       final payload = jsonDecode(decoded);
       if (payload is! Map) return;
 
-      final city = (payload['custom:city'] ?? payload['city'])?.toString().trim();
+      final city = (payload['custom:City'] ?? payload['city'])?.toString().trim();
       if (!mounted || city == null || city.isEmpty) return;
 
       setState(() {

@@ -4,8 +4,11 @@ import '../../features/auth/services/token_storage.dart';
 
 /// Service for managing user operations with the backend
 class UserService {
-  static const String _baseUrl =
-      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
+  // static const String _baseUrl =
+  //     'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
+
+     static const String _baseUrl =
+      'http://localhost:8080'; // Use local backend for development/testing 
   
   static const String _userCreatedFlagKey = 'user.backendCreated';
 
@@ -35,16 +38,18 @@ class UserService {
         return true;
       }
 
-      // Get ID token for backend authentication
+      // Get both Cognito tokens for backend authentication
+      final accessToken = await TokenStorage.getAccessToken();
       final idToken = await TokenStorage.getIdToken();
-      if (idToken == null || idToken.isEmpty) {
+      if (accessToken == null || accessToken.isEmpty || idToken == null || idToken.isEmpty) {
         return false;
       }
 
-      // Build headers with Authorization header for backend authentication
+      // Build headers with both Authorization (access token) and ID token
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $idToken',
+        'Authorization': 'Bearer $accessToken',
+        'X-Id-Token': idToken,
       };
 
       // Call backend to create user
