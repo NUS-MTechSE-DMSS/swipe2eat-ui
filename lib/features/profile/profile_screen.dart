@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/state/favorites_store.dart';
@@ -13,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _displayName = "Food Explorer";
   String _cuisinesDisplay = "Loading...";
   String _spiceDisplay = "Loading...";
   String _budgetDisplay = "Loading...";
@@ -25,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserNameFromToken();
     _loadPreferences();
     // Listen for preference updates
     PreferencesService.preferencesUpdated.addListener(_onPreferencesUpdated);
@@ -38,6 +41,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _onPreferencesUpdated() {
     _loadPreferences();
+  }
+
+  Future<void> _loadUserNameFromToken() async {
+    try {
+      final idToken = await TokenStorage.getIdToken();
+      if (idToken == null || idToken.isEmpty) return;
+
+      final parts = idToken.split('.');
+      if (parts.length != 3) return;
+
+      final normalized = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payload = jsonDecode(decoded);
+      if (payload is! Map) return;
+
+      final name = (payload['name'] ?? payload['given_name'])
+          ?.toString()
+          .trim();
+      if (!mounted || name == null || name.isEmpty) return;
+
+      setState(() {
+        _displayName = name;
+      });
+    } catch (_) {
+      // Keep fallback display name when token name is unavailable.
+    }
   }
 
   Future<void> _handleLogout() async {
@@ -156,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ProfileCard(),
+                  _ProfileCard(displayName: _displayName),
                   const SizedBox(height: 18),
 
                   const Text(
@@ -312,6 +341,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 //for profile card -- supporting UI parts
 
 class _ProfileCard extends StatelessWidget {
+  final String displayName;
+
+  const _ProfileCard({required this.displayName});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -345,9 +378,12 @@ class _ProfileCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Food Explorer",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 ValueListenableBuilder(
