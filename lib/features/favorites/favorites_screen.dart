@@ -9,7 +9,7 @@ import '../auth/services/token_storage.dart';
 class FavoritesScreen extends StatefulWidget {
   // const FavoritesScreen({super.key});
   final bool showBottomNav;
-const FavoritesScreen({super.key, this.showBottomNav = true});
+  const FavoritesScreen({super.key, this.showBottomNav = true});
 
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
@@ -32,9 +32,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   /// Builds HTTP headers with AWS Cognito authentication.
   /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
   Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
     final authHeader = await TokenStorage.getAuthorizationHeader();
     if (authHeader != null) {
       headers['Authorization'] = authHeader;
@@ -96,7 +94,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
                     ),
                   ),
-                  child: const Icon(Icons.favorite_rounded, color: Colors.white),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -108,7 +109,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         children: [
                           const Text(
                             "Favorites",
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -138,7 +142,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       ),
                       child: const Icon(Icons.close_rounded),
                     ),
-                  )
+                  ),
               ],
             ),
 
@@ -153,7 +157,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
                 boxShadow: const [
-                  BoxShadow(blurRadius: 14, offset: Offset(0, 8), color: Color(0x14000000)),
+                  BoxShadow(
+                    blurRadius: 14,
+                    offset: Offset(0, 8),
+                    color: Color(0x14000000),
+                  ),
                 ],
               ),
               child: Row(
@@ -162,7 +170,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                      onChanged: (v) =>
+                          setState(() => _query = v.trim().toLowerCase()),
                       decoration: const InputDecoration(
                         hintText: "Search your favorites...",
                         border: InputBorder.none,
@@ -206,7 +215,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
+                                ),
                               ),
                               child: const Text(
                                 "Retry",
@@ -230,19 +241,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       child: Text(
                         "No favorites yet.\nGo like some food 😄",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF6B7280),
+                        ),
                       ),
                     );
                   }
 
                   return GridView.builder(
                     itemCount: filtered.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 0.78,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.78,
+                        ),
                     itemBuilder: (context, i) {
                       final item = filtered[i];
                       return _FavoriteTile(
@@ -250,7 +265,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => FoodDetailScreen(item: item)),
+                            MaterialPageRoute(
+                              builder: (_) => FoodDetailScreen(item: item),
+                            ),
                           );
                         },
                       );
@@ -303,14 +320,15 @@ FoodItem? _foodFromJson(dynamic raw) {
   final restaurant = readString('restaurantName') ?? 'Unknown';
   final rating = readDouble('rating', fallback: 4.5);
   final price = readDouble('price', fallback: 14.99);
-  final description = readString('description') ??
+  final description =
+      readString('description') ??
       'A delicious pick based on your preferences.';
 
   final imageKey = readString('imageKey');
-  final imageUrl = _imageUrlFromKey(imageKey) ??
+  final imageUrl =
+      _imageUrlFromKey(imageKey) ??
       'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200';
 
-  const String distanceLabel = '0.7 mi away';
   const int spiceLevel = 2;
 
   int budgetLevel;
@@ -338,7 +356,7 @@ FoodItem? _foodFromJson(dynamic raw) {
     rating: rating,
     price: price,
     description: description,
-    distanceLabel: distanceLabel,
+    distanceLabel: '',
     spiceLevel: spiceLevel,
     budgetLevel: budgetLevel,
     tags: tags,
@@ -369,7 +387,11 @@ class _FavoriteTile extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [
-            BoxShadow(blurRadius: 18, offset: Offset(0, 10), color: Color(0x14000000)),
+            BoxShadow(
+              blurRadius: 18,
+              offset: Offset(0, 10),
+              color: Color(0x14000000),
+            ),
           ],
         ),
         child: ClipRRect(
@@ -391,11 +413,17 @@ class _FavoriteTile extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 16,
+                              color: Color(0xFFF59E0B),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               item.rating.toStringAsFixed(1),
-                              style: const TextStyle(fontWeight: FontWeight.w900),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ],
                         ),
@@ -425,26 +453,41 @@ class _FavoriteTile extends StatelessWidget {
                       item.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.restaurant,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF9CA3AF)),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.distanceLabel,
-                          style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
+                    if (item.distanceLabel.trim().isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.distanceLabel,
+                            style: const TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

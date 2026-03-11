@@ -109,9 +109,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     final cuisines = prefs.getStringList(_prefsCuisinesKey) ?? [];
+    final budgetRaw = prefs.getString(_prefsBudgetKey);
+    final legacyBudgetLabel = prefs.getString(_prefsBudgetLabelKey);
     final budget =
-        prefs.getString(_prefsBudgetLabelKey) ??
-        prefs.getString(_prefsBudgetKey) ??
+        budgetRaw ??
+        _legacyBudgetLabelToBudgetValue(legacyBudgetLabel) ??
         "Not set";
     final spice = prefs.getString(_prefsSpiceKey) ?? "Not set";
 
@@ -139,6 +141,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return "\$\$\$";
       default:
         return budget;
+    }
+  }
+
+  String? _legacyBudgetLabelToBudgetValue(String? label) {
+    if (label == null || label.trim().isEmpty) return null;
+    switch (label.trim().toLowerCase()) {
+      case 'budget friendly':
+        return 'low';
+      case 'mid range':
+        return 'medium';
+      case 'premium':
+        return 'high';
+      default:
+        return null;
     }
   }
 
@@ -289,8 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final prefs = await PreferencesService.getLocalPreferences();
     final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
     final currentBudget = prefs['budget'] ?? 'low';
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final currentSpice = sharedPrefs.getString(_prefsSpiceKey);
+    final currentSpice = prefs['spiceLevel']?.toString() ?? 'Medium';
 
     if (!context.mounted) return;
 
@@ -299,12 +314,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => _PreferencesDialog(
         initialCuisines: currentCuisines,
         initialBudget: currentBudget,
-        onSave: (cuisines, budget) async {
+        initialSpice: currentSpice,
+        onSave: (cuisines, budget, spice) async {
           // First, try to sync with backend
           final synced = await PreferencesService.updatePreferences(
             cuisines: cuisines,
             budget: budget,
-            spiceLevel: currentSpice,
+            spiceLevel: spice,
           );
 
           // If sync was successful, fetch latest preferences from backend
@@ -315,7 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             await PreferencesService.saveLocalPreferences(
               cuisines: cuisines,
               budget: budget,
-              spiceLevel: currentSpice,
+              spiceLevel: spice,
             );
           }
 
@@ -510,11 +526,13 @@ class _ActionTile extends StatelessWidget {
 class _PreferencesDialog extends StatefulWidget {
   final List<String> initialCuisines;
   final String initialBudget;
-  final Function(List<String> cuisines, String budget) onSave;
+  final String initialSpice;
+  final Function(List<String> cuisines, String budget, String spice) onSave;
 
   const _PreferencesDialog({
     required this.initialCuisines,
     required this.initialBudget,
+    required this.initialSpice,
     required this.onSave,
   });
 
@@ -525,6 +543,7 @@ class _PreferencesDialog extends StatefulWidget {
 class _PreferencesDialogState extends State<_PreferencesDialog> {
   late Set<String> _selectedCuisines;
   late String _selectedBudget;
+  late String _selectedSpice;
   bool _saving = false;
 
   static const List<String> cuisineOptions = [
@@ -547,12 +566,33 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
     'medium': 'Mid Range',
     'high': 'Premium',
   };
+  static const List<String> spiceOptions = ['Mild', 'Medium', 'Hot'];
 
   @override
   void initState() {
     super.initState();
     _selectedCuisines = Set.from(widget.initialCuisines);
     _selectedBudget = widget.initialBudget;
+    _selectedSpice = _normalizeSpice(widget.initialSpice);
+  }
+
+  String _normalizeSpice(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'mild':
+      case '1':
+      case 'low':
+        return 'Mild';
+      case 'hot':
+      case '3':
+      case 'high':
+      case 'spicy':
+        return 'Hot';
+      case 'medium':
+      case '2':
+      case 'med':
+      default:
+        return 'Medium';
+    }
   }
 
   void _toggleCuisine(String cuisine) {
@@ -628,6 +668,32 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 24),
+              const Text(
+                'Spice Level',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: spiceOptions.map((spice) {
+                  final selected = _selectedSpice == spice;
+                  return FilterChip(
+                    label: Text(spice),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _selectedSpice = spice),
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFFFFF2E7),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? const Color(0xFFFF6B4A)
+                          : const Color(0xFF111827),
+                    ),
+                  );
+                }).toList(),
+              ),
             ],
           ),
         ),
@@ -645,6 +711,7 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
                   await widget.onSave(
                     _selectedCuisines.toList()..sort(),
                     _selectedBudget,
+                    _selectedSpice,
                   );
                 },
           child: _saving

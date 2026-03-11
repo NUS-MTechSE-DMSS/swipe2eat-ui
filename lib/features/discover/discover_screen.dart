@@ -11,7 +11,7 @@ import 'services/food_service.dart';
 
 class DiscoverScreen extends StatefulWidget {
   final bool showBottomNav;
-const DiscoverScreen({super.key, this.showBottomNav = true});
+  const DiscoverScreen({super.key, this.showBottomNav = true});
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -51,7 +51,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void initState() {
     super.initState();
     _initLoad();
-    
+
     // Listen for preferences updates and refresh food list
     PreferencesService.preferencesUpdated.addListener(_onPreferencesUpdated);
   }
@@ -86,7 +86,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       final payload = jsonDecode(decoded);
       if (payload is! Map) return;
 
-      final city = (payload['custom:City'] ?? payload['city'])?.toString().trim();
+      final city = (payload['custom:City'] ?? payload['city'])
+          ?.toString()
+          .trim();
       if (!mounted || city == null || city.isEmpty) return;
 
       setState(() {
@@ -235,133 +237,132 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: _loading
                   ? const CircularProgressIndicator()
                   : _error != null
-                      ? Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              "Couldn't load foods",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF6B7280),
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Couldn't load foods",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: _fetchFoods,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            child: const Text(
+                              "Retry",
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : item == null
+                  ? _items.isEmpty
+                        ? _EmptyState(
+                            title: "No dishes available",
+                            subtitle: _lastDroppedInvalidIds > 0
+                                ? "Skipped $_lastDroppedInvalidIds dishes because of invalid data. Please try again shortly."
+                                : "No dishes match your current preferences right now.",
+                            onRetry: _fetchFoods,
+                          )
+                        : const Text(
+                            "No more dishes 🎉",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = min(
+                          constraints.maxWidth * 0.86,
+                          360.0,
+                        );
+                        final cardHeight = min(
+                          constraints.maxHeight * 0.82,
+                          560.0,
+                        );
+
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (_topIndex + 1 < _items.length)
+                              Transform.scale(
+                                scale: 0.96,
+                                child: Opacity(
+                                  opacity: 0.45,
+                                  child: _FoodCard(
+                                    item: _items[_topIndex + 1],
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                    showOverlay: false,
+                                  ),
+                                ),
+                              ),
+
                             GestureDetector(
-                              onTap: _fetchFoods,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                                ),
-                                child: const Text(
-                                  "Retry",
-                                  style: TextStyle(fontWeight: FontWeight.w800),
+                              onTap: () {
+                                if (_isSubmittingSwipe) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        FoodDetailScreen(item: item),
+                                  ),
+                                );
+                              },
+                              onPanUpdate: (d) {
+                                if (_isSubmittingSwipe) return;
+                                setState(() {
+                                  _dragOffset += d.delta;
+                                  _dragRotation = (_dragOffset.dx / 800) * 0.6;
+                                });
+                              },
+                              onPanEnd: (_) {
+                                if (_isSubmittingSwipe) return;
+                                final dx = _dragOffset.dx;
+                                if (dx > 120) {
+                                  _swipeRight();
+                                } else if (dx < -120) {
+                                  _swipeLeft();
+                                } else {
+                                  _resetDrag();
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOut,
+                                transform: Matrix4.identity()
+                                  ..translate(_dragOffset.dx, _dragOffset.dy)
+                                  ..rotateZ(_dragRotation),
+                                child: _FoodCard(
+                                  item: item,
+                                  width: cardWidth,
+                                  height: cardHeight,
+                                  showOverlay: true,
+                                  overlayDx: _dragOffset.dx,
                                 ),
                               ),
                             ),
                           ],
-                        )
-                      : item == null
-                          ? _items.isEmpty
-                              ? _EmptyState(
-                                  title: "No dishes available",
-                                  subtitle: _lastDroppedInvalidIds > 0
-                                      ? "Skipped $_lastDroppedInvalidIds dishes because of invalid data. Please try again shortly."
-                                      : "No dishes match your current preferences right now.",
-                                  onRetry: _fetchFoods,
-                                )
-                              : const Text(
-                                  "No more dishes 🎉",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                )
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                final cardWidth = min(
-                                  constraints.maxWidth * 0.86,
-                                  360.0,
-                                );
-                                final cardHeight = min(
-                                  constraints.maxHeight * 0.82,
-                                  560.0,
-                                );
-
-                                return Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    if (_topIndex + 1 < _items.length)
-                                      Transform.scale(
-                                        scale: 0.96,
-                                        child: Opacity(
-                                          opacity: 0.45,
-                                          child: _FoodCard(
-                                            item: _items[_topIndex + 1],
-                                            width: cardWidth,
-                                            height: cardHeight,
-                                            showOverlay: false,
-                                          ),
-                                        ),
-                                      ),
-
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (_isSubmittingSwipe) return;
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                FoodDetailScreen(item: item),
-                                          ),
-                                        );
-                                      },
-                                      onPanUpdate: (d) {
-                                        if (_isSubmittingSwipe) return;
-                                        setState(() {
-                                          _dragOffset += d.delta;
-                                          _dragRotation =
-                                              (_dragOffset.dx / 800) * 0.6;
-                                        });
-                                      },
-                                      onPanEnd: (_) {
-                                        if (_isSubmittingSwipe) return;
-                                        final dx = _dragOffset.dx;
-                                        if (dx > 120) {
-                                          _swipeRight();
-                                        } else if (dx < -120) {
-                                          _swipeLeft();
-                                        } else {
-                                          _resetDrag();
-                                        }
-                                      },
-                                      child: AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 180),
-                                        curve: Curves.easeOut,
-                                        transform: Matrix4.identity()
-                                          ..translate(
-                                              _dragOffset.dx, _dragOffset.dy)
-                                          ..rotateZ(_dragRotation),
-                                        child: _FoodCard(
-                                          item: item,
-                                          width: cardWidth,
-                                          height: cardHeight,
-                                          showOverlay: true,
-                                          overlayDx: _dragOffset.dx,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                        );
+                      },
+                    ),
             ),
           ),
 
@@ -566,52 +567,18 @@ class _FoodCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item.restaurant,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                      shadows: [
-                                        Shadow(
-                                          blurRadius: 14,
-                                          color: Colors.black54,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 16,
-                                  color: Colors.white70,
-                                ),
-                                const SizedBox(width: 3),
-                                Flexible(
-                                  child: Text(
-                                    item.distanceLabel,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white70,
-                                      shadows: [
-                                        Shadow(
-                                          blurRadius: 14,
-                                          color: Colors.black54,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              item.restaurant,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(blurRadius: 14, color: Colors.black54),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -854,24 +821,24 @@ class _CircleAction extends StatelessWidget {
     return Opacity(
       opacity: onTap == null ? 0.45 : 1,
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 18,
-              offset: Offset(0, 10),
-              color: Color(0x14000000),
-            ),
-          ],
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 18,
+                offset: Offset(0, 10),
+                color: Color(0x14000000),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: iconColor, size: size * 0.42),
         ),
-        child: Icon(icon, color: iconColor, size: size * 0.42),
-      ),
       ),
     );
   }
@@ -936,10 +903,7 @@ class _EmptyState extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Padding(
@@ -957,10 +921,7 @@ class _EmptyState extends StatelessWidget {
         GestureDetector(
           onTap: onRetry,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),

@@ -22,9 +22,7 @@ class FoodService {
   /// Builds HTTP headers with AWS Cognito authentication.
   /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
   static Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
     final authHeader = await TokenStorage.getAuthorizationHeader();
     if (authHeader != null) {
       headers['Authorization'] = authHeader;
@@ -48,14 +46,14 @@ class FoodService {
   }
 
   /// Fetches foods from the backend based on user preferences.
-  /// 
+  ///
   /// Parameters:
   /// - [cuisines]: List of preferred cuisines
   /// - [budget]: Budget level ('low', 'medium', 'high')
   /// - [spiceLevel]: Spice preference ('mild', 'medium', 'hot')
   /// - [dietType]: Dietary type (optional, use 'None' to exclude)
   /// - [allergens]: List of allergens to avoid
-  /// 
+  ///
   /// Returns a list of [FoodItem] objects or throws an exception on failure.
   static Future<List<FoodItem>> fetchFoods({
     required List<String> cuisines,
@@ -66,9 +64,7 @@ class FoodService {
   }) async {
     final baseUri = Uri.parse('${ApiConfig.baseUrl}/food');
 
-    final params = <String>[
-      'budget=${Uri.encodeQueryComponent(budget)}',
-    ];
+    final params = <String>['budget=${Uri.encodeQueryComponent(budget)}'];
 
     if (cuisines.isNotEmpty) {
       params.addAll(
@@ -173,14 +169,15 @@ class FoodService {
     final restaurant = readString('restaurantName') ?? "Unknown";
     final rating = readDouble('rating', fallback: 4.5);
     final price = readDouble('price', fallback: 14.99);
-    final description = readString('description') ??
+    final description =
+        readString('description') ??
         "A delicious pick based on your preferences.";
 
     final imageKey = readString('imageKey');
-    final imageUrl = _imageUrlFromKey(imageKey) ??
+    final imageUrl =
+        _imageUrlFromKey(imageKey) ??
         "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
-    const String distanceLabel = "0.7 mi away";
     const int spiceLevel = 2;
 
     int budgetLevel;
@@ -206,7 +203,7 @@ class FoodService {
       rating: rating,
       price: price,
       description: description,
-      distanceLabel: distanceLabel,
+      distanceLabel: '',
       spiceLevel: spiceLevel,
       budgetLevel: budgetLevel,
       tags: tags,
