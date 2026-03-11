@@ -9,10 +9,10 @@ class UserService {
 
   /// Creates a user in the backend after successful Cognito signup
   /// This should be called after the first successful sign-in
-  /// 
+  ///
   /// Backend extracts the user ID (sub) from the JWT token and creates
   /// the user record in the database.
-  /// 
+  ///
   /// Returns true if the user was created successfully or already exists,
   /// false if there was an error.
   static Future<bool> createUserInBackend() async {
@@ -27,7 +27,7 @@ class UserService {
       final prefs = await SharedPreferences.getInstance();
       final userCreatedKey = '$_userCreatedFlagKey.$userId';
       final alreadyCreated = prefs.getBool(userCreatedKey) ?? false;
-      
+
       if (alreadyCreated) {
         // User already created in backend, skip
         return true;
@@ -36,7 +36,10 @@ class UserService {
       // Get both Cognito tokens for backend authentication
       final accessToken = await TokenStorage.getAccessToken();
       final idToken = await TokenStorage.getIdToken();
-      if (accessToken == null || accessToken.isEmpty || idToken == null || idToken.isEmpty) {
+      if (accessToken == null ||
+          accessToken.isEmpty ||
+          idToken == null ||
+          idToken.isEmpty) {
         return false;
       }
 
@@ -49,12 +52,9 @@ class UserService {
 
       // Call backend to create user
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/create-user');
-      final response = await http.post(
-        uri,
-        headers: headers,
-      ).timeout(
-        const Duration(seconds: 10),
-      );
+      final response = await http
+          .post(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
 
       // Backend returns 201 CREATED on success
       if (response.statusCode == 201) {
@@ -82,6 +82,43 @@ class UserService {
     if (userId != null) {
       final userCreatedKey = '$_userCreatedFlagKey.$userId';
       await prefs.remove(userCreatedKey);
+    }
+  }
+
+  /// Deletes the currently signed-in user from backend.
+  /// Uses the Cognito userId (sub) as path parameter.
+  ///
+  /// Returns true if the backend deletion succeeds.
+  static Future<bool> deleteCurrentUserInBackend() async {
+    try {
+      final userId = await TokenStorage.getUserId();
+      if (userId == null || userId.trim().isEmpty) {
+        return false;
+      }
+
+      final accessToken = await TokenStorage.getAccessToken();
+      final idToken = await TokenStorage.getIdToken();
+      if (accessToken == null ||
+          accessToken.isEmpty ||
+          idToken == null ||
+          idToken.isEmpty) {
+        return false;
+      }
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+        'X-Id-Token': idToken,
+      };
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
+      final response = await http
+          .delete(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
     }
   }
 }

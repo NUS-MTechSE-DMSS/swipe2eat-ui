@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/user_service.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
 import '../auth/services/token_storage.dart';
@@ -23,6 +24,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const String _prefsBudgetKey = 'prefs.budget';
   static const String _prefsBudgetLabelKey = 'prefs.budgetLabel';
   static const String _prefsSpiceKey = 'prefs.spice';
+  static const String _prefsDietTypeKey = 'prefs.dietType';
+  static const String _prefsAllergensKey = 'prefs.allergens';
 
   @override
   void initState() {
@@ -251,18 +254,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _ActionTile(
-                    icon: Icons.restart_alt_rounded,
-                    title: "Reset everything",
-                    danger: true,
-                    onTap: () {
-                      _confirmReset(context);
-                    },
-                  ),
-                  _ActionTile(
                     icon: Icons.logout_rounded,
                     title: "Logout",
                     danger: true,
                     onTap: _handleLogout,
+                  ),
+                  _ActionTile(
+                    icon: Icons.delete_forever_rounded,
+                    title: "Delete Account",
+                    danger: true,
+                    onTap: _handleDeleteAccount,
                   ),
                 ],
               ),
@@ -273,32 +274,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _confirmReset(BuildContext context) {
-    showDialog(
+  Future<void> _handleDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Reset everything?"),
+      builder: (context) => AlertDialog(
+        title: const Text('Delete account?'),
         content: const Text(
-          "This will clear your preferences and favorites.\nYou cannot undo this.",
+          'This will permanently delete your account and preferences. '
+          'This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              FavoritesStore.instance.clear();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text("All data cleared")));
-            },
-            child: const Text("Reset", style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    final deleted = await UserService.deleteCurrentUserInBackend();
+    if (!mounted) return;
+
+    if (!deleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to delete account. Please try again.'),
+        ),
+      );
+      return;
+    }
+
+    await _clearLocalUserData();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Account deleted')));
+    Navigator.of(context).pushNamedAndRemoveUntil('/sign-in', (route) => false);
+  }
+
+  Future<void> _clearLocalUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsCuisinesKey);
+    await prefs.remove(_prefsBudgetKey);
+    await prefs.remove(_prefsBudgetLabelKey);
+    await prefs.remove(_prefsSpiceKey);
+    await prefs.remove(_prefsDietTypeKey);
+    await prefs.remove(_prefsAllergensKey);
+    FavoritesStore.instance.clear();
+    await TokenStorage.clearTokens();
   }
 
   void _showEditPreferencesDialog(BuildContext context) async {
