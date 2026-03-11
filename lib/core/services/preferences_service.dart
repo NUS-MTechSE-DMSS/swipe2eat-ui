@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/services/token_storage.dart';
+import '../config/api_config.dart';
 
 class PreferencesService {
-  static const String _baseUrl =
-      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
   static const String _prefsCuisinesKey = 'prefs.cuisines';
   static const String _prefsBudgetKey = 'prefs.budget';
+  static const String _prefsSpiceKey = 'prefs.spice';
 
   /// ValueNotifier that emits when preferences are updated
   /// Subscribers (like DiscoverScreen) can listen to this to refresh their data
@@ -17,9 +17,7 @@ class PreferencesService {
   /// Builds HTTP headers with AWS Cognito authentication.
   /// Includes the ID token from Cognito for backend API authorization
   static Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
 
     // Add Cognito ID token if available
     final authHeader = await TokenStorage.getAuthorizationHeader();
@@ -28,6 +26,102 @@ class PreferencesService {
     }
 
     return headers;
+  }
+
+  static String _normalizeSpiceLabel(String value) {
+    final normalized = value.trim().toLowerCase();
+    switch (normalized) {
+      case '1':
+      case 'mild':
+      case 'low':
+        return 'Mild';
+      case '2':
+      case 'medium':
+      case 'med':
+        return 'Medium';
+      case '3':
+      case 'hot':
+      case 'high':
+      case 'spicy':
+        return 'Hot';
+      default:
+        return 'Medium';
+    }
+  }
+
+  static bool _hasNonEmptyText(dynamic value) {
+    return value is String && value.trim().isNotEmpty;
+  }
+
+  static bool _hasNonEmptyCuisines(dynamic cuisinesData) {
+    if (cuisinesData is List) {
+      return cuisinesData.any((item) => _hasNonEmptyText(item));
+    }
+    if (cuisinesData is String) {
+      return cuisinesData.trim().isNotEmpty;
+    }
+    return false;
+  }
+
+  static int _spiceLevelToBackendNumber(String value) {
+    final normalized = value.trim().toLowerCase();
+    switch (normalized) {
+      case '1':
+      case 'mild':
+      case 'low':
+        return 1;
+      case '3':
+      case 'hot':
+      case 'high':
+      case 'spicy':
+        return 3;
+      case '2':
+      case 'medium':
+      case 'med':
+      default:
+        return 2;
+    }
+  }
+
+  static String? _extractSpiceLabel(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) {
+      final level = raw.toInt();
+      if (level < 1 || level > 3) {
+        return null;
+      }
+      return _normalizeSpiceLabel(level.toString());
+    }
+    if (raw is String && raw.trim().isNotEmpty) {
+      final normalized = raw.trim().toLowerCase();
+      const valid = {
+        '1',
+        '2',
+        '3',
+        'mild',
+        'medium',
+        'med',
+        'hot',
+        'high',
+        'low',
+        'spicy',
+      };
+      if (!valid.contains(normalized)) {
+        return null;
+      }
+      return _normalizeSpiceLabel(raw);
+    }
+    return null;
+  }
+
+  static bool _hasCompletePreferencePayload(Map<String, dynamic> json) {
+    final cuisines = json['cuisines'];
+    final budget = json['budget'];
+    final spice = json['spiceLevel'] ?? json['spice'];
+
+    return _hasNonEmptyCuisines(cuisines) &&
+        _hasNonEmptyText(budget) &&
+        _extractSpiceLabel(spice) != null;
   }
 
   /// Checks if the user has saved preferences on the backend
@@ -41,21 +135,20 @@ class PreferencesService {
         return false;
       }
 
-      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
-      final res = await http.get(uri, headers: await _buildAuthHeaders()).timeout(
-        const Duration(seconds: 5),
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
       );
+      final res = await http
+          .get(uri, headers: await _buildAuthHeaders())
+          .timeout(const Duration(seconds: 5));
 
       // 200 with valid preferences
       if (res.statusCode == 200) {
         try {
           final json = jsonDecode(res.body) as Map<String, dynamic>;
-          
-          // Check if cuisines and budget exist (minimum required fields)
-          final cuisines = json['cuisines'];
-          final budget = json['budget'];
-          
-          if (cuisines != null && budget != null) {
+
+          // Returning users must have non-empty cuisines, budget, and spice level.
+          if (_hasCompletePreferencePayload(json)) {
             return true;
           }
         } catch (_) {
@@ -63,7 +156,7 @@ class PreferencesService {
           return false;
         }
       }
-      
+
       // 404, 400+, or other errors -> user needs onboarding
       return false;
     } catch (_) {
@@ -72,11 +165,12 @@ class PreferencesService {
     }
   }
 
-  /// Updates preferences on the backend (cuisines and budget)
+  /// Updates preferences on the backend (cuisines, budget, optional spice level)
   /// Returns true if successful, false otherwise
   static Future<bool> updatePreferences({
     required List<String> cuisines,
     required String budget,
+    String? spiceLevel,
   }) async {
     try {
       // Use Cognito userId from TokenStorage
@@ -85,15 +179,21 @@ class PreferencesService {
         return false;
       }
 
-      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
+      );
       final headers = await _buildAuthHeaders();
-      final payload = jsonEncode({
+      final payloadMap = <String, dynamic>{
         'cuisines': cuisines,
         'budget': budget,
-      });
+      };
+      if (spiceLevel != null && spiceLevel.trim().isNotEmpty) {
+        payloadMap['spiceLevel'] = _spiceLevelToBackendNumber(spiceLevel);
+      }
+      final payload = jsonEncode(payloadMap);
 
       final res = await http.put(uri, headers: headers, body: payload);
-      return res.statusCode == 200;
+      return res.statusCode == 200 || res.statusCode == 204;
     } catch (_) {
       return false;
     }
@@ -102,24 +202,28 @@ class PreferencesService {
   /// Gets current preferences from local storage
   static Future<Map<String, dynamic>> getLocalPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    final cuisines = prefs.getStringList(_prefsCuisinesKey) ?? ['Chinese', 'Thai', 'Western'];
+    final cuisines =
+        prefs.getStringList(_prefsCuisinesKey) ??
+        ['Chinese', 'Thai', 'Western'];
     final budget = prefs.getString(_prefsBudgetKey) ?? 'low';
+    final spiceLevel = prefs.getString(_prefsSpiceKey) ?? 'Medium';
 
-    return {
-      'cuisines': cuisines,
-      'budget': budget,
-    };
+    return {'cuisines': cuisines, 'budget': budget, 'spiceLevel': spiceLevel};
   }
 
   /// Saves preferences to local storage and notifies listeners
   static Future<void> saveLocalPreferences({
     required List<String> cuisines,
     required String budget,
+    String? spiceLevel,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsCuisinesKey, cuisines);
     await prefs.setString(_prefsBudgetKey, budget);
-    
+    if (spiceLevel != null && spiceLevel.trim().isNotEmpty) {
+      await prefs.setString(_prefsSpiceKey, _normalizeSpiceLabel(spiceLevel));
+    }
+
     // Notify listeners that preferences have been updated
     preferencesUpdated.value++;
   }
@@ -134,12 +238,14 @@ class PreferencesService {
         return null;
       }
 
-      final uri = Uri.parse('$_baseUrl/preference/users/$cognitoUserId');
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
+      );
       final res = await http.get(uri, headers: await _buildAuthHeaders());
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as Map<String, dynamic>;
-        
+
         // Extract cuisines (handle both string and array formats)
         List<String> cuisines = [];
         final cuisinesData = json['cuisines'];
@@ -151,18 +257,61 @@ class PreferencesService {
 
         // Extract budget
         final budget = json['budget']?.toString() ?? 'low';
+        final spiceLevel = _extractSpiceLabel(
+          json['spiceLevel'] ?? json['spice'],
+        );
 
         // Save to local storage
-        await saveLocalPreferences(cuisines: cuisines, budget: budget);
+        await saveLocalPreferences(
+          cuisines: cuisines,
+          budget: budget,
+          spiceLevel: spiceLevel,
+        );
 
         return {
           'cuisines': cuisines,
           'budget': budget,
+          'spiceLevel': spiceLevel,
         };
       }
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Sends user's swipe preference (like/dislike) for a food item to the backend.
+  ///
+  /// Parameters:
+  /// - [foodId]: ID of the food item
+  /// - [liked]: true if liked, false if disliked
+  ///
+  /// Returns true if successful, false otherwise.
+  static Future<bool> sendSwipePreference({
+    required String foodId,
+    required bool liked,
+  }) async {
+    final userId = await TokenStorage.getUserId();
+    if (userId == null || userId.trim().isEmpty) {
+      return false;
+    }
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/preference/food/swipe');
+    final headers = await _buildAuthHeaders();
+    final payload = jsonEncode({
+      'userId': userId,
+      'foodId': foodId,
+      'status': liked,
+    });
+
+    try {
+      final res = await http.post(uri, headers: headers, body: payload);
+      // Backend contract is 204 No Content; keep 200/201 for compatibility.
+      return res.statusCode == 204 ||
+          res.statusCode == 200 ||
+          res.statusCode == 201;
+    } catch (_) {
+      return false;
     }
   }
 }

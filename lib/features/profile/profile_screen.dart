@@ -63,30 +63,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed == true) {
       // Clear all tokens
       await TokenStorage.clearTokens();
-      
+
       // Clear favorites
       FavoritesStore.instance.clear();
-      
+
       // Navigate to sign-in screen and remove all previous routes
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/sign-in',
-          (route) => false,
-        );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/sign-in', (route) => false);
       }
     }
   }
 
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     final cuisines = prefs.getStringList(_prefsCuisinesKey) ?? [];
-    final budget = prefs.getString(_prefsBudgetLabelKey) ?? prefs.getString(_prefsBudgetKey) ?? "Not set";
+    final budget =
+        prefs.getString(_prefsBudgetLabelKey) ??
+        prefs.getString(_prefsBudgetKey) ??
+        "Not set";
     final spice = prefs.getString(_prefsSpiceKey) ?? "Not set";
 
     if (mounted) {
       setState(() {
-        _cuisinesDisplay = cuisines.isNotEmpty ? cuisines.join(", ") : "Not set";
+        _cuisinesDisplay = cuisines.isNotEmpty
+            ? cuisines.join(", ")
+            : "Not set";
         _budgetDisplay = _getBudgetDisplay(budget);
         _spiceDisplay = spice;
       });
@@ -108,7 +112,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return budget;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -242,14 +245,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               FavoritesStore.instance.clear();
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("All data cleared")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("All data cleared")));
             },
-            child: const Text(
-              "Reset",
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text("Reset", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -260,6 +260,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final prefs = await PreferencesService.getLocalPreferences();
     final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
     final currentBudget = prefs['budget'] ?? 'low';
+    final sharedPrefs = await SharedPreferences.getInstance();
+    final currentSpice = sharedPrefs.getString(_prefsSpiceKey);
 
     if (!context.mounted) return;
 
@@ -273,6 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final synced = await PreferencesService.updatePreferences(
             cuisines: cuisines,
             budget: budget,
+            spiceLevel: currentSpice,
           );
 
           // If sync was successful, fetch latest preferences from backend
@@ -283,12 +286,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             await PreferencesService.saveLocalPreferences(
               cuisines: cuisines,
               budget: budget,
+              spiceLevel: currentSpice,
             );
           }
 
           if (context.mounted) {
             Navigator.pop(context); // Close dialog
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -305,7 +309,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-
 //for profile card -- supporting UI parts
 
 class _ProfileCard extends StatelessWidget {
@@ -317,7 +320,11 @@ class _ProfileCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(blurRadius: 18, offset: Offset(0, 10), color: Color(0x14000000)),
+          BoxShadow(
+            blurRadius: 18,
+            offset: Offset(0, 10),
+            color: Color(0x14000000),
+          ),
         ],
       ),
       child: Row(
@@ -397,7 +404,10 @@ class _PrefTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     value,
@@ -549,7 +559,9 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
                     selectedColor: const Color(0xFFFFF2E7),
                     labelStyle: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: selected ? const Color(0xFFFF6B4A) : const Color(0xFF111827),
+                      color: selected
+                          ? const Color(0xFFFF6B4A)
+                          : const Color(0xFF111827),
                     ),
                   );
                 }).toList(),
@@ -573,7 +585,9 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
                     selectedColor: const Color(0xFFFFF2E7),
                     labelStyle: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: selected ? const Color(0xFFFF6B4A) : const Color(0xFF111827),
+                      color: selected
+                          ? const Color(0xFFFF6B4A)
+                          : const Color(0xFF111827),
                     ),
                   );
                 }).toList(),

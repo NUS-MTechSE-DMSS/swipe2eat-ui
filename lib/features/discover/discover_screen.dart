@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
 import '../favorites/food_detail_screen.dart';
 import '../auth/services/token_storage.dart';
+import 'services/food_service.dart';
 
 class DiscoverScreen extends StatefulWidget {
   final bool showBottomNav;
@@ -18,12 +18,11 @@ const DiscoverScreen({super.key, this.showBottomNav = true});
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
-  static const String _baseUrl =
-      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
-
   final List<FoodItem> _items = [];
   bool _loading = true;
+  bool _isSubmittingSwipe = false;
   String? _error;
+  int _lastDroppedInvalidIds = 0;
 
   int _topIndex = 0;
 
@@ -125,85 +124,25 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     });
   }
 
-  /// Builds HTTP headers with AWS Cognito authentication.
-  /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
-  Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
-    final authHeader = await TokenStorage.getAuthorizationHeader();
-    if (authHeader != null) {
-      headers['Authorization'] = authHeader;
-    }
-    return headers;
-  }
-
-  Future<void> _sendSwipePreference({
-    required FoodItem item,
-    required bool liked,
-  }) async {
-    final userId = await TokenStorage.getUserId();
-    if (userId == null || userId.trim().isEmpty) {
-      return;
-    }
-    final uri = Uri.parse('$_baseUrl/preference/food/swipe');
-    final headers = await _buildAuthHeaders();
-    final payload = jsonEncode({
-      'userId': userId,
-      'foodId': item.id,
-      'status': liked,
-    });
-    try {
-      await http.post(uri, headers: headers, body: payload);
-    } catch (_) {
-      // Best-effort; ignore failures for now.
-    }
-  }
-
   Future<void> _fetchFoods() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final baseUri = Uri.parse('$_baseUrl/food');
-      final params = <String>[
-        'budget=${Uri.encodeQueryComponent(_selectedBudget)}',
-      ];
-      if (_selectedCuisines.isNotEmpty) {
-        params.addAll(
-          _selectedCuisines
-              .map((c) => 'cuisines=${Uri.encodeQueryComponent(c)}'),
-        );
-      }
-      if (_selectedSpice.trim().isNotEmpty) {
-        params.add('spice=${Uri.encodeQueryComponent(_selectedSpice)}');
-      }
-      if (_selectedDietType.trim().isNotEmpty && _selectedDietType != 'None') {
-        params.add('dietType=${Uri.encodeQueryComponent(_selectedDietType)}');
-      }
-      if (_selectedAllergens.isNotEmpty) {
-        params.addAll(
-          _selectedAllergens
-              .map((a) => 'allergens=${Uri.encodeQueryComponent(a)}'),
-        );
-      }
-      final query = params.join('&');
-      final uri = baseUri.replace(query: query);
-      final headers = await _buildAuthHeaders();
-
-      final res = await http.get(uri, headers: headers);
-      if (res.statusCode != 200) {
-        throw Exception('Failed to load foods (${res.statusCode})');
-      }
-      final data = jsonDecode(res.body);
-      final list = _extractList(data);
-      final foods = list.map(_foodFromJson).whereType<FoodItem>().toList();
+      final foods = await FoodService.fetchFoods(
+        cuisines: _selectedCuisines,
+        budget: _selectedBudget,
+        spiceLevel: _selectedSpice,
+        dietType: _selectedDietType,
+        allergens: _selectedAllergens,
+      );
       setState(() {
         _items
           ..clear()
           ..addAll(foods);
         _topIndex = 0;
+        _lastDroppedInvalidIds = FoodService.lastInvalidFoodIdDropCount;
         _loading = false;
       });
     } catch (e) {
@@ -221,23 +160,54 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     });
   }
 
-  void _swipeLeft() => _completeSwipe(isRight: false);
-  void _swipeRight() => _completeSwipe(isRight: true);
+  void _swipeLeft() {
+    _completeSwipe(isRight: false);
+  }
 
-  void _completeSwipe({required bool isRight}) {
+  void _swipeRight() {
+    _completeSwipe(isRight: true);
+  }
+
+  Future<void> _completeSwipe({required bool isRight}) async {
+    if (_isSubmittingSwipe) return;
+
     final item = _current;
     if (item == null) return;
 
-    _sendSwipePreference(item: item, liked: isRight);
+    setState(() {
+      _isSubmittingSwipe = true;
+      _dragOffset = Offset.zero;
+      _dragRotation = 0;
+    });
+
+    final synced = await PreferencesService.sendSwipePreference(
+      foodId: item.id,
+      liked: isRight,
+    );
+
+    if (!mounted) return;
+
+    if (!synced) {
+      setState(() {
+        _isSubmittingSwipe = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save swipe. Please try again.'),
+        ),
+      );
+      return;
+    }
 
     if (isRight) {
-      FavoritesStore.instance.add(item); //  store liked item -- API call
+      FavoritesStore.instance.add(item);
     }
 
     setState(() {
       _topIndex++;
       _dragOffset = Offset.zero;
       _dragRotation = 0;
+      _isSubmittingSwipe = false;
     });
   }
 
@@ -298,13 +268,21 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           ],
                         )
                       : item == null
-                          ? const Text(
-                              "No more dishes 🎉",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            )
+                          ? _items.isEmpty
+                              ? _EmptyState(
+                                  title: "No dishes available",
+                                  subtitle: _lastDroppedInvalidIds > 0
+                                      ? "Skipped $_lastDroppedInvalidIds dishes because of invalid data. Please try again shortly."
+                                      : "No dishes match your current preferences right now.",
+                                  onRetry: _fetchFoods,
+                                )
+                              : const Text(
+                                  "No more dishes 🎉",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                )
                           : LayoutBuilder(
                               builder: (context, constraints) {
                                 final cardWidth = min(
@@ -335,6 +313,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
                                     GestureDetector(
                                       onTap: () {
+                                        if (_isSubmittingSwipe) return;
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -344,6 +323,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                         );
                                       },
                                       onPanUpdate: (d) {
+                                        if (_isSubmittingSwipe) return;
                                         setState(() {
                                           _dragOffset += d.delta;
                                           _dragRotation =
@@ -351,6 +331,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                         });
                                       },
                                       onPanEnd: (_) {
+                                        if (_isSubmittingSwipe) return;
                                         final dx = _dragOffset.dx;
                                         if (dx > 120) {
                                           _swipeRight();
@@ -385,7 +366,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           ),
 
           const SizedBox(height: 6),
-          _ActionRow(onNope: _swipeLeft, onLike: _swipeRight),
+          _ActionRow(
+            onNope: _swipeLeft,
+            onLike: _swipeRight,
+            enabled: !_isSubmittingSwipe && !_loading && item != null,
+          ),
           const SizedBox(height: 10),
 
           if (widget.showBottomNav)
@@ -399,86 +384,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       ),
     );
   }
-}
-
-List<dynamic> _extractList(dynamic data) {
-  if (data is List) return data;
-  if (data is Map && data['data'] is List) return data['data'] as List;
-  if (data is Map && data['foods'] is List) return data['foods'] as List;
-  return const <dynamic>[];
-}
-
-FoodItem? _foodFromJson(dynamic raw) {
-  if (raw is! Map) return null;
-
-  String? readString(String key) {
-    final v = raw[key];
-    return (v is String && v.trim().isNotEmpty) ? v.trim() : null;
-  }
-
-  double readDouble(String key, {double fallback = 0}) {
-    final v = raw[key];
-    if (v is num) return v.toDouble();
-    if (v is String) {
-      final parsed = double.tryParse(v);
-      if (parsed != null) return parsed;
-    }
-    return fallback;
-  }
-
-  final id = readString('id') ?? DateTime.now().toString();
-  final name = readString('name') ?? "Unknown Dish";
-  final restaurant = readString('restaurantName') ?? "Unknown";
-  final rating = readDouble('rating', fallback: 4.5);
-  final price = readDouble('price', fallback: 14.99);
-  final description = readString('description') ??
-      "A delicious pick based on your preferences.";
-
-  final imageKey = readString('imageKey');
-  final imageUrl = _imageUrlFromKey(imageKey) ??
-      "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200";
-
-  const String distanceLabel = "0.7 mi away";
-  const int spiceLevel = 2;
-
-  int budgetLevel;
-  if (price <= 10) {
-    budgetLevel = 1;
-  } else if (price <= 20) {
-    budgetLevel = 2;
-  } else {
-    budgetLevel = 3;
-  }
-
-  List<String> tags = const [];
-  final cuisineRaw = raw['cuisine'];
-  if (cuisineRaw is List) {
-    tags = cuisineRaw.map((e) => e.toString()).toList();
-  }
-
-  return FoodItem(
-    id: id,
-    name: name,
-    restaurant: restaurant,
-    imageUrl: imageUrl,
-    rating: rating,
-    price: price,
-    description: description,
-    distanceLabel: distanceLabel,
-    spiceLevel: spiceLevel,
-    budgetLevel: budgetLevel,
-    tags: tags,
-  );
-}
-
-String? _imageUrlFromKey(String? imageKey) {
-  if (imageKey == null || imageKey.trim().isEmpty) return null;
-  final key = imageKey.trim();
-  if (key.startsWith('http://') || key.startsWith('https://')) {
-    return key;
-  }
-  // Append to S3 bucket URL
-  return 'https://swe5006-nus-g3-public-dev-ap-southeast-1-282793424364.s3.ap-southeast-1.amazonaws.com/images/$key';
 }
 
 /* ------------------- TOP BAR ------------------- */
@@ -649,6 +554,8 @@ class _FoodCard extends StatelessWidget {
                           children: [
                             Text(
                               item.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
@@ -661,18 +568,22 @@ class _FoodCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Text(
-                                  item.restaurant,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 14,
-                                        color: Colors.black54,
-                                      ),
-                                    ],
+                                Expanded(
+                                  child: Text(
+                                    item.restaurant,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -682,18 +593,22 @@ class _FoodCard extends StatelessWidget {
                                   color: Colors.white70,
                                 ),
                                 const SizedBox(width: 3),
-                                Text(
-                                  item.distanceLabel,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white70,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 14,
-                                        color: Colors.black54,
-                                      ),
-                                    ],
+                                Flexible(
+                                  child: Text(
+                                    item.distanceLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white70,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -888,8 +803,13 @@ class _BudgetIcons extends StatelessWidget {
 class _ActionRow extends StatelessWidget {
   final VoidCallback onNope;
   final VoidCallback onLike;
+  final bool enabled;
 
-  const _ActionRow({required this.onNope, required this.onLike});
+  const _ActionRow({
+    required this.onNope,
+    required this.onLike,
+    this.enabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -901,14 +821,14 @@ class _ActionRow extends StatelessWidget {
           _CircleAction(
             icon: Icons.close_rounded,
             iconColor: const Color(0xFFEF4444),
-            onTap: onNope,
+            onTap: enabled ? onNope : null,
           ),
           const SizedBox(width: 28),
           _CircleAction(
             icon: Icons.favorite_rounded,
             iconColor: const Color(0xFFFF6B4A),
             size: 74,
-            onTap: onLike,
+            onTap: enabled ? onLike : null,
           ),
         ],
       ),
@@ -920,7 +840,7 @@ class _CircleAction extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final double size;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _CircleAction({
     required this.icon,
@@ -931,7 +851,9 @@ class _CircleAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Opacity(
+      opacity: onTap == null ? 0.45 : 1,
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         width: size,
@@ -949,6 +871,7 @@ class _CircleAction extends StatelessWidget {
           ],
         ),
         child: Icon(icon, color: iconColor, size: size * 0.42),
+      ),
       ),
     );
   }
@@ -991,6 +914,65 @@ class _BottomNavMock extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onRetry;
+
+  const _EmptyState({
+    required this.title,
+    required this.subtitle,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        GestureDetector(
+          onTap: onRetry,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Text(
+              "Retry",
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

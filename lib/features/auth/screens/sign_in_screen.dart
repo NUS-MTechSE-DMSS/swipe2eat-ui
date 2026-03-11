@@ -93,6 +93,11 @@ class _SignInScreenState extends State<SignInScreen> {
           // Navigate based on preferences status
           if (mounted) {
             if (hasPreferences) {
+              // Hydrate local preference cache from backend before entering the app.
+              // Best-effort only: navigation should still proceed even if fetch fails.
+              await PreferencesService.fetchPreferencesFromBackend();
+              if (!mounted) return;
+
               // Returning user with preferences - go directly to main app
               Navigator.pushAndRemoveUntil(
                 context,

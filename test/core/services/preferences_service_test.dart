@@ -34,30 +34,35 @@ void main() {
       expect(prefs['budget'], equals('low'));
     });
 
-    test('getLocalPreferences returns defaults when no preferences stored',
-        () async {
-      final prefs = await PreferencesService.getLocalPreferences();
+    test(
+      'getLocalPreferences returns defaults when no preferences stored',
+      () async {
+        final prefs = await PreferencesService.getLocalPreferences();
 
-      expect(prefs['cuisines'], equals(['Chinese', 'Thai', 'Western']));
-      expect(prefs['budget'], equals('low'));
-    });
+        expect(prefs['cuisines'], equals(['Chinese', 'Thai', 'Western']));
+        expect(prefs['budget'], equals('low'));
+        expect(prefs['spiceLevel'], equals('Medium'));
+      },
+    );
 
-    test('preferencesUpdated notifier increments when preferences change',
-        () async {
-      int notificationCount = 0;
-      PreferencesService.preferencesUpdated.addListener(() {
-        notificationCount++;
-      });
+    test(
+      'preferencesUpdated notifier increments when preferences change',
+      () async {
+        int notificationCount = 0;
+        PreferencesService.preferencesUpdated.addListener(() {
+          notificationCount++;
+        });
 
-      await PreferencesService.saveLocalPreferences(
-        cuisines: ['Thai'],
-        budget: 'high',
-      );
+        await PreferencesService.saveLocalPreferences(
+          cuisines: ['Thai'],
+          budget: 'high',
+        );
 
-      expect(notificationCount, greaterThan(0));
+        expect(notificationCount, greaterThan(0));
 
-      PreferencesService.preferencesUpdated.removeListener(() {});
-    });
+        PreferencesService.preferencesUpdated.removeListener(() {});
+      },
+    );
 
     test('saveLocalPreferences with empty cuisines', () async {
       await PreferencesService.saveLocalPreferences(
@@ -113,7 +118,7 @@ void main() {
         'Japanese',
         'Italian',
         'Indian',
-        'Vietnamese'
+        'Vietnamese',
       ];
 
       await PreferencesService.saveLocalPreferences(
@@ -124,5 +129,34 @@ void main() {
       final prefs = await PreferencesService.getLocalPreferences();
       expect(prefs['cuisines'], equals(cuisines));
     });
+
+    test('saveLocalPreferences stores normalized spice level', () async {
+      await PreferencesService.saveLocalPreferences(
+        cuisines: ['Thai'],
+        budget: 'medium',
+        spiceLevel: 'hot',
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('prefs.spice'), equals('Hot'));
+    });
+
+    test(
+      'saveLocalPreferences does not overwrite spice when omitted',
+      () async {
+        await PreferencesService.saveLocalPreferences(
+          cuisines: ['Thai'],
+          budget: 'low',
+          spiceLevel: 'mild',
+        );
+        await PreferencesService.saveLocalPreferences(
+          cuisines: ['Japanese'],
+          budget: 'high',
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('prefs.spice'), equals('Mild'));
+      },
+    );
   });
 }

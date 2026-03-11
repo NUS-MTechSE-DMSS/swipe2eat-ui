@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'done_screen.dart';
-import '../../auth/services/token_storage.dart';
+import '../models/dietary_options.dart';
+import '../services/dietary_service.dart';
 
 class DietaryScreen extends StatefulWidget {
   final String selectedBudget;
@@ -22,48 +21,17 @@ class DietaryScreen extends StatefulWidget {
 }
 
 class _DietaryScreenState extends State<DietaryScreen> {
-  //currently using dietary-prefs railway deploy link replace with actual
-  //static const String _baseUrl = 'https://dietary-service-production-48d4.up.railway.app/dietary';
-  //provided by dietary service owner 
-  static const String _baseUrl = 'http://54.255.48.54:8080/dietary';
-
   static const String _prefsDietTypeKey = 'prefs.dietType';
   static const String _prefsAllergensKey = 'prefs.allergens';
 
-  late Future<_DietaryOptions> _future;
+  late Future<DietaryOptions> _future;
   String? _selectedDietType;
   final Set<String> _selectedAllergens = {};
 
   @override
   void initState() {
     super.initState();
-    _future = _fetchOptions();
-  }
-
-  Future<_DietaryOptions> _fetchOptions() async {
-    final uri = Uri.parse('$_baseUrl/options');
-    final headers = await _buildAuthHeaders();
-    final res = await http.get(uri, headers: headers).timeout(
-      const Duration(seconds: 2),
-    );
-    if (res.statusCode != 200) {
-      throw Exception('Failed to load options (${res.statusCode})');
-    }
-    final data = jsonDecode(res.body) as Map<String, dynamic>;
-    return _DietaryOptions.fromJson(data);
-  }
-
-  /// Builds HTTP headers with AWS Cognito authentication.
-  /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
-  Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
-    final authHeader = await TokenStorage.getAuthorizationHeader();
-    if (authHeader != null) {
-      headers['Authorization'] = authHeader;
-    }
-    return headers;
+    _future = DietaryService.fetchOptions();
   }
 
   void _toggleAllergen(String allergen) {
@@ -117,7 +85,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
               const SizedBox(height: 18),
 
               Expanded(
-                child: FutureBuilder<_DietaryOptions>(
+                child: FutureBuilder<DietaryOptions>(
                   future: _future,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -125,7 +93,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
                     }
                     
                     // Use fallback data if API fails, or use fetched data
-                    final options = snapshot.data ?? _DietaryOptions.fallback;
+                    final options = snapshot.data ?? DietaryOptions.fallback;
                     return SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,43 +206,6 @@ class _DietaryScreenState extends State<DietaryScreen> {
       ),
     );
   }
-}
-
-class _DietaryOptions {
-  final List<String> dietType;
-  final List<String> allergens;
-
-  const _DietaryOptions({
-    required this.dietType,
-    required this.allergens,
-  });
-
-  factory _DietaryOptions.fromJson(Map<String, dynamic> json) {
-    return _DietaryOptions(
-      dietType: List<String>.from(json['dietType'] ?? const []),
-      allergens: List<String>.from(json['allergens'] ?? const []),
-    );
-  }
-
-  // Fallback data when API is unavailable
-  static const _DietaryOptions fallback = _DietaryOptions(
-    dietType: [
-      'Omnivore',
-      'Vegetarian',
-      'Vegan',
-      'Halal',
-      'Kosher',
-    ],
-    allergens: [
-      'Peanut',
-      'Dairy',
-      'Gluten',
-      'Shellfish',
-      'Soy',
-      'Sesame',
-      'Tree Nuts',
-    ],
-  );
 }
 
 /* ------------------- UI PARTS ------------------- */

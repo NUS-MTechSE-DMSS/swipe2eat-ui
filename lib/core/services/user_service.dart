@@ -1,15 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/services/token_storage.dart';
+import '../config/api_config.dart';
 
 /// Service for managing user operations with the backend
 class UserService {
-  // static const String _baseUrl =
-  //     'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
-
-     static const String _baseUrl =
-      'http://localhost:8080'; // Use local backend for development/testing 
-  
   static const String _userCreatedFlagKey = 'user.backendCreated';
 
   /// Creates a user in the backend after successful Cognito signup
@@ -53,7 +48,7 @@ class UserService {
       };
 
       // Call backend to create user
-      final uri = Uri.parse('$_baseUrl/user/create-user');
+      final uri = Uri.parse('${ApiConfig.baseUrl}/user/create-user');
       final response = await http.post(
         uri,
         headers: headers,

@@ -189,14 +189,30 @@ class DoneScreen extends StatelessWidget {
                                     'Mid Range': 'medium',
                                     'Premium': 'high',
                                   };
-                                  final backendBudget = budgetMap[selectedBudget] ?? 'low';
-                                  
-                                  // Save preferences to backend
-                                  await PreferencesService.updatePreferences(
-                                    cuisines: selectedCuisinesLabel.split(', '),
-                                    budget: backendBudget,
-                                  );
-                                  
+                                  final backendBudget =
+                                      budgetMap[selectedBudget] ?? 'low';
+                                  final cuisines = selectedCuisinesLabel
+                                      .split(', ')
+                                      .where((c) => c.trim().isNotEmpty)
+                                      .toList();
+
+                                  // Save preferences to backend first.
+                                  final synced =
+                                      await PreferencesService.updatePreferences(
+                                        cuisines: cuisines,
+                                        budget: backendBudget,
+                                        spiceLevel: selectedSpiceLabel,
+                                      );
+
+                                  // Fallback: keep preferences locally when backend sync fails.
+                                  if (!synced) {
+                                    await PreferencesService.saveLocalPreferences(
+                                      cuisines: cuisines,
+                                      budget: backendBudget,
+                                      spiceLevel: selectedSpiceLabel,
+                                    );
+                                  }
+
                                   // Navigate to main app
                                   if (context.mounted) {
                                     Navigator.pushAndRemoveUntil(
@@ -209,8 +225,12 @@ class DoneScreen extends StatelessWidget {
                                       (route) => false,
                                     );
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Go to Discover Screen 🚀"),
+                                      SnackBar(
+                                        content: Text(
+                                          synced
+                                              ? "Preferences saved. Go to Discover."
+                                              : "Preferences saved locally. Backend sync failed.",
+                                        ),
                                       ),
                                     );
                                   }
