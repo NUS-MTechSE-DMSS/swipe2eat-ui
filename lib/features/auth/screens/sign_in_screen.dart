@@ -7,7 +7,6 @@ import '../services/cognito_service.dart';
 import '../services/token_storage.dart';
 import '../../../core/services/preferences_service.dart';
 import '../../../core/services/user_service.dart';
-import '../../../core/navigation/main_shell.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -98,13 +97,7 @@ class _SignInScreenState extends State<SignInScreen> {
               unawaited(createUserFuture);
 
               // Returning user with preferences - go directly to main app
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MainShell(initialTab: MainTab.discover),
-                ),
-                (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
 
               // Hydrate local preference cache after navigation so the app can
               // open immediately with defaults and refresh when sync completes.
@@ -142,10 +135,6 @@ class _SignInScreenState extends State<SignInScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF8F1),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF111827)),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

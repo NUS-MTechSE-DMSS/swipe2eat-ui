@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/navigation/main_shell.dart';
 import '../../../core/services/preferences_service.dart';
 
 class DoneScreen extends StatelessWidget {
@@ -215,13 +214,9 @@ class DoneScreen extends StatelessWidget {
 
                                   // Navigate to main app
                                   if (context.mounted) {
-                                    Navigator.pushAndRemoveUntil(
+                                    Navigator.pushNamedAndRemoveUntil(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const MainShell(
-                                          initialTab: MainTab.discover,
-                                        ),
-                                      ),
+                                      '/main',
                                       (route) => false,
                                     );
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -296,7 +291,7 @@ class _InfoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
       ),

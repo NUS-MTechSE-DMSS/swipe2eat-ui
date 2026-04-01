@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swipe2eat_ui/app.dart';
 
 void main() {
   group('Swipe2EatApp', () {
-    testWidgets('app starts with sign-in route', (WidgetTester tester) async {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    testWidgets('app starts from the launch gate', (WidgetTester tester) async {
       await tester.pumpWidget(const Swipe2EatApp());
       await tester.pumpAndSettle();
 
-      // The initial route is '/sign-in'
       expect(find.byType(MaterialApp), findsOneWidget);
+      expect(find.text('Welcome Back'), findsOneWidget);
     });
 
     testWidgets('app disables debug banner', (WidgetTester tester) async {
@@ -31,17 +36,19 @@ void main() {
 
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(materialApp.routes, isNotNull);
+      expect(materialApp.routes!.containsKey('/launch'), true);
       expect(materialApp.routes!.containsKey('/'), true);
       expect(materialApp.routes!.containsKey('/sign-in'), true);
       expect(materialApp.routes!.containsKey('/sign-up'), true);
       expect(materialApp.routes!.containsKey('/cuisine'), true);
+      expect(materialApp.routes!.containsKey('/main'), true);
     });
 
-    testWidgets('initial route is set to sign-in', (WidgetTester tester) async {
+    testWidgets('initial route is set to launch gate', (WidgetTester tester) async {
       await tester.pumpWidget(const Swipe2EatApp());
 
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
-      expect(materialApp.initialRoute, '/sign-in');
+      expect(materialApp.initialRoute, '/launch');
     });
 
     testWidgets('app widget is stateless', (WidgetTester tester) async {
@@ -68,6 +75,13 @@ void main() {
 
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(materialApp.routes!.containsKey('/cuisine'), true);
+    });
+
+    testWidgets('app has guarded main route', (WidgetTester tester) async {
+      await tester.pumpWidget(const Swipe2EatApp());
+
+      final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(materialApp.routes!.containsKey('/main'), true);
     });
 
     testWidgets('routes are not null', (WidgetTester tester) async {
