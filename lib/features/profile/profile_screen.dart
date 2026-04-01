@@ -6,6 +6,47 @@ import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
 import '../auth/services/token_storage.dart';
 
+const List<String> _cuisineOptions = [
+  'Thai',
+  'Chinese',
+  'Western',
+  'Japanese',
+  'Indian',
+  'Italian',
+  'Korean',
+  'Vietnamese',
+  'Mediterranean',
+  'Malay',
+  'Asian',
+];
+
+const List<String> _budgetOptions = ['low', 'medium', 'high'];
+const Map<String, String> _budgetLabels = {
+  'low': 'Budget Friendly',
+  'medium': 'Mid Range',
+  'high': 'Premium',
+};
+const List<String> _spiceOptions = ['Mild', 'Medium', 'Hot'];
+
+String _normalizeSpiceValue(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'mild':
+    case '1':
+    case 'low':
+      return 'Mild';
+    case 'hot':
+    case '3':
+    case 'high':
+    case 'spicy':
+      return 'Hot';
+    case 'medium':
+    case '2':
+    case 'med':
+    default:
+      return 'Medium';
+  }
+}
+
 class ProfileScreen extends StatefulWidget {
   final bool showBottomNav;
   const ProfileScreen({super.key, this.showBottomNav = true});
@@ -218,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Cuisines",
                     value: _cuisinesDisplay,
                     onTap: () {
-                      // TODO: navigate to edit cuisines
+                      _showCuisineEditor(context);
                     },
                   ),
                   _PrefTile(
@@ -226,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Spice Level",
                     value: _spiceDisplay,
                     onTap: () {
-                      // TODO: navigate to spice screen
+                      _showSpiceEditor(context);
                     },
                   ),
                   _PrefTile(
@@ -234,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Budget",
                     value: _budgetDisplay,
                     onTap: () {
-                      // TODO: navigate to budget screen
+                      _showBudgetEditor(context);
                     },
                   ),
 
@@ -346,24 +387,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         initialBudget: currentBudget,
         initialSpice: currentSpice,
         onSave: (cuisines, budget, spice) async {
-          // First, try to sync with backend
-          final synced = await PreferencesService.updatePreferences(
+          final synced = await _persistPreferenceChanges(
             cuisines: cuisines,
             budget: budget,
-            spiceLevel: spice,
+            spice: spice,
           );
-
-          // If sync was successful, fetch latest preferences from backend
-          if (synced) {
-            await PreferencesService.fetchPreferencesFromBackend();
-          } else {
-            // Save locally if sync failed
-            await PreferencesService.saveLocalPreferences(
-              cuisines: cuisines,
-              budget: budget,
-              spiceLevel: spice,
-            );
-          }
 
           if (context.mounted) {
             Navigator.pop(context); // Close dialog
@@ -379,6 +407,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
         },
+      ),
+    );
+  }
+
+  Future<bool> _persistPreferenceChanges({
+    required List<String> cuisines,
+    required String budget,
+    required String spice,
+  }) async {
+    final synced = await PreferencesService.updatePreferences(
+      cuisines: cuisines,
+      budget: budget,
+      spiceLevel: spice,
+    );
+
+    if (synced) {
+      await PreferencesService.fetchPreferencesFromBackend();
+    } else {
+      await PreferencesService.saveLocalPreferences(
+        cuisines: cuisines,
+        budget: budget,
+        spiceLevel: spice,
+      );
+    }
+
+    return synced;
+  }
+
+  Future<void> _showCuisineEditor(BuildContext context) async {
+    final prefs = await PreferencesService.getLocalPreferences();
+    final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
+    final currentBudget = prefs['budget']?.toString() ?? 'low';
+    final currentSpice = _normalizeSpiceValue(
+      prefs['spiceLevel']?.toString() ?? 'Medium',
+    );
+    if (!context.mounted) return;
+
+    final selection = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => _CuisineEditorSheet(initialCuisines: currentCuisines),
+    );
+
+    if (selection == null) return;
+
+    final cuisines = List<String>.from(selection)..sort();
+    final synced = await _persistPreferenceChanges(
+      cuisines: cuisines,
+      budget: currentBudget,
+      spice: currentSpice,
+    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      SnackBar(
+        content: Text(
+          synced
+              ? 'Cuisine preferences updated.'
+              : 'Cuisine preferences saved locally (sync failed).',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showSpiceEditor(BuildContext context) async {
+    final prefs = await PreferencesService.getLocalPreferences();
+    final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
+    final currentBudget = prefs['budget']?.toString() ?? 'low';
+    final currentSpice = _normalizeSpiceValue(
+      prefs['spiceLevel']?.toString() ?? 'Medium',
+    );
+    if (!context.mounted) return;
+
+    final selection = await showDialog<String>(
+      context: context,
+      builder: (_) => _SpiceEditorSheet(initialSpice: currentSpice),
+    );
+
+    if (selection == null) return;
+
+    final synced = await _persistPreferenceChanges(
+      cuisines: currentCuisines,
+      budget: currentBudget,
+      spice: selection,
+    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      SnackBar(
+        content: Text(
+          synced
+              ? 'Spice preference updated.'
+              : 'Spice preference saved locally (sync failed).',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBudgetEditor(BuildContext context) async {
+    final prefs = await PreferencesService.getLocalPreferences();
+    final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
+    final currentBudget = prefs['budget']?.toString() ?? 'low';
+    final currentSpice = _normalizeSpiceValue(
+      prefs['spiceLevel']?.toString() ?? 'Medium',
+    );
+    if (!context.mounted) return;
+
+    final selection = await showDialog<String>(
+      context: context,
+      builder: (_) => _BudgetEditorSheet(initialBudget: currentBudget),
+    );
+
+    if (selection == null) return;
+
+    final synced = await _persistPreferenceChanges(
+      cuisines: currentCuisines,
+      budget: selection,
+      spice: currentSpice,
+    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      SnackBar(
+        content: Text(
+          synced
+              ? 'Budget preference updated.'
+              : 'Budget preference saved locally (sync failed).',
+        ),
       ),
     );
   }
@@ -434,7 +589,7 @@ class _ProfileCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 ValueListenableBuilder(
                   valueListenable: FavoritesStore.instance.favorites,
-                  builder: (_, list, __) {
+                  builder: (context, list, child) {
                     return Text(
                       "${list.length} favorites saved",
                       style: const TextStyle(
@@ -474,7 +629,7 @@ class _PrefTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
+          color: Colors.white.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
@@ -532,7 +687,7 @@ class _ActionTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
+          color: Colors.white.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
@@ -576,53 +731,12 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
   late String _selectedSpice;
   bool _saving = false;
 
-  static const List<String> cuisineOptions = [
-    'Thai',
-    'Chinese',
-    'Western',
-    'Japanese',
-    'Indian',
-    'Italian',
-    'Korean',
-    'Vietnamese',
-    'Mediterranean',
-    'Malay',
-    'Asian',
-  ];
-
-  static const List<String> budgetOptions = ['low', 'medium', 'high'];
-  static const Map<String, String> budgetLabels = {
-    'low': 'Budget Friendly',
-    'medium': 'Mid Range',
-    'high': 'Premium',
-  };
-  static const List<String> spiceOptions = ['Mild', 'Medium', 'Hot'];
-
   @override
   void initState() {
     super.initState();
     _selectedCuisines = Set.from(widget.initialCuisines);
     _selectedBudget = widget.initialBudget;
-    _selectedSpice = _normalizeSpice(widget.initialSpice);
-  }
-
-  String _normalizeSpice(String value) {
-    switch (value.trim().toLowerCase()) {
-      case 'mild':
-      case '1':
-      case 'low':
-        return 'Mild';
-      case 'hot':
-      case '3':
-      case 'high':
-      case 'spicy':
-        return 'Hot';
-      case 'medium':
-      case '2':
-      case 'med':
-      default:
-        return 'Medium';
-    }
+    _selectedSpice = _normalizeSpiceValue(widget.initialSpice);
   }
 
   void _toggleCuisine(String cuisine) {
@@ -655,7 +769,7 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: cuisineOptions.map((cuisine) {
+                children: _cuisineOptions.map((cuisine) {
                   final selected = _selectedCuisines.contains(cuisine);
                   return FilterChip(
                     label: Text(cuisine),
@@ -681,10 +795,10 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: budgetOptions.map((budget) {
+                children: _budgetOptions.map((budget) {
                   final selected = _selectedBudget == budget;
                   return FilterChip(
-                    label: Text(budgetLabels[budget]!),
+                    label: Text(_budgetLabels[budget]!),
                     selected: selected,
                     onSelected: (_) => setState(() => _selectedBudget = budget),
                     backgroundColor: Colors.white,
@@ -707,7 +821,7 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: spiceOptions.map((spice) {
+                children: _spiceOptions.map((spice) {
                   final selected = _selectedSpice == spice;
                   return FilterChip(
                     label: Text(spice),
@@ -753,6 +867,386 @@ class _PreferencesDialogState extends State<_PreferencesDialog> {
               : const Text('Save'),
         ),
       ],
+    );
+  }
+}
+
+class _SheetFrame extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  const _SheetFrame({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8F1),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 24,
+                offset: Offset(0, 16),
+                color: Color(0x22000000),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  child,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CuisineEditorSheet extends StatefulWidget {
+  final List<String> initialCuisines;
+
+  const _CuisineEditorSheet({required this.initialCuisines});
+
+  @override
+  State<_CuisineEditorSheet> createState() => _CuisineEditorSheetState();
+}
+
+class _CuisineEditorSheetState extends State<_CuisineEditorSheet> {
+  late Set<String> _selectedCuisines;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCuisines = Set<String>.from(widget.initialCuisines);
+  }
+
+  void _toggleCuisine(String cuisine) {
+    setState(() {
+      if (_selectedCuisines.contains(cuisine)) {
+        _selectedCuisines.remove(cuisine);
+      } else {
+        _selectedCuisines.add(cuisine);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canSave = _selectedCuisines.isNotEmpty;
+
+    return _SheetFrame(
+      title: 'Edit Cuisines',
+      subtitle: 'Choose the cuisines that should shape your recommendations.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _cuisineOptions.map((cuisine) {
+              final selected = _selectedCuisines.contains(cuisine);
+              return FilterChip(
+                label: Text(cuisine),
+                selected: selected,
+                onSelected: (_) => _toggleCuisine(cuisine),
+                backgroundColor: Colors.white,
+                selectedColor: const Color(0xFFFFF2E7),
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? const Color(0xFFFF6B4A)
+                      : const Color(0xFF111827),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: !canSave
+                      ? null
+                      : () => Navigator.pop(
+                          context,
+                          _selectedCuisines.toList(),
+                        ),
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetEditorSheet extends StatefulWidget {
+  final String initialBudget;
+
+  const _BudgetEditorSheet({required this.initialBudget});
+
+  @override
+  State<_BudgetEditorSheet> createState() => _BudgetEditorSheetState();
+}
+
+class _BudgetEditorSheetState extends State<_BudgetEditorSheet> {
+  late String _selectedBudget;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedBudget = widget.initialBudget;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetFrame(
+      title: 'Edit Budget',
+      subtitle: 'Set the spending range you want us to bias toward.',
+      child: Column(
+        children: [
+          ..._budgetOptions.map((budget) {
+            final selected = _selectedBudget == budget;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: () => setState(() => _selectedBudget = budget),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFFFFF2E7)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFFFFB28E)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFFFF6B4A)
+                              : const Color(0xFFFFF2E7),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.attach_money_rounded,
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFFFF6B4A),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _budgetLabels[budget]!,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      if (selected)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: Color(0xFFFF6B4A),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, _selectedBudget),
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpiceEditorSheet extends StatefulWidget {
+  final String initialSpice;
+
+  const _SpiceEditorSheet({required this.initialSpice});
+
+  @override
+  State<_SpiceEditorSheet> createState() => _SpiceEditorSheetState();
+}
+
+class _SpiceEditorSheetState extends State<_SpiceEditorSheet> {
+  late String _selectedSpice;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSpice = _normalizeSpiceValue(widget.initialSpice);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetFrame(
+      title: 'Edit Spice Level',
+      subtitle: 'Choose how bold you want your flavor recommendations to be.',
+      child: Column(
+        children: [
+          ..._spiceOptions.map((spice) {
+            final selected = _selectedSpice == spice;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: () => setState(() => _selectedSpice = spice),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFFFFF2E7)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFFFFB28E)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFFFF6B4A)
+                              : const Color(0xFFFFF2E7),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          spice == 'Hot'
+                              ? Icons.local_fire_department_rounded
+                              : spice == 'Medium'
+                              ? Icons.whatshot_rounded
+                              : Icons.eco_rounded,
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFFFF6B4A),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          spice,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      if (selected)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: Color(0xFFFF6B4A),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, _selectedSpice),
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
