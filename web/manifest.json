@@ -1,6 +1,6 @@
 {
-    "name": "swipe2eat_ui",
-    "short_name": "swipe2eat_ui",
+    "name": "Swipe2eat",
+    "short_name": "Swipe2eat",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
