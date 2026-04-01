@@ -17,6 +17,17 @@ void main() {
       expect(find.text('Welcome Back'), findsOneWidget);
     });
 
+    testWidgets('startup sign-in screen does not show a back button', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const Swipe2EatApp());
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Back'), findsNothing);
+      expect(find.byIcon(Icons.arrow_back_ios_rounded), findsNothing);
+      expect(find.byIcon(Icons.arrow_back), findsNothing);
+    });
+
     testWidgets('app disables debug banner', (WidgetTester tester) async {
       await tester.pumpWidget(const Swipe2EatApp());
 
@@ -44,7 +55,9 @@ void main() {
       expect(materialApp.routes!.containsKey('/main'), true);
     });
 
-    testWidgets('initial route is set to launch gate', (WidgetTester tester) async {
+    testWidgets('initial route is set to launch gate', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const Swipe2EatApp());
 
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
@@ -93,7 +106,9 @@ void main() {
       }
     });
 
-    testWidgets('theme is applied correctly to app', (WidgetTester tester) async {
+    testWidgets('theme is applied correctly to app', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const Swipe2EatApp());
 
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));

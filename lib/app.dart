@@ -26,8 +26,8 @@ class Swipe2EatApp extends StatelessWidget {
         '/sign-up': (_) => const SignUpScreen(),
         '/cuisine': (_) => const _AuthenticatedOnly(child: CuisineScreen()),
         '/main': (_) => const _AuthenticatedOnly(
-              child: MainShell(initialTab: MainTab.discover),
-            ),
+          child: MainShell(initialTab: MainTab.discover),
+        ),
       },
     );
   }
@@ -43,8 +43,11 @@ class _AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<_AuthGate> {
-  late final Future<_StartupDestination> _destinationFuture =
-      _resolveDestination();
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_redirectToStartupDestination());
+  }
 
   Future<_StartupDestination> _resolveDestination() async {
     final loggedIn = await TokenStorage.isLoggedIn();
@@ -61,48 +64,63 @@ class _AuthGateState extends State<_AuthGate> {
     return _StartupDestination.onboarding;
   }
 
+  Future<void> _redirectToStartupDestination() async {
+    final destination = await _resolveDestination();
+    if (!mounted) return;
+
+    final routeName = switch (destination) {
+      _StartupDestination.main => '/main',
+      _StartupDestination.onboarding => '/',
+      _StartupDestination.signIn => '/sign-in',
+    };
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(routeName, (route) => false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_StartupDestination>(
-      future: _destinationFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const _LaunchLoadingScreen();
-        }
-
-        switch (snapshot.data) {
-          case _StartupDestination.main:
-            return const MainShell(initialTab: MainTab.discover);
-          case _StartupDestination.onboarding:
-            return const WelcomeScreen();
-          case _StartupDestination.signIn:
-          default:
-            return const SignInScreen();
-        }
-      },
-    );
+    return const _LaunchLoadingScreen();
   }
 }
 
-class _AuthenticatedOnly extends StatelessWidget {
+class _AuthenticatedOnly extends StatefulWidget {
   final Widget child;
 
   const _AuthenticatedOnly({required this.child});
 
   @override
+  State<_AuthenticatedOnly> createState() => _AuthenticatedOnlyState();
+}
+
+class _AuthenticatedOnlyState extends State<_AuthenticatedOnly> {
+  late final Future<bool> _isLoggedInFuture = TokenStorage.isLoggedIn();
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: TokenStorage.isLoggedIn(),
+      future: _isLoggedInFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const _LaunchLoadingScreen();
         }
 
         if (snapshot.data == true) {
-          return child;
+          return widget.child;
         }
 
-        return const SignInScreen();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/sign-in', (route) => false);
+        });
+
+        return const _LaunchLoadingScreen();
       },
     );
   }
@@ -115,9 +133,7 @@ class _LaunchLoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFFFFF8F1),
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }
