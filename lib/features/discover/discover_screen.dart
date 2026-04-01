@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
+import '../../core/widgets/loading_placeholder.dart';
 import '../favorites/food_detail_screen.dart';
 import '../auth/services/token_storage.dart';
 import 'services/food_service.dart';
@@ -20,7 +21,6 @@ class DiscoverScreen extends StatefulWidget {
 class _DiscoverScreenState extends State<DiscoverScreen> {
   final List<FoodItem> _items = [];
   bool _loading = true;
-  bool _isSubmittingSwipe = false;
   String? _error;
   int _lastDroppedInvalidIds = 0;
 
@@ -69,61 +69,64 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Future<void> _initLoad() async {
-    await _loadUserCityFromToken();
-    await _loadPreferences();
+    await _loadBootstrapState();
     await _fetchFoods();
   }
 
-  Future<void> _loadUserCityFromToken() async {
+  Future<void> _loadBootstrapState() async {
     try {
-      final idToken = await TokenStorage.getIdToken();
-      if (idToken == null || idToken.isEmpty) return;
-      final parts = idToken.split('.');
-      if (parts.length != 3) return;
+      final results = await Future.wait<Object?>([
+        SharedPreferences.getInstance(),
+        TokenStorage.getIdToken(),
+      ]);
+      final prefs = results[0] as SharedPreferences;
+      final idToken = results[1] as String?;
+      if (!mounted) return;
 
-      final normalized = base64Url.normalize(parts[1]);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final payload = jsonDecode(decoded);
-      if (payload is! Map) return;
+      String? city;
+      if (idToken != null && idToken.isNotEmpty) {
+        final parts = idToken.split('.');
+        if (parts.length == 3) {
+          final normalized = base64Url.normalize(parts[1]);
+          final decoded = utf8.decode(base64Url.decode(normalized));
+          final payload = jsonDecode(decoded);
+          if (payload is Map) {
+            city = (payload['custom:City'] ?? payload['city'])
+                ?.toString()
+                .trim();
+          }
+        }
+      }
 
-      final city = (payload['custom:City'] ?? payload['city'])
-          ?.toString()
-          .trim();
-      if (!mounted || city == null || city.isEmpty) return;
+      final cuisines = prefs.getStringList(_prefsCuisinesKey);
+      final budget = prefs.getString(_prefsBudgetKey);
+      final spice = prefs.getString(_prefsSpiceKey);
+      final dietType = prefs.getString(_prefsDietTypeKey);
+      final allergens = prefs.getStringList(_prefsAllergensKey);
 
       setState(() {
-        _locationLabel = city;
+        if (city != null && city.isNotEmpty) {
+          _locationLabel = city;
+        }
+        if (cuisines != null && cuisines.isNotEmpty) {
+          _selectedCuisines = cuisines;
+        }
+        if (budget != null && budget.trim().isNotEmpty) {
+          _selectedBudget = budget.trim();
+        }
+        if (spice != null && spice.trim().isNotEmpty) {
+          _selectedSpice = spice.trim();
+        }
+        if (dietType != null && dietType.trim().isNotEmpty) {
+          _selectedDietType = dietType.trim();
+        }
+        if (allergens != null && allergens.isNotEmpty) {
+          _selectedAllergens = allergens;
+        }
       });
     } catch (_) {
-      // Keep fallback location label when city is unavailable.
+      // Keep fallback values when cached state is unavailable.
     }
-  }
-
-  Future<void> _loadPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cuisines = prefs.getStringList(_prefsCuisinesKey);
-    final budget = prefs.getString(_prefsBudgetKey);
-    final spice = prefs.getString(_prefsSpiceKey);
-    final dietType = prefs.getString(_prefsDietTypeKey);
-    final allergens = prefs.getStringList(_prefsAllergensKey);
-    if (!mounted) return;
-    setState(() {
-      if (cuisines != null && cuisines.isNotEmpty) {
-        _selectedCuisines = cuisines;
-      }
-      if (budget != null && budget.trim().isNotEmpty) {
-        _selectedBudget = budget.trim();
-      }
-      if (spice != null && spice.trim().isNotEmpty) {
-        _selectedSpice = spice.trim();
-      }
-      if (dietType != null && dietType.trim().isNotEmpty) {
-        _selectedDietType = dietType.trim();
-      }
-      if (allergens != null && allergens.isNotEmpty) {
-        _selectedAllergens = allergens;
-      }
-    });
   }
 
   Future<void> _fetchFoods() async {
@@ -155,6 +158,51 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     }
   }
 
+  Future<void> _openQuickPreferencesEditor() async {
+    final selection = await showModalBottomSheet<_DiscoverPreferenceSelection>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _QuickPreferencesSheet(
+        initialCuisines: _selectedCuisines,
+        initialBudget: _selectedBudget,
+        initialSpice: _selectedSpice,
+      ),
+    );
+
+    if (selection == null || !mounted) return;
+
+    final cuisines = List<String>.from(selection.cuisines)..sort();
+    setState(() {
+      _selectedCuisines = cuisines;
+      _selectedBudget = selection.budget;
+      _selectedSpice = selection.spice;
+    });
+
+    final synced = await PreferencesService.updatePreferences(
+      cuisines: cuisines,
+      budget: selection.budget,
+      spiceLevel: selection.spice,
+    );
+
+    await PreferencesService.saveLocalPreferences(
+      cuisines: cuisines,
+      budget: selection.budget,
+      spiceLevel: selection.spice,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          synced
+              ? 'Preferences updated.'
+              : 'Preferences saved locally (sync failed).',
+        ),
+      ),
+    );
+  }
+
   void _resetDrag() {
     setState(() {
       _dragOffset = Offset.zero;
@@ -170,36 +218,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     _completeSwipe(isRight: true);
   }
 
-  Future<void> _completeSwipe({required bool isRight}) async {
-    if (_isSubmittingSwipe) return;
-
+  void _completeSwipe({required bool isRight}) {
     final item = _current;
     if (item == null) return;
-
-    setState(() {
-      _isSubmittingSwipe = true;
-      _dragOffset = Offset.zero;
-      _dragRotation = 0;
-    });
-
-    final synced = await PreferencesService.sendSwipePreference(
-      foodId: item.id,
-      liked: isRight,
-    );
-
-    if (!mounted) return;
-
-    if (!synced) {
-      setState(() {
-        _isSubmittingSwipe = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save swipe. Please try again.'),
-        ),
-      );
-      return;
-    }
 
     if (isRight) {
       FavoritesStore.instance.add(item);
@@ -209,7 +230,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _topIndex++;
       _dragOffset = Offset.zero;
       _dragRotation = 0;
-      _isSubmittingSwipe = false;
+    });
+
+    PreferencesService.queueSwipePreference(
+      foodId: item.id,
+      liked: isRight,
+    ).then((synced) {
+      if (!mounted || synced) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not sync swipe. Please try again later.'),
+        ),
+      );
     });
   }
 
@@ -224,18 +257,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           const SizedBox(height: 10),
           _TopBar(
             locationLabel: _locationLabel,
-            onPlaceholderTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings coming soon')),
-              );
-            },
+            onEditPreferencesTap: _openQuickPreferencesEditor,
+            onRefreshTap: _fetchFoods,
           ),
           const SizedBox(height: 14),
 
           Expanded(
             child: Center(
               child: _loading
-                  ? const CircularProgressIndicator()
+                  ? const _DiscoverLoadingState()
                   : _error != null
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
@@ -317,7 +347,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
                             GestureDetector(
                               onTap: () {
-                                if (_isSubmittingSwipe) return;
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -327,14 +356,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                 );
                               },
                               onPanUpdate: (d) {
-                                if (_isSubmittingSwipe) return;
                                 setState(() {
                                   _dragOffset += d.delta;
                                   _dragRotation = (_dragOffset.dx / 800) * 0.6;
                                 });
                               },
                               onPanEnd: (_) {
-                                if (_isSubmittingSwipe) return;
                                 final dx = _dragOffset.dx;
                                 if (dx > 120) {
                                   _swipeRight();
@@ -370,7 +397,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           _ActionRow(
             onNope: _swipeLeft,
             onLike: _swipeRight,
-            enabled: !_isSubmittingSwipe && !_loading && item != null,
+            enabled: !_loading && item != null,
           ),
           const SizedBox(height: 10),
 
@@ -387,13 +414,191 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 }
 
+class _DiscoverLoadingState extends StatelessWidget {
+  const _DiscoverLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = min(constraints.maxWidth * 0.86, 360.0);
+        final cardHeight = min(constraints.maxHeight * 0.82, 560.0);
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.scale(
+              scale: 0.96,
+              child: Opacity(
+                opacity: 0.42,
+                child: _FoodCardSkeleton(
+                  width: cardWidth,
+                  height: cardHeight,
+                ),
+              ),
+            ),
+            Transform.translate(
+              offset: const Offset(0, -6),
+              child: _FoodCardSkeleton(width: cardWidth, height: cardHeight),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FoodCardSkeleton extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const _FoodCardSkeleton({required this.width, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 28,
+              offset: Offset(0, 16),
+              color: Color(0x22000000),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: Column(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: SkeletonBox(borderRadius: BorderRadius.zero),
+                    ),
+                    Positioned(
+                      top: 14,
+                      left: 14,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const SkeletonBox(
+                          width: 44,
+                          height: 12,
+                          borderRadius: BorderRadius.all(Radius.circular(999)),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 18,
+                      right: 18,
+                      bottom: 18,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          SkeletonBox(
+                            width: 180,
+                            height: 22,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          SizedBox(height: 8),
+                          SkeletonBox(
+                            width: 120,
+                            height: 14,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          SkeletonBox(
+                            width: 72,
+                            height: 14,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          SizedBox(width: 12),
+                          SkeletonBox(
+                            width: 68,
+                            height: 14,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          Spacer(),
+                          SkeletonBox(
+                            width: 58,
+                            height: 22,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: const [
+                          SkeletonBox(
+                            width: 74,
+                            height: 32,
+                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                          ),
+                          SkeletonBox(
+                            width: 96,
+                            height: 32,
+                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                          ),
+                          SkeletonBox(
+                            width: 82,
+                            height: 32,
+                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /* ------------------- TOP BAR ------------------- */
 
 class _TopBar extends StatelessWidget {
   final String locationLabel;
-  final VoidCallback onPlaceholderTap;
+  final VoidCallback onEditPreferencesTap;
+  final VoidCallback onRefreshTap;
 
-  const _TopBar({required this.locationLabel, required this.onPlaceholderTap});
+  const _TopBar({
+    required this.locationLabel,
+    required this.onEditPreferencesTap,
+    required this.onRefreshTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -442,20 +647,308 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: onPlaceholderTap,
+          PopupMenuButton<_TopBarAction>(
+            offset: const Offset(0, 52),
+            elevation: 12,
+            color: const Color(0xFFFFFBF7),
+            surfaceTintColor: Colors.transparent,
+            shadowColor: const Color(0x22000000),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFFFE6D6)),
+            ),
+            menuPadding: const EdgeInsets.symmetric(vertical: 8),
+            onSelected: (value) {
+              if (value == _TopBarAction.editPreferences) {
+                onEditPreferencesTap();
+              } else if (value == _TopBarAction.refresh) {
+                onRefreshTap();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem<_TopBarAction>(
+                value: _TopBarAction.editPreferences,
+                child: _TopBarMenuItem(
+                  icon: Icons.tune_rounded,
+                  label: 'Edit preferences',
+                ),
+              ),
+              PopupMenuItem<_TopBarAction>(
+                value: _TopBarAction.refresh,
+                child: _TopBarMenuItem(
+                  icon: Icons.refresh_rounded,
+                  label: 'Refresh dishes',
+                ),
+              ),
+            ],
             child: Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: const Icon(Icons.construction_rounded),
+              child: const Icon(Icons.tune_rounded),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+enum _TopBarAction { editPreferences, refresh }
+
+class _TopBarMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _TopBarMenuItem({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF2E7),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFFFF6B4A)),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF374151),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DiscoverPreferenceSelection {
+  final List<String> cuisines;
+  final String budget;
+  final String spice;
+
+  const _DiscoverPreferenceSelection({
+    required this.cuisines,
+    required this.budget,
+    required this.spice,
+  });
+}
+
+class _QuickPreferencesSheet extends StatefulWidget {
+  final List<String> initialCuisines;
+  final String initialBudget;
+  final String initialSpice;
+
+  const _QuickPreferencesSheet({
+    required this.initialCuisines,
+    required this.initialBudget,
+    required this.initialSpice,
+  });
+
+  @override
+  State<_QuickPreferencesSheet> createState() => _QuickPreferencesSheetState();
+}
+
+class _QuickPreferencesSheetState extends State<_QuickPreferencesSheet> {
+  late Set<String> _selectedCuisines;
+  late String _selectedBudget;
+  late String _selectedSpice;
+
+  static const List<String> _cuisineOptions = [
+    'Thai',
+    'Chinese',
+    'Western',
+    'Japanese',
+    'Indian',
+    'Italian',
+    'Korean',
+    'Vietnamese',
+    'Mediterranean',
+    'Malay',
+    'Asian',
+  ];
+
+  static const List<String> _budgetOptions = ['low', 'medium', 'high'];
+  static const Map<String, String> _budgetLabels = {
+    'low': 'Budget Friendly',
+    'medium': 'Mid Range',
+    'high': 'Premium',
+  };
+  static const List<String> _spiceOptions = ['Mild', 'Medium', 'Hot'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCuisines = Set<String>.from(widget.initialCuisines);
+    _selectedBudget = widget.initialBudget;
+    _selectedSpice = _normalizeSpice(widget.initialSpice);
+  }
+
+  String _normalizeSpice(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'mild':
+      case '1':
+      case 'low':
+        return 'Mild';
+      case 'hot':
+      case '3':
+      case 'high':
+      case 'spicy':
+        return 'Hot';
+      case 'medium':
+      case '2':
+      case 'med':
+      default:
+        return 'Medium';
+    }
+  }
+
+  void _toggleCuisine(String cuisine) {
+    setState(() {
+      if (_selectedCuisines.contains(cuisine)) {
+        _selectedCuisines.remove(cuisine);
+      } else {
+        _selectedCuisines.add(cuisine);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canSave = _selectedCuisines.isNotEmpty;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 80, 12, 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8F1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Quick Preferences',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Cuisines',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _cuisineOptions.map((cuisine) {
+                    final selected = _selectedCuisines.contains(cuisine);
+                    return FilterChip(
+                      label: Text(cuisine),
+                      selected: selected,
+                      onSelected: (_) => _toggleCuisine(cuisine),
+                      selectedColor: const Color(0xFFFFF2E7),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Budget',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _budgetOptions.map((budget) {
+                    final selected = _selectedBudget == budget;
+                    return FilterChip(
+                      label: Text(_budgetLabels[budget]!),
+                      selected: selected,
+                      onSelected: (_) =>
+                          setState(() => _selectedBudget = budget),
+                      selectedColor: const Color(0xFFFFF2E7),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Spice Level',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _spiceOptions.map((spice) {
+                    final selected = _selectedSpice == spice;
+                    return FilterChip(
+                      label: Text(spice),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _selectedSpice = spice),
+                      selectedColor: const Color(0xFFFFF2E7),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: !canSave
+                            ? null
+                            : () {
+                                Navigator.pop(
+                                  context,
+                                  _DiscoverPreferenceSelection(
+                                    cuisines: _selectedCuisines.toList(),
+                                    budget: _selectedBudget,
+                                    spice: _selectedSpice,
+                                  ),
+                                );
+                              },
+                        child: const Text('Save'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -511,7 +1004,10 @@ class _FoodCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: Image.network(item.imageUrl, fit: BoxFit.cover),
+                        child: AppNetworkImage(
+                          imageUrl: item.imageUrl,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       // rating badge
                       Positioned(
@@ -523,7 +1019,7 @@ class _FoodCard extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.92),
+                            color: Colors.white.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -684,7 +1180,7 @@ class _SwipeOverlay extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(

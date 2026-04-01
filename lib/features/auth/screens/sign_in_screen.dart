@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // Sign In Screen
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
@@ -83,9 +85,8 @@ class _SignInScreenState extends State<SignInScreen> {
             email: _emailController.text.trim(),
           );
 
-          // Create user in backend database (idempotent operation)
-          // Backend extracts user ID from JWT and creates user record if it doesn't exist
-          await UserService.createUserInBackend();
+          // Start user bootstrap work right away, but don't block navigation on it.
+          final createUserFuture = UserService.createUserInBackend();
 
           // Check if user has saved preferences on backend
           final hasPreferences = await PreferencesService.hasUserPreferences();
@@ -93,10 +94,8 @@ class _SignInScreenState extends State<SignInScreen> {
           // Navigate based on preferences status
           if (mounted) {
             if (hasPreferences) {
-              // Hydrate local preference cache from backend before entering the app.
-              // Best-effort only: navigation should still proceed even if fetch fails.
-              await PreferencesService.fetchPreferencesFromBackend();
-              if (!mounted) return;
+              // Keep backend bootstrap and preference hydration best-effort.
+              unawaited(createUserFuture);
 
               // Returning user with preferences - go directly to main app
               Navigator.pushAndRemoveUntil(
@@ -106,7 +105,13 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 (route) => false,
               );
+
+              // Hydrate local preference cache after navigation so the app can
+              // open immediately with defaults and refresh when sync completes.
+              unawaited(PreferencesService.fetchPreferencesFromBackend());
             } else {
+              unawaited(createUserFuture);
+
               // First time user or no preferences - go to onboarding
               Navigator.pushReplacementNamed(context, '/');
             }

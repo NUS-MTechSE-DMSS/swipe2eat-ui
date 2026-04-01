@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
+import '../../core/widgets/loading_placeholder.dart';
 
 class FoodDetailScreen extends StatelessWidget {
   final FoodItem item;
@@ -60,7 +61,10 @@ class FoodDetailScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(22),
-                  child: Image.network(item.imageUrl, fit: BoxFit.cover),
+                  child: AppNetworkImage(
+                    imageUrl: item.imageUrl,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
@@ -186,7 +190,7 @@ class _IconButtonBox extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
@@ -207,7 +211,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),

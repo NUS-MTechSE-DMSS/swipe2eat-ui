@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../core/state/favorites_store.dart';
+import '../../core/widgets/loading_placeholder.dart';
 import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
 import '../auth/services/token_storage.dart';
@@ -20,8 +21,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   bool _loading = true;
   String? _error;
 
-  static const String _baseUrl =
-      'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
+  static const String _baseUrl ='https://dev.keiyam.me';
+    //  'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
 
   @override
   void initState() {
@@ -103,7 +104,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 Expanded(
                   child: ValueListenableBuilder<List<FoodItem>>(
                     valueListenable: FavoritesStore.instance.favorites,
-                    builder: (_, favs, __) {
+                    builder: (context, favs, child) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -136,7 +137,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
@@ -153,7 +154,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
                 boxShadow: const [
@@ -188,9 +189,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             Expanded(
               child: ValueListenableBuilder<List<FoodItem>>(
                 valueListenable: FavoritesStore.instance.favorites,
-                builder: (_, favs, __) {
+                builder: (context, favs, child) {
                   if (_loading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const _FavoritesGridSkeleton();
                   }
                   if (_error != null) {
                     return Center(
@@ -372,6 +373,120 @@ String? _imageUrlFromKey(String? imageKey) {
   return null;
 }
 
+class _FavoritesGridSkeleton extends StatelessWidget {
+  const _FavoritesGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.78,
+      ),
+      itemBuilder: (context, index) => const _FavoriteTileSkeleton(),
+    );
+  }
+}
+
+class _FavoriteTileSkeleton extends StatelessWidget {
+  const _FavoriteTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 18,
+            offset: Offset(0, 10),
+            color: Color(0x14000000),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  const Positioned.fill(
+                    child: SkeletonBox(borderRadius: BorderRadius.zero),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const SkeletonBox(
+                        width: 34,
+                        height: 12,
+                        borderRadius: BorderRadius.all(Radius.circular(999)),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const SkeletonBox(
+                        width: 42,
+                        height: 12,
+                        borderRadius: BorderRadius.all(Radius.circular(999)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(
+                    width: 108,
+                    height: 16,
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  SizedBox(height: 8),
+                  SkeletonBox(
+                    width: 86,
+                    height: 12,
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _FavoriteTile extends StatelessWidget {
   final FoodItem item;
   final VoidCallback onTap;
@@ -404,7 +519,10 @@ class _FavoriteTile extends StatelessWidget {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: Image.network(item.imageUrl, fit: BoxFit.cover),
+                      child: AppNetworkImage(
+                        imageUrl: item.imageUrl,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Positioned(
                       top: 10,
@@ -508,7 +626,7 @@ class _PillBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(999),
       ),
       child: child,

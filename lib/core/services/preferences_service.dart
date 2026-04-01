@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +14,7 @@ class PreferencesService {
   /// ValueNotifier that emits when preferences are updated
   /// Subscribers (like DiscoverScreen) can listen to this to refresh their data
   static final preferencesUpdated = ValueNotifier<int>(0);
+  static Future<void> _pendingSwipeQueue = Future.value();
 
   /// Builds HTTP headers with AWS Cognito authentication.
   /// Includes the ID token from Cognito for backend API authorization
@@ -313,5 +315,25 @@ class PreferencesService {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Queues swipe sync requests so the UI can advance immediately while
+  /// preserving backend submission order.
+  static Future<bool> queueSwipePreference({
+    required String foodId,
+    required bool liked,
+  }) {
+    final completer = Completer<bool>();
+
+    _pendingSwipeQueue = _pendingSwipeQueue.catchError((_) {}).then((_) async {
+      try {
+        final synced = await sendSwipePreference(foodId: foodId, liked: liked);
+        completer.complete(synced);
+      } catch (_) {
+        completer.complete(false);
+      }
+    });
+
+    return completer.future;
   }
 }
