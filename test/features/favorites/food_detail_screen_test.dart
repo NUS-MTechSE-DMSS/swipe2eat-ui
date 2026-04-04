@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swipe2eat_ui/features/favorites/food_detail_screen.dart';
 import 'package:swipe2eat_ui/core/state/favorites_store.dart';
 import 'package:swipe2eat_ui/models/food_item.dart';
@@ -10,6 +11,10 @@ import '../../test_helpers/network_image_stub.dart';
 void main() {
   group('FoodDetailScreen widget tests', () {
     setUp(() {
+      SharedPreferences.setMockInitialValues({
+        'cognito.userId': 'user-123',
+        'cognito.idToken': 'id-token',
+      });
       FavoritesStore.instance.clear();
     });
 

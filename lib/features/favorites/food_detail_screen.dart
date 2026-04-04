@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../../core/services/preferences_service.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/widgets/loading_placeholder.dart';
@@ -7,6 +10,36 @@ class FoodDetailScreen extends StatelessWidget {
   final FoodItem item;
 
   const FoodDetailScreen({super.key, required this.item});
+
+  Future<void> _handleFavoriteTap(BuildContext context, bool isFav) async {
+    final liked = !isFav;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final navigator = Navigator.of(context);
+
+    if (isFav) {
+      FavoritesStore.instance.removeById(item.id);
+    } else {
+      FavoritesStore.instance.add(item);
+    }
+
+    navigator.pop();
+
+    final synced = await PreferencesService.queueSwipePreference(
+      foodId: item.id,
+      liked: liked,
+    );
+    if (synced) return;
+
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(
+          liked
+              ? 'Saved locally, but could not sync your like.'
+              : 'Removed locally, but could not sync your dislike.',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +65,7 @@ class FoodDetailScreen extends StatelessWidget {
                         ? Icons.favorite_rounded
                         : Icons.favorite_border_rounded,
                     onTap: () {
-                      if (isFav) {
-                        FavoritesStore.instance.removeById(item.id);
-                      } else {
-                        FavoritesStore.instance.add(item);
-                      }
-                      // force rebuild by popping + pushing? (stateless)
-                      Navigator.pop(context);
+                      unawaited(_handleFavoriteTap(context, isFav));
                     },
                   ),
                 ],
