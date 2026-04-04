@@ -357,7 +357,6 @@ FoodItem? _foodFromJson(dynamic raw) {
     rating: rating,
     price: price,
     description: description,
-    distanceLabel: '',
     spiceLevel: spiceLevel,
     budgetLevel: budgetLevel,
     tags: tags,
@@ -586,26 +585,6 @@ class _FavoriteTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (item.distanceLabel.trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 16,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.distanceLabel,
-                            style: const TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),

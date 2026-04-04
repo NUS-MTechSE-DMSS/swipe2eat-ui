@@ -12,7 +12,6 @@ void main() {
         rating: 4.7,
         price: 14.99,
         description: 'Korean rice bowl',
-        distanceLabel: '0.7 mi away',
         spiceLevel: 2,
         budgetLevel: 2,
         tags: ['Korean', 'Rice Bowl'],
@@ -25,7 +24,6 @@ void main() {
       expect(foodItem.rating, 4.7);
       expect(foodItem.price, 14.99);
       expect(foodItem.description, 'Korean rice bowl');
-      expect(foodItem.distanceLabel, '0.7 mi away');
       expect(foodItem.spiceLevel, 2);
       expect(foodItem.budgetLevel, 2);
       expect(foodItem.tags, ['Korean', 'Rice Bowl']);
@@ -40,7 +38,6 @@ void main() {
         rating: 4.8,
         price: 16.99,
         description: 'Fresh tuna sushi roll',
-        distanceLabel: '0.3 mi away',
         spiceLevel: 1,
         budgetLevel: 2,
         tags: ['Japanese', 'Sushi'],
@@ -60,7 +57,6 @@ void main() {
         rating: 4.5,
         price: 12.99,
         description: 'Mild spiced curry',
-        distanceLabel: '1.2 mi away',
         spiceLevel: 1,
         budgetLevel: 1,
         tags: ['Indian', 'Curry'],
@@ -79,7 +75,6 @@ void main() {
         rating: 4.9,
         price: 13.99,
         description: 'Extremely hot chili',
-        distanceLabel: '0.5 mi away',
         spiceLevel: 3,
         budgetLevel: 3,
         tags: ['Thai', 'Spicy'],
@@ -98,7 +93,6 @@ void main() {
         rating: 3.5,
         price: 9.99,
         description: 'A surprise dish',
-        distanceLabel: '2.0 mi away',
         spiceLevel: 2,
         budgetLevel: 1,
         tags: [],
@@ -116,7 +110,6 @@ void main() {
         rating: 4.6,
         price: 15.99,
         description: 'Asian fusion dish',
-        distanceLabel: '0.8 mi away',
         spiceLevel: 2,
         budgetLevel: 2,
         tags: ['Asian', 'Fusion', 'Vegetarian', 'Organic', 'Gluten-Free'],
@@ -136,7 +129,6 @@ void main() {
         rating: 3.5,
         price: 5.99,
         description: 'Cheap and cheerful',
-        distanceLabel: '0.5 mi away',
         spiceLevel: 1,
         budgetLevel: 1,
         tags: ['Cheap'],
@@ -150,7 +142,6 @@ void main() {
         rating: 4.9,
         price: 29.99,
         description: 'Luxury dining',
-        distanceLabel: '1.0 mi away',
         spiceLevel: 2,
         budgetLevel: 3,
         tags: ['Premium'],
@@ -158,25 +149,6 @@ void main() {
 
       expect(foodItem1.price < foodItem2.price, true);
       expect(foodItem2.price > foodItem1.price, true);
-    });
-
-    test('FoodItem distance parsing', () {
-      final foodItem = FoodItem(
-        id: '9',
-        name: 'Nearby Food',
-        restaurant: 'Corner Shop',
-        imageUrl: 'https://example.com/nearby.jpg',
-        rating: 4.2,
-        price: 11.99,
-        description: 'Very close',
-        distanceLabel: '0.1 mi away',
-        spiceLevel: 1,
-        budgetLevel: 2,
-        tags: [],
-      );
-
-      expect(foodItem.distanceLabel.contains('mi'), true);
-      expect(foodItem.distanceLabel, '0.1 mi away');
     });
   });
 }

@@ -100,13 +100,6 @@ class FoodDetailScreen extends StatelessWidget {
                           icon: Icons.star_rounded,
                           text: item.rating.toStringAsFixed(1),
                         ),
-                        if (item.distanceLabel.trim().isNotEmpty) ...[
-                          const SizedBox(width: 10),
-                          _InfoChip(
-                            icon: Icons.location_on_outlined,
-                            text: item.distanceLabel,
-                          ),
-                        ],
                         const Spacer(),
                         Text(
                           "\$${item.price.toStringAsFixed(2)}",

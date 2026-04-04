@@ -203,7 +203,6 @@ class FoodService {
       rating: rating,
       price: price,
       description: description,
-      distanceLabel: '',
       spiceLevel: spiceLevel,
       budgetLevel: budgetLevel,
       tags: tags,

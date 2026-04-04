@@ -12,7 +12,6 @@ void main() {
         rating: 4.5,
         price: 12.99,
         description: 'Traditional Thai noodle dish',
-        distanceLabel: '0.5 mi away',
         spiceLevel: 2,
         budgetLevel: 2,
         tags: ['Thai', 'Noodles'],
@@ -33,7 +32,6 @@ void main() {
         rating: 4.2,
         price: 11.99,
         description: 'Classic burger',
-        distanceLabel: '0.3 mi away',
         spiceLevel: 1,
         budgetLevel: 1,
         tags: ['American'],
@@ -52,7 +50,6 @@ void main() {
         rating: 4.8,
         price: 18.99,
         description: 'Fresh sushi',
-        distanceLabel: '1.2 mi away',
         spiceLevel: 1,
         budgetLevel: 3,
         tags: ['Japanese', 'Sushi', 'Seafood'],
@@ -72,7 +69,6 @@ void main() {
           rating: 4.0,
           price: 15.0 * level,
           description: 'Test food',
-          distanceLabel: '0.5 mi away',
           spiceLevel: 1,
           budgetLevel: level,
           tags: [],
@@ -92,7 +88,6 @@ void main() {
           rating: 4.0,
           price: 15.0,
           description: 'Spicy dish',
-          distanceLabel: '0.5 mi away',
           spiceLevel: level,
           budgetLevel: 2,
           tags: [],
@@ -111,7 +106,6 @@ void main() {
         rating: 3.5,
         price: 10.0,
         description: 'Some food',
-        distanceLabel: '0.2 mi away',
         spiceLevel: 1,
         budgetLevel: 1,
         tags: [],
@@ -132,40 +126,12 @@ void main() {
           rating: rating,
           price: 15.0,
           description: 'Test food',
-          distanceLabel: '0.5 mi away',
           spiceLevel: 1,
           budgetLevel: 2,
           tags: [],
         );
 
         expect(food.rating, equals(rating));
-      }
-    });
-
-    test('food item distance labels', () {
-      final labels = [
-        '0.1 mi away',
-        '0.5 mi away',
-        '1.0 mi away',
-        '2.5 mi away',
-      ];
-
-      for (final label in labels) {
-        final food = FoodItem(
-          id: 'distance-test',
-          name: 'Food',
-          restaurant: 'Restaurant',
-          imageUrl: 'https://example.com/food.jpg',
-          rating: 4.0,
-          price: 15.0,
-          description: 'Test food',
-          distanceLabel: label,
-          spiceLevel: 1,
-          budgetLevel: 2,
-          tags: [],
-        );
-
-        expect(food.distanceLabel, equals(label));
       }
     });
 
@@ -179,7 +145,6 @@ void main() {
         rating: 4.0,
         price: 15.0,
         description: 'Test food',
-        distanceLabel: '0.5 mi away',
         spiceLevel: 1,
         budgetLevel: 2,
         tags: [],
@@ -199,7 +164,6 @@ void main() {
         rating: 4.7,
         price: 13.99,
         description: description,
-        distanceLabel: '0.5 mi away',
         spiceLevel: 2,
         budgetLevel: 2,
         tags: ['Thai'],
