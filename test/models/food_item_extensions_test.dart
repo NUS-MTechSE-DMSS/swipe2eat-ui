@@ -143,7 +143,12 @@ void main() {
     });
 
     test('food item distance labels', () {
-      final labels = ['0.1 mi away', '0.5 mi away', '1.0 mi away', '2.5 mi away'];
+      final labels = [
+        '0.1 mi away',
+        '0.5 mi away',
+        '1.0 mi away',
+        '2.5 mi away',
+      ];
 
       for (final label in labels) {
         final food = FoodItem(
@@ -184,7 +189,8 @@ void main() {
     });
 
     test('food item description handling', () {
-      const description = 'Delicious traditional Thai noodle dish with peanut sauce';
+      const description =
+          'Delicious traditional Thai noodle dish with peanut sauce';
       final food = FoodItem(
         id: '6',
         name: 'Pad Thai',

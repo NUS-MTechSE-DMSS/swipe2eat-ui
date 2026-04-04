@@ -4,8 +4,9 @@ import 'package:swipe2eat_ui/features/onboarding/screens/spice_screen.dart';
 
 void main() {
   group('SpiceScreen Widget', () {
-    testWidgets('displays Spice level title in AppBar',
-        (WidgetTester tester) async {
+    testWidgets('displays Spice level title in AppBar', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -59,7 +60,9 @@ void main() {
       expect(find.text('Bring on the fire!'), findsOneWidget);
     });
 
-    testWidgets('displays fire emojis for spice levels', (WidgetTester tester) async {
+    testWidgets('displays fire emojis for spice levels', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -81,7 +84,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
     });
 
-    testWidgets('Continue button is initially disabled', (WidgetTester tester) async {
+    testWidgets('Continue button is initially disabled', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -91,7 +96,9 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('selecting Mild enables Continue button', (WidgetTester tester) async {
+    testWidgets('selecting Mild enables Continue button', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -104,7 +111,9 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('selecting Medium enables Continue button', (WidgetTester tester) async {
+    testWidgets('selecting Medium enables Continue button', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -117,7 +126,9 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('selecting Hot enables Continue button', (WidgetTester tester) async {
+    testWidgets('selecting Hot enables Continue button', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -130,8 +141,9 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('can switch selection from one option to another',
-        (WidgetTester tester) async {
+    testWidgets('can switch selection from one option to another', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -150,27 +162,26 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('Back button exists and is clickable', (WidgetTester tester) async {
+    testWidgets('Back button exists and is clickable', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
-          routes: {
-            '/previous': (_) => const Scaffold(body: SizedBox.shrink()),
-          },
+          routes: {'/previous': (_) => const Scaffold(body: SizedBox.shrink())},
         ),
       );
 
       expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
     });
 
-    testWidgets('shows SnackBar when Continue is tapped after selection',
-        (WidgetTester tester) async {
+    testWidgets('shows SnackBar when Continue is tapped after selection', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
-          routes: {
-            '/budget': (_) => const Scaffold(body: SizedBox.shrink()),
-          },
+          routes: {'/budget': (_) => const Scaffold(body: SizedBox.shrink())},
         ),
       );
 
@@ -186,8 +197,9 @@ void main() {
       expect(find.text('Continue'), findsOneWidget);
     });
 
-    testWidgets('displays progress indicator at step 3 of 6',
-        (WidgetTester tester) async {
+    testWidgets('displays progress indicator at step 3 of 6', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),
@@ -198,20 +210,21 @@ void main() {
       expect(find.byType(Container), findsWidgets);
     });
 
-    testWidgets('takes selectedCuisinesLabel as parameter',
-        (WidgetTester tester) async {
+    testWidgets('takes selectedCuisinesLabel as parameter', (
+      WidgetTester tester,
+    ) async {
       const testLabel = 'Italian, French, Mexican';
       await tester.pumpWidget(
-        MaterialApp(
-          home: const SpiceScreen(selectedCuisinesLabel: testLabel),
-        ),
+        MaterialApp(home: const SpiceScreen(selectedCuisinesLabel: testLabel)),
       );
 
       // Screen should still display properly
       expect(find.text('How spicy do you like it?'), findsOneWidget);
     });
 
-    testWidgets('all three option cards are displayed', (WidgetTester tester) async {
+    testWidgets('all three option cards are displayed', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: const SpiceScreen(selectedCuisinesLabel: 'Indian, Thai'),

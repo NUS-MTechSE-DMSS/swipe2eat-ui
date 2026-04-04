@@ -1022,10 +1022,8 @@ class _CuisineEditorSheetState extends State<_CuisineEditorSheet> {
                 child: ElevatedButton(
                   onPressed: !canSave
                       ? null
-                      : () => Navigator.pop(
-                          context,
-                          _selectedCuisines.toList(),
-                        ),
+                      : () =>
+                            Navigator.pop(context, _selectedCuisines.toList()),
                   child: const Text('Save'),
                 ),
               ),
@@ -1072,9 +1070,7 @@ class _BudgetEditorSheetState extends State<_BudgetEditorSheet> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: selected
-                        ? const Color(0xFFFFF2E7)
-                        : Colors.white,
+                    color: selected ? const Color(0xFFFFF2E7) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: selected
@@ -1177,9 +1173,7 @@ class _SpiceEditorSheetState extends State<_SpiceEditorSheet> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: selected
-                        ? const Color(0xFFFFF2E7)
-                        : Colors.white,
+                    color: selected ? const Color(0xFFFFF2E7) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: selected

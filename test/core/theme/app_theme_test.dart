@@ -99,14 +99,8 @@ void main() {
           home: Scaffold(
             body: Column(
               children: [
-                Text(
-                  'Headline',
-                  style: theme.textTheme.headlineMedium,
-                ),
-                Text(
-                  'Body',
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text('Headline', style: theme.textTheme.headlineMedium),
+                Text('Body', style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
@@ -117,20 +111,22 @@ void main() {
       expect(find.text('Body'), findsOneWidget);
     });
 
-    testWidgets('scaffold has correct background color', (WidgetTester tester) async {
+    testWidgets('scaffold has correct background color', (
+      WidgetTester tester,
+    ) async {
       final theme = appTheme();
       await tester.pumpWidget(
         MaterialApp(
           theme: theme,
-          home: Scaffold(
-            body: Container(),
-          ),
+          home: Scaffold(body: Container()),
         ),
       );
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.backgroundColor ?? theme.scaffoldBackgroundColor,
-          equals(AppColors.background));
+      expect(
+        scaffold.backgroundColor ?? theme.scaffoldBackgroundColor,
+        equals(AppColors.background),
+      );
     });
 
     testWidgets('text inherits theme styles', (WidgetTester tester) async {
@@ -139,10 +135,7 @@ void main() {
         MaterialApp(
           theme: theme,
           home: Scaffold(
-            body: Text(
-              'Test Text',
-              style: theme.textTheme.bodyMedium,
-            ),
+            body: Text('Test Text', style: theme.textTheme.bodyMedium),
           ),
         ),
       );
@@ -151,15 +144,21 @@ void main() {
       expect(text.style?.color, AppColors.textSecondary);
     });
 
-    testWidgets('multiple app instances can have same theme',
-        (WidgetTester tester) async {
+    testWidgets('multiple app instances can have same theme', (
+      WidgetTester tester,
+    ) async {
       final theme1 = appTheme();
       final theme2 = appTheme();
 
-      expect(theme1.scaffoldBackgroundColor, equals(theme2.scaffoldBackgroundColor));
+      expect(
+        theme1.scaffoldBackgroundColor,
+        equals(theme2.scaffoldBackgroundColor),
+      );
       expect(theme1.useMaterial3, equals(theme2.useMaterial3));
-      expect(theme1.textTheme.headlineMedium?.fontWeight,
-          equals(theme2.textTheme.headlineMedium?.fontWeight));
+      expect(
+        theme1.textTheme.headlineMedium?.fontWeight,
+        equals(theme2.textTheme.headlineMedium?.fontWeight),
+      );
     });
   });
 

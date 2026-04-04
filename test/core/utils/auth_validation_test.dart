@@ -7,7 +7,9 @@ void main() {
       if (value == null || value.isEmpty) {
         return 'Email is required';
       }
-      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+      final emailRegex = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      );
       if (!emailRegex.hasMatch(value)) {
         return 'Please enter a valid email';
       }
@@ -57,10 +59,7 @@ void main() {
       });
 
       test('email without domain returns error', () {
-        expect(
-          validateEmail('user@'),
-          equals('Please enter a valid email'),
-        );
+        expect(validateEmail('user@'), equals('Please enter a valid email'));
       });
 
       test('email without TLD returns error', () {
@@ -143,10 +142,7 @@ void main() {
       });
 
       test('passwords match returns null', () {
-        expect(
-          validateConfirmPassword('password123', 'password123'),
-          isNull,
-        );
+        expect(validateConfirmPassword('password123', 'password123'), isNull);
       });
 
       test('passwords do not match returns error', () {

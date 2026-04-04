@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/preferences_service.dart';
 import 'done_screen.dart';
 import '../models/dietary_options.dart';
-import '../services/dietary_service.dart';
 
 class DietaryScreen extends StatefulWidget {
   final String selectedBudget;
@@ -31,7 +31,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
   @override
   void initState() {
     super.initState();
-    _future = DietaryService.fetchOptions();
+    _future = PreferencesService.fetchDietaryOptions();
   }
 
   void _toggleAllergen(String allergen) {
@@ -91,7 +91,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    
+
                     // Use fallback data if API fails, or use fetched data
                     final options = snapshot.data ?? DietaryOptions.fallback;
                     return SingleChildScrollView(
@@ -100,7 +100,10 @@ class _DietaryScreenState extends State<DietaryScreen> {
                         children: [
                           const Text(
                             "Diet type (pick one)",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                           const SizedBox(height: 10),
                           Wrap(
@@ -111,7 +114,8 @@ class _DietaryScreenState extends State<DietaryScreen> {
                               return ChoiceChip(
                                 label: Text(opt),
                                 selected: selected,
-                                onSelected: (_) => setState(() => _selectedDietType = opt),
+                                onSelected: (_) =>
+                                    setState(() => _selectedDietType = opt),
                                 selectedColor: const Color(0xFFFFF2E7),
                                 labelStyle: TextStyle(
                                   fontWeight: FontWeight.w800,
@@ -125,7 +129,10 @@ class _DietaryScreenState extends State<DietaryScreen> {
                           const SizedBox(height: 20),
                           const Text(
                             "Allergens (optional)",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                           const SizedBox(height: 10),
                           Wrap(
@@ -170,12 +177,14 @@ class _DietaryScreenState extends State<DietaryScreen> {
                       enabled: canContinue,
                       onTap: canContinue
                           ? () async {
-                              final prefs = await SharedPreferences.getInstance();
+                              final prefs =
+                                  await SharedPreferences.getInstance();
                               await prefs.setString(
                                 _prefsDietTypeKey,
                                 _selectedDietType!,
                               );
-                              final allergens = _selectedAllergens.toList()..sort();
+                              final allergens = _selectedAllergens.toList()
+                                ..sort();
                               await prefs.setStringList(
                                 _prefsAllergensKey,
                                 allergens,
@@ -185,10 +194,13 @@ class _DietaryScreenState extends State<DietaryScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => DoneScreen(
                                     selectedBudget: widget.selectedBudget,
-                                    selectedCuisinesLabel: widget.selectedCuisinesLabel,
-                                    selectedSpiceLabel: widget.selectedSpiceLabel,
+                                    selectedCuisinesLabel:
+                                        widget.selectedCuisinesLabel,
+                                    selectedSpiceLabel:
+                                        widget.selectedSpiceLabel,
                                     selectedDietType: _selectedDietType!,
-                                    selectedAllergensLabel: _selectedAllergens.isEmpty
+                                    selectedAllergensLabel:
+                                        _selectedAllergens.isEmpty
                                         ? "None"
                                         : _selectedAllergens.join(", "),
                                   ),
@@ -229,7 +241,9 @@ class _ProgressPills extends StatelessWidget {
             margin: EdgeInsets.only(right: i == totalSteps - 1 ? 0 : 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: isActive ? const Color(0xFFFF6B4A) : const Color(0xFFE5E7EB),
+              color: isActive
+                  ? const Color(0xFFFF6B4A)
+                  : const Color(0xFFE5E7EB),
             ),
           ),
         );
@@ -256,10 +270,7 @@ class _SecondaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w800)),
       ),
     );
   }
@@ -270,11 +281,7 @@ class _GradientButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onTap;
 
-  const _GradientButton({
-    required this.text,
-    this.enabled = true,
-    this.onTap,
-  });
+  const _GradientButton({required this.text, this.enabled = true, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +300,10 @@ class _GradientButton extends StatelessWidget {
           ),
           child: Text(
             text,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),

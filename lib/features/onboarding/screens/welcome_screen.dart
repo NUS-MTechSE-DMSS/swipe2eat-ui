@@ -28,20 +28,21 @@ class WelcomeScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFFF8A3D),
-                    Color(0xFFFF4D4D),
-                  ],
+                  colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)],
                 ),
               ),
-              child: const Icon(Icons.restaurant, size: 60, color: Colors.white),
+              child: const Icon(
+                Icons.restaurant,
+                size: 60,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 40),
             GradientButton(
               text: "Continue",
               onTap: () {
                 // Navigate to cuisine screen
-               Navigator.pushNamed(context, '/cuisine');
+                Navigator.pushNamed(context, '/cuisine');
               },
             ),
           ],

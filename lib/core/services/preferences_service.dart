@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/onboarding/models/dietary_options.dart';
 import '../../features/auth/services/token_storage.dart';
 import '../config/api_config.dart';
 
@@ -126,6 +127,21 @@ class PreferencesService {
         _extractSpiceLabel(spice) != null;
   }
 
+  /// Fetches dietary options from the preference service.
+  static Future<DietaryOptions> fetchDietaryOptions() async {
+    final uri = Uri.parse(ApiConfig.dietaryOptionsUrl);
+    final res = await http
+        .get(uri, headers: await _buildAuthHeaders())
+        .timeout(const Duration(seconds: 2));
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load options (${res.statusCode})');
+    }
+
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    return DietaryOptions.fromJson(data);
+  }
+
   /// Checks if the user has saved preferences on the backend
   /// This is used to determine if user needs to go through onboarding
   /// Returns true if user has preferences, false otherwise
@@ -138,7 +154,7 @@ class PreferencesService {
       }
 
       final uri = Uri.parse(
-        '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
+        '${ApiConfig.preferenceBaseUrl}/users/$cognitoUserId',
       );
       final res = await http
           .get(uri, headers: await _buildAuthHeaders())
@@ -182,7 +198,7 @@ class PreferencesService {
       }
 
       final uri = Uri.parse(
-        '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
+        '${ApiConfig.preferenceBaseUrl}/users/$cognitoUserId',
       );
       final headers = await _buildAuthHeaders();
       final payloadMap = <String, dynamic>{

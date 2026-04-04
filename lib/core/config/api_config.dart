@@ -1,8 +1,18 @@
 /// API configuration for the application.
 /// Contains base URLs and common API endpoints.
 class ApiConfig {
+  static const String _defaultBaseUrl = 'https://dev.keiyam.me';
+
   /// Base URL for all backend services deployed on AWS.
-  static const String baseUrl =
-        'https://dev.keiyam.me';
-      //'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
+  ///
+  /// Override at build time with:
+  /// `--dart-define=API_BASE_URL=https://api.example.com`
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: _defaultBaseUrl,
+  );
+
+  static String get preferenceBaseUrl => '$baseUrl/preference';
+
+  static String get dietaryOptionsUrl => '$preferenceBaseUrl/dietary/options';
 }

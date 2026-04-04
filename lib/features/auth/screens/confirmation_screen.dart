@@ -6,10 +6,7 @@ import '../../../core/widgets/gradient_button.dart';
 class ConfirmationScreen extends StatefulWidget {
   final String email;
 
-  const ConfirmationScreen({
-    super.key,
-    required this.email,
-  });
+  const ConfirmationScreen({super.key, required this.email});
 
   @override
   State<ConfirmationScreen> createState() => _ConfirmationScreenState();
@@ -58,12 +55,18 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         if (result['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Email verified successfully!'),
+              content: Text(
+                result['message'] ?? 'Email verified successfully!',
+              ),
               backgroundColor: Colors.green,
             ),
           );
           // Navigate to sign in screen
-          Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (route) => false);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/sign-in',
+            (route) => false,
+          );
         } else {
           setState(() {
             _errorMessage = result['error'] ?? 'Verification failed';
@@ -135,7 +138,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         backgroundColor: const Color(0xFFFFF8F1),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF111827)),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Color(0xFF111827),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -150,10 +156,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                 // Header
                 const Text(
                   'Verify Your Email',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -200,11 +203,17 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -240,7 +249,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -250,7 +262,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   maxLength: 6,
@@ -278,7 +293,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                                 strokeWidth: 2.5,
                               ),
                             ),
@@ -301,7 +318,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B4A)),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFFF6B4A),
+                              ),
                             ),
                           )
                         : const Text(

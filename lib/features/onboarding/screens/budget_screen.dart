@@ -115,24 +115,33 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       text: "Continue",
                       enabled: canContinue,
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8A3D), Color(0xFFFF4D4D)], // CTA stays orange/red
+                        colors: [
+                          Color(0xFFFF8A3D),
+                          Color(0xFFFF4D4D),
+                        ], // CTA stays orange/red
                       ),
                       onTap: canContinue
                           ? () async {
                               final selected = _selected!;
-                              final prefs = await SharedPreferences.getInstance();
+                              final prefs =
+                                  await SharedPreferences.getInstance();
                               await prefs.setString(
                                 _prefsBudgetKey,
                                 _budgetToApiValue(selected),
                               );
-                              await prefs.setString(_prefsBudgetLabelKey, selected);
+                              await prefs.setString(
+                                _prefsBudgetLabelKey,
+                                selected,
+                              );
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => DietaryScreen(
                                     selectedBudget: selected,
-                                    selectedCuisinesLabel: widget.selectedCuisinesLabel,
-                                    selectedSpiceLabel: widget.selectedSpiceLabel,
+                                    selectedCuisinesLabel:
+                                        widget.selectedCuisinesLabel,
+                                    selectedSpiceLabel:
+                                        widget.selectedSpiceLabel,
                                   ),
                                 ),
                               );
@@ -156,10 +165,7 @@ class _ProgressPills extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
 
-  const _ProgressPills({
-    required this.currentStep,
-    required this.totalSteps,
-  });
+  const _ProgressPills({required this.currentStep, required this.totalSteps});
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +180,9 @@ class _ProgressPills extends StatelessWidget {
             margin: EdgeInsets.only(right: i == totalSteps - 1 ? 0 : 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: isActive ? const Color(0xFFFF6B4A) : const Color(0xFFE5E7EB),
+              color: isActive
+                  ? const Color(0xFFFF6B4A)
+                  : const Color(0xFFE5E7EB),
             ),
           ),
         );
@@ -231,7 +239,9 @@ class _BudgetOptionCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white.withOpacity(0.15) : const Color(0xFFEFFDF4),
+                  color: selected
+                      ? Colors.white.withOpacity(0.15)
+                      : const Color(0xFFEFFDF4),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
@@ -256,7 +266,9 @@ class _BudgetOptionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: selected ? Colors.white : const Color(0xFF111827),
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF111827),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -264,7 +276,9 @@ class _BudgetOptionCard extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 14,
-                        color: selected ? Colors.white70 : const Color(0xFF6B7280),
+                        color: selected
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -283,7 +297,10 @@ class _BudgetOptionCard extends StatelessWidget {
                 ),
                 child: selected
                     ? const Center(
-                        child: CircleAvatar(radius: 6, backgroundColor: Colors.white),
+                        child: CircleAvatar(
+                          radius: 6,
+                          backgroundColor: Colors.white,
+                        ),
                       )
                     : null,
               ),

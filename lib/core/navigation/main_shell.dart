@@ -87,11 +87,13 @@ class _BottomNav extends StatelessWidget {
           children: [
             Icon(icon, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontWeight: FontWeight.w700,
-                )),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       );
@@ -110,11 +112,13 @@ class _BottomNav extends StatelessWidget {
           children: [
             Icon(icon, color: const Color(0xFFFF6B4A)),
             const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                  color: Color(0xFFFF6B4A),
-                  fontWeight: FontWeight.w900,
-                )),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFFFF6B4A),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),

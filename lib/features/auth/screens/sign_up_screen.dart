@@ -16,7 +16,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   String? _selectedCity;
   bool _showPassword = false;
@@ -51,7 +52,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email';
     }
@@ -119,13 +122,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => ConfirmationScreen(email: _emailController.text.trim()),
+              builder: (_) =>
+                  ConfirmationScreen(email: _emailController.text.trim()),
             ),
           );
         } else {
           // Show error from Cognito
           setState(() {
-            _generalError = result['error'] ?? 'Sign up failed. Please try again.';
+            _generalError =
+                result['error'] ?? 'Sign up failed. Please try again.';
           });
         }
       }
@@ -150,7 +155,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: const Color(0xFFFFF8F1),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF111827)),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Color(0xFF111827),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -165,10 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 // Header
                 const Text(
                   'Create Account',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -188,11 +193,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -228,7 +239,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -238,7 +252,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   textCapitalization: TextCapitalization.words,
                   validator: _validateName,
@@ -265,7 +282,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -275,7 +295,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
@@ -302,7 +325,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -312,7 +338,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.location_city_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   items: _cities.map((String city) {
                     return DropdownMenuItem<String>(
@@ -320,11 +349,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Text(city),
                     );
                   }).toList(),
-                  onChanged: _isLoading ? null : (String? newValue) {
-                    setState(() {
-                      _selectedCity = newValue;
-                    });
-                  },
+                  onChanged: _isLoading
+                      ? null
+                      : (String? newValue) {
+                          setState(() {
+                            _selectedCity = newValue;
+                          });
+                        },
                   validator: _validateCity,
                 ),
                 const SizedBox(height: 20),
@@ -347,7 +378,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -357,7 +391,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -393,7 +430,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -403,14 +443,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                        _showConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF6B7280),
                       ),
                       onPressed: () {
-                        setState(() => _showConfirmPassword = !_showConfirmPassword);
+                        setState(
+                          () => _showConfirmPassword = !_showConfirmPassword,
+                        );
                       },
                     ),
                   ),
@@ -439,16 +486,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                                 strokeWidth: 2.5,
                               ),
                             ),
                           ),
                         )
-                      : GradientButton(
-                          text: 'Sign Up',
-                          onTap: _handleSignUp,
-                        ),
+                      : GradientButton(text: 'Sign Up', onTap: _handleSignUp),
                 ),
                 const SizedBox(height: 20),
 

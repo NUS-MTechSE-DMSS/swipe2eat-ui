@@ -17,7 +17,6 @@ void main() {
     tearDownAll(() {
       HttpOverrides.global = null;
     });
-
   });
 }
 

@@ -2,10 +2,7 @@ class DietaryOptions {
   final List<String> dietType;
   final List<String> allergens;
 
-  const DietaryOptions({
-    required this.dietType,
-    required this.allergens,
-  });
+  const DietaryOptions({required this.dietType, required this.allergens});
 
   factory DietaryOptions.fromJson(Map<String, dynamic> json) {
     return DietaryOptions(
@@ -16,13 +13,7 @@ class DietaryOptions {
 
   // Fallback data when API is unavailable.
   static const DietaryOptions fallback = DietaryOptions(
-    dietType: [
-      'Omnivore',
-      'Vegetarian',
-      'Vegan',
-      'Halal',
-      'Kosher',
-    ],
+    dietType: ['Omnivore', 'Vegetarian', 'Vegan', 'Halal', 'Kosher'],
     allergens: [
       'Peanut',
       'Dairy',

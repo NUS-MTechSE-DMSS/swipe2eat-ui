@@ -26,10 +26,19 @@ class TestHttpOverrides extends HttpOverrides {
 
 class FakeHttpClient implements HttpClient {
   @override
-  void addCredentials(Uri url, String realm, HttpClientCredentials credentials) {}
+  void addCredentials(
+    Uri url,
+    String realm,
+    HttpClientCredentials credentials,
+  ) {}
 
   @override
-  void addProxyCredentials(String host, int port, String realm, HttpClientCredentials credentials) {}
+  void addProxyCredentials(
+    String host,
+    int port,
+    String realm,
+    HttpClientCredentials credentials,
+  ) {}
 
   // Match SDK signature: Future<bool> Function(Uri url, String scheme, String? realm)?
   @override
@@ -62,7 +71,8 @@ class FakeHttpClientRequest implements HttpClientRequest {
   Future<HttpClientResponse> close() async {
     // 1x1 transparent PNG
     final png = base64Decode(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=');
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+    );
     // push bytes then close stream
     _controller.add(png);
     await _controller.close();
@@ -73,7 +83,8 @@ class FakeHttpClientRequest implements HttpClientRequest {
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResponse {
+class FakeHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
   final Stream<List<int>> _stream;
   FakeHttpClientResponse(this._stream);
 
@@ -81,8 +92,12 @@ class FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResp
   int get statusCode => 200;
 
   @override
-  StreamSubscription<List<int>> listen(void Function(List<int>)? onData,
-      {Function? onError, void Function()? onDone, bool? cancelOnError}) {
+  StreamSubscription<List<int>> listen(
+    void Function(List<int>)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
     return _stream.listen(
       onData,
       onError: onError,

@@ -19,7 +19,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   bool _showPassword = false;
   bool _isLoading = false;
   String? _generalError;
@@ -35,7 +35,9 @@ class _SignInScreenState extends State<SignInScreen> {
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email';
     }
@@ -71,10 +73,10 @@ class _SignInScreenState extends State<SignInScreen> {
       if (mounted) {
         if (result['success'] == true) {
           final idToken = result['idToken'];
-          
+
           // Extract userId from JWT token
           final userId = TokenStorage.extractUserIdFromToken(idToken);
-          
+
           // Store tokens
           await TokenStorage.saveTokens(
             idToken: idToken,
@@ -97,7 +99,11 @@ class _SignInScreenState extends State<SignInScreen> {
               unawaited(createUserFuture);
 
               // Returning user with preferences - go directly to main app
-              Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/main',
+                (route) => false,
+              );
 
               // Hydrate local preference cache after navigation so the app can
               // open immediately with defaults and refresh when sync completes.
@@ -111,7 +117,8 @@ class _SignInScreenState extends State<SignInScreen> {
           }
         } else {
           setState(() {
-            _generalError = result['error'] ?? 'Sign in failed. Please try again.';
+            _generalError =
+                result['error'] ?? 'Sign in failed. Please try again.';
           });
         }
       }
@@ -132,10 +139,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F1),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF8F1),
-        elevation: 0,
-      ),
+      appBar: AppBar(backgroundColor: const Color(0xFFFFF8F1), elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -147,10 +151,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 // Header
                 const Text(
                   'Welcome Back',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -170,11 +171,17 @@ class _SignInScreenState extends State<SignInScreen> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -210,7 +217,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -220,7 +230,10 @@ class _SignInScreenState extends State<SignInScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
@@ -247,7 +260,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6B4A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -257,7 +273,10 @@ class _SignInScreenState extends State<SignInScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFF6B7280)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -293,16 +312,15 @@ class _SignInScreenState extends State<SignInScreen> {
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                                 strokeWidth: 2.5,
                               ),
                             ),
                           ),
                         )
-                      : GradientButton(
-                          text: 'Sign In',
-                          onTap: _handleLogin,
-                        ),
+                      : GradientButton(text: 'Sign In', onTap: _handleLogin),
                 ),
                 const SizedBox(height: 20),
 
@@ -315,7 +333,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         // TODO: Implement forgot password flow
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Forgot password feature coming soon'),
+                            content: Text(
+                              'Forgot password feature coming soon',
+                            ),
                           ),
                         );
                       },

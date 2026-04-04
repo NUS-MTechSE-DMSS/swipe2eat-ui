@@ -22,11 +22,11 @@ class TokenStorage {
     await prefs.setString(_idTokenKey, idToken);
     await prefs.setString(_accessTokenKey, accessToken);
     await prefs.setString(_refreshTokenKey, refreshToken);
-    
+
     if (userId != null) {
       await prefs.setString(_userIdKey, userId);
     }
-    
+
     if (email != null) {
       await prefs.setString(_emailKey, email);
     }
@@ -76,7 +76,7 @@ class TokenStorage {
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_emailKey);
-    
+
     // Clear user backend creation flag
     await UserService.clearUserCreatedFlag();
   }
@@ -103,13 +103,13 @@ class TokenStorage {
 
       // Decode the payload (second part)
       final payload = parts[1];
-      
+
       // Add padding if needed for base64 decoding
       var normalized = base64Url.normalize(payload);
       var decoded = utf8.decode(base64Url.decode(normalized));
-      
+
       final payloadMap = jsonDecode(decoded) as Map<String, dynamic>;
-      
+
       // Extract 'sub' claim which is the userId in Cognito
       return payloadMap['sub'] as String?;
     } catch (_) {

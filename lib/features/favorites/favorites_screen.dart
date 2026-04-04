@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../core/config/api_config.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/widgets/loading_placeholder.dart';
 import '../../models/food_item.dart';
@@ -20,9 +21,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   String _query = "";
   bool _loading = true;
   String? _error;
-
-  static const String _baseUrl ='https://dev.keiyam.me';
-    //  'http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com';
 
   @override
   void initState() {
@@ -51,7 +49,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (userId == null || userId.trim().isEmpty) {
         throw Exception('Missing user id');
       }
-      final uri = Uri.parse('$_baseUrl/preference/food/users/$userId');
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/preference/food/users/$userId',
+      );
       final res = await http.get(uri, headers: await _buildAuthHeaders());
       if (res.statusCode != 200) {
         throw Exception('Failed to load favorites (${res.statusCode})');

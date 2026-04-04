@@ -5,10 +5,7 @@ import 'budget_screen.dart';
 class SpiceScreen extends StatefulWidget {
   final String selectedCuisinesLabel;
 
-  const SpiceScreen({
-    super.key,
-    required this.selectedCuisinesLabel,
-  });
+  const SpiceScreen({super.key, required this.selectedCuisinesLabel});
 
   @override
   State<SpiceScreen> createState() => _SpiceScreenState();
@@ -101,13 +98,15 @@ class _SpiceScreenState extends State<SpiceScreen> {
                       onTap: canContinue
                           ? () async {
                               final selected = _selected!;
-                              final prefs = await SharedPreferences.getInstance();
+                              final prefs =
+                                  await SharedPreferences.getInstance();
                               await prefs.setString(_prefsSpiceKey, selected);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => BudgetScreen(
-                                    selectedCuisinesLabel: widget.selectedCuisinesLabel,
+                                    selectedCuisinesLabel:
+                                        widget.selectedCuisinesLabel,
                                     selectedSpiceLabel: selected,
                                   ),
                                 ),

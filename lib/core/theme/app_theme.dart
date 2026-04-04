@@ -10,9 +10,7 @@ ThemeData appTheme() {
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
       ),
-      bodyMedium: TextStyle(
-        color: AppColors.textSecondary,
-      ),
+      bodyMedium: TextStyle(color: AppColors.textSecondary),
     ),
     useMaterial3: true,
   );

@@ -103,9 +103,7 @@ class _ImagePlaceholder extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const SkeletonBox(
-          borderRadius: BorderRadius.zero,
-        ),
+        const SkeletonBox(borderRadius: BorderRadius.zero),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(

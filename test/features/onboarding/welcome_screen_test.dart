@@ -5,31 +5,19 @@ import 'package:swipe2eat_ui/features/onboarding/screens/welcome_screen.dart';
 void main() {
   group('WelcomeScreen Widget', () {
     testWidgets('displays welcome title', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       expect(find.text('Welcome to Swipe2Eat'), findsOneWidget);
     });
 
     testWidgets('displays subtitle text', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       expect(find.text('Discover your next favorite meal'), findsOneWidget);
     });
 
     testWidgets('displays restaurant icon', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       expect(find.byIcon(Icons.restaurant), findsOneWidget);
     });
@@ -38,9 +26,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: WelcomeScreen(),
-          routes: {
-            '/cuisine': (_) => const Scaffold(body: SizedBox.shrink()),
-          },
+          routes: {'/cuisine': (_) => const Scaffold(body: SizedBox.shrink())},
         ),
       );
 
@@ -48,11 +34,7 @@ void main() {
     });
 
     testWidgets('title has correct font size', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       final titleFinder = find.text('Welcome to Swipe2Eat');
       final title = tester.widget<Text>(titleFinder);
@@ -62,11 +44,7 @@ void main() {
     });
 
     testWidgets('subtitle is centered', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       final subtitleFinder = find.text('Discover your next favorite meal');
       final subtitle = tester.widget<Text>(subtitleFinder);
@@ -74,39 +52,31 @@ void main() {
       expect(subtitle.textAlign, TextAlign.center);
     });
 
-    testWidgets('icon container has orange gradient', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+    testWidgets('icon container has orange gradient', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       expect(find.byIcon(Icons.restaurant), findsOneWidget);
     });
 
     testWidgets('has proper padding', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       final padding = find.byType(Padding);
       expect(padding, findsWidgets);
     });
 
     testWidgets('scaffold has proper background', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       final scaffold = find.byType(Scaffold);
       expect(scaffold, findsOneWidget);
     });
 
-    testWidgets('continue button navigates to cuisine screen', (WidgetTester tester) async {
+    testWidgets('continue button navigates to cuisine screen', (
+      WidgetTester tester,
+    ) async {
       var navigated = false;
 
       await tester.pumpWidget(
@@ -128,22 +98,14 @@ void main() {
     });
 
     testWidgets('column layout is centered', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       final column = tester.widget<Column>(find.byType(Column));
       expect(column.mainAxisAlignment, MainAxisAlignment.center);
     });
 
     testWidgets('renders all text elements', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WelcomeScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
       expect(find.byType(Text), findsWidgets);
       expect(find.byType(Text).evaluate().length, greaterThanOrEqualTo(2));

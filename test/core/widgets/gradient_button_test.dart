@@ -8,10 +8,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -23,10 +20,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -41,14 +35,13 @@ void main() {
       expect(sizedBox, findsWidgets);
     });
 
-    testWidgets('displays gradient colors correctly', (WidgetTester tester) async {
+    testWidgets('displays gradient colors correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -62,10 +55,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -77,14 +67,13 @@ void main() {
       expect(text.style?.color, Colors.white);
     });
 
-    testWidgets('text has correct font size and weight', (WidgetTester tester) async {
+    testWidgets('text has correct font size and weight', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -96,7 +85,9 @@ void main() {
       expect(text.style?.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('calls onTap callback when tapped', (WidgetTester tester) async {
+    testWidgets('calls onTap callback when tapped', (
+      WidgetTester tester,
+    ) async {
       var tapped = false;
 
       await tester.pumpWidget(
@@ -120,10 +111,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );
@@ -135,10 +123,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Login',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Login', onTap: () {}),
           ),
         ),
       );
@@ -147,7 +132,9 @@ void main() {
       expect(find.text('Continue'), findsNothing);
     });
 
-    testWidgets('button responds to multiple taps', (WidgetTester tester) async {
+    testWidgets('button responds to multiple taps', (
+      WidgetTester tester,
+    ) async {
       var tapCount = 0;
 
       await tester.pumpWidget(
@@ -170,7 +157,9 @@ void main() {
       expect(tapCount, 2);
     });
 
-    testWidgets('renders correctly with long text', (WidgetTester tester) async {
+    testWidgets('renders correctly with long text', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -182,17 +171,17 @@ void main() {
         ),
       );
 
-      expect(find.text('This is a very long button text that might wrap'), findsOneWidget);
+      expect(
+        find.text('This is a very long button text that might wrap'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('gradient uses correct colors', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GradientButton(
-              text: 'Continue',
-              onTap: () {},
-            ),
+            body: GradientButton(text: 'Continue', onTap: () {}),
           ),
         ),
       );

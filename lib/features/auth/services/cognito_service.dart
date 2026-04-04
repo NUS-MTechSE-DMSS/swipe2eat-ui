@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 /// AWS Cognito Authentication Service
 /// Handles user signup, signin, and token management
 class CognitoService {
-  static const String _cognitoEndpoint = 'https://cognito-idp.ap-southeast-1.amazonaws.com/';
+  static const String _cognitoEndpoint =
+      'https://cognito-idp.ap-southeast-1.amazonaws.com/';
   static const String _clientId = '1d1jkchdvgt5tldbb0hivruird';
 
   /// Sign up a new user with AWS Cognito
@@ -27,21 +28,11 @@ class CognitoService {
         'Username': email,
         'Password': password,
         'UserAttributes': [
-          {
-            'Name': 'email',
-            'Value': email,
-          },
-          if (name != null && name.isNotEmpty)
-            {
-              'Name': 'name',
-              'Value': name,
-            },
+          {'Name': 'email', 'Value': email},
+          if (name != null && name.isNotEmpty) {'Name': 'name', 'Value': name},
           // NOTE: custom:City attribute configured in AWS Cognito User Pool (case-sensitive)
           if (city != null && city.isNotEmpty)
-            {
-              'Name': 'custom:City',
-              'Value': city,
-            },
+            {'Name': 'custom:City', 'Value': city},
         ],
       };
 
@@ -62,14 +53,15 @@ class CognitoService {
           'success': true,
           'userId': userSub,
           'requiresConfirmation': !userConfirmed,
-          'message': userConfirmed 
-              ? 'Account created successfully!' 
+          'message': userConfirmed
+              ? 'Account created successfully!'
               : 'Please check your email for verification code',
         };
       } else {
         // Handle Cognito errors
         final errorType = responseData['__type'] as String?;
-        final errorMessage = responseData['message'] as String? ?? 'Sign up failed';
+        final errorMessage =
+            responseData['message'] as String? ?? 'Sign up failed';
 
         String userFriendlyMessage = errorMessage;
 
@@ -78,11 +70,14 @@ class CognitoService {
           if (errorType.contains('UsernameExistsException')) {
             userFriendlyMessage = 'An account with this email already exists';
           } else if (errorType.contains('InvalidPasswordException')) {
-            userFriendlyMessage = 'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and special characters';
+            userFriendlyMessage =
+                'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and special characters';
           } else if (errorType.contains('InvalidParameterException')) {
             // Check if it's a custom attribute schema error
-            if (errorMessage.contains('custom:') || errorMessage.contains('schema')) {
-              userFriendlyMessage = 'Custom attribute error. Please verify custom:City attribute exists in Cognito User Pool settings';
+            if (errorMessage.contains('custom:') ||
+                errorMessage.contains('schema')) {
+              userFriendlyMessage =
+                  'Custom attribute error. Please verify custom:City attribute exists in Cognito User Pool settings';
             } else {
               userFriendlyMessage = 'Invalid email or password format';
             }
@@ -137,7 +132,8 @@ class CognitoService {
       } else {
         final responseData = jsonDecode(response.body);
         final errorType = responseData['__type'] as String?;
-        final errorMessage = responseData['message'] as String? ?? 'Verification failed';
+        final errorMessage =
+            responseData['message'] as String? ?? 'Verification failed';
 
         String userFriendlyMessage = errorMessage;
 
@@ -145,7 +141,8 @@ class CognitoService {
           if (errorType.contains('CodeMismatchException')) {
             userFriendlyMessage = 'Invalid verification code. Please try again';
           } else if (errorType.contains('ExpiredCodeException')) {
-            userFriendlyMessage = 'Verification code has expired. Request a new one';
+            userFriendlyMessage =
+                'Verification code has expired. Request a new one';
           } else if (errorType.contains('NotAuthorizedException')) {
             userFriendlyMessage = 'User is already confirmed';
           }
@@ -172,14 +169,12 @@ class CognitoService {
   }) async {
     try {
       final headers = {
-        'X-Amz-Target': 'AWSCognitoIdentityProviderService.ResendConfirmationCode',
+        'X-Amz-Target':
+            'AWSCognitoIdentityProviderService.ResendConfirmationCode',
         'Content-Type': 'application/x-amz-json-1.1',
       };
 
-      final body = {
-        'ClientId': _clientId,
-        'Username': email,
-      };
+      final body = {'ClientId': _clientId, 'Username': email};
 
       final response = await http.post(
         Uri.parse(_cognitoEndpoint),
@@ -194,12 +189,10 @@ class CognitoService {
         };
       } else {
         final responseData = jsonDecode(response.body);
-        final errorMessage = responseData['message'] as String? ?? 'Failed to resend code';
+        final errorMessage =
+            responseData['message'] as String? ?? 'Failed to resend code';
 
-        return {
-          'success': false,
-          'error': errorMessage,
-        };
+        return {'success': false, 'error': errorMessage};
       }
     } catch (e) {
       return {
@@ -225,10 +218,7 @@ class CognitoService {
       final body = {
         'AuthFlow': 'USER_PASSWORD_AUTH',
         'ClientId': _clientId,
-        'AuthParameters': {
-          'USERNAME': email,
-          'PASSWORD': password,
-        },
+        'AuthParameters': {'USERNAME': email, 'PASSWORD': password},
       };
 
       final response = await http.post(
@@ -263,7 +253,8 @@ class CognitoService {
         }
       } else {
         final errorType = responseData['__type'] as String?;
-        final errorMessage = responseData['message'] as String? ?? 'Sign in failed';
+        final errorMessage =
+            responseData['message'] as String? ?? 'Sign in failed';
 
         String userFriendlyMessage = errorMessage;
 

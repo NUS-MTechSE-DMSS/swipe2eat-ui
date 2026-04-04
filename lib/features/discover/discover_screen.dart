@@ -431,10 +431,7 @@ class _DiscoverLoadingState extends StatelessWidget {
               scale: 0.96,
               child: Opacity(
                 opacity: 0.42,
-                child: _FoodCardSkeleton(
-                  width: cardWidth,
-                  height: cardHeight,
-                ),
+                child: _FoodCardSkeleton(width: cardWidth, height: cardHeight),
               ),
             ),
             Transform.translate(
@@ -561,17 +558,23 @@ class _FoodCardSkeleton extends StatelessWidget {
                           SkeletonBox(
                             width: 74,
                             height: 32,
-                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(999),
+                            ),
                           ),
                           SkeletonBox(
                             width: 96,
                             height: 32,
-                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(999),
+                            ),
                           ),
                           SkeletonBox(
                             width: 82,
                             height: 32,
-                            borderRadius: BorderRadius.all(Radius.circular(999)),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(999),
+                            ),
                           ),
                         ],
                       ),

@@ -13,7 +13,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
   final Set<String> _selected = {};
 
   static const String _prefsCuisinesKey = 'prefs.cuisines';
-  
+
   // Hardcoded list of cuisines
   static const List<String> _cuisines = [
     'Thai',
@@ -82,8 +82,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
               Expanded(
                 child: GridView.builder(
                   itemCount: _cuisines.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
@@ -120,8 +119,12 @@ class _CuisineScreenState extends State<CuisineScreen> {
                       onTap: canContinue
                           ? () async {
                               final cuisines = _selected.toList()..sort();
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setStringList(_prefsCuisinesKey, cuisines);
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setStringList(
+                                _prefsCuisinesKey,
+                                cuisines,
+                              );
                               final cuisinesLabel = cuisines.join(", ");
                               Navigator.push(
                                 context,
@@ -134,9 +137,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    "Selected: $cuisinesLabel",
-                                  ),
+                                  content: Text("Selected: $cuisinesLabel"),
                                 ),
                               );
                             }
@@ -144,7 +145,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -190,10 +191,7 @@ class _ProgressPills extends StatelessWidget {
   final int currentStep; // 1-based
   final int totalSteps;
 
-  const _ProgressPills({
-    required this.currentStep,
-    required this.totalSteps,
-  });
+  const _ProgressPills({required this.currentStep, required this.totalSteps});
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +206,9 @@ class _ProgressPills extends StatelessWidget {
             margin: EdgeInsets.only(right: i == totalSteps - 1 ? 0 : 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: isActive ? const Color(0xFFFF6B4A) : const Color(0xFFE5E7EB),
+              color: isActive
+                  ? const Color(0xFFFF6B4A)
+                  : const Color(0xFFE5E7EB),
             ),
           ),
         );
@@ -243,7 +243,9 @@ class _CuisineTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               width: 2,
-              color: isSelected ? const Color(0xFFFF6B4A) : const Color(0xFFE5E7EB),
+              color: isSelected
+                  ? const Color(0xFFFF6B4A)
+                  : const Color(0xFFE5E7EB),
             ),
             boxShadow: const [
               BoxShadow(
@@ -262,12 +264,19 @@ class _CuisineTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle, color: Color(0xFFFF6B4A), size: 22),
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFFFF6B4A),
+                    size: 22,
+                  ),
               ],
             ),
           ),

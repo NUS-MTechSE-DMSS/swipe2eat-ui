@@ -5,8 +5,6 @@ void main() {
   runApp(const Swipe2EatApp());
 }
 
-
-
 // import 'package:flutter/material.dart';
 
 // void main() {

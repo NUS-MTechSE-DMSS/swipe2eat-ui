@@ -177,7 +177,10 @@ void main() {
       store.add(item2);
 
       expect(store.favorites.value.length, 2);
-      expect(store.favorites.value.first.id, '2'); // Most recently added is first
+      expect(
+        store.favorites.value.first.id,
+        '2',
+      ); // Most recently added is first
       expect(store.favorites.value.last.id, '1');
     });
 
@@ -265,7 +268,7 @@ void main() {
     test('removing non-existent item does not error', () {
       final store = FavoritesStore.instance;
       expect(store.favorites.value.length, 0);
-      
+
       store.removeById('non-existent');
       expect(store.favorites.value.length, 0);
     });

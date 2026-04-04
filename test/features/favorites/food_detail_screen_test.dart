@@ -26,7 +26,10 @@ void main() {
         home: Builder(
           builder: (ctx) => Center(
             child: ElevatedButton(
-              onPressed: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => FoodDetailScreen(item: item))),
+              onPressed: () => Navigator.push(
+                ctx,
+                MaterialPageRoute(builder: (_) => FoodDetailScreen(item: item)),
+              ),
               child: const Text('open'),
             ),
           ),
@@ -126,7 +129,9 @@ void main() {
       expect(FavoritesStore.instance.contains(item.id), true);
     });
 
-    testWidgets('tapping favorite when already favored removes it (and pops)', (tester) async {
+    testWidgets('tapping favorite when already favored removes it (and pops)', (
+      tester,
+    ) async {
       final item = FoodItem(
         id: '1',
         name: 'Sushi Deluxe',

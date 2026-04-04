@@ -4,43 +4,29 @@ import 'package:swipe2eat_ui/features/auth/screens/sign_in_screen.dart';
 
 void main() {
   group('SignInScreen Widget', () {
-    testWidgets('displays Sign In title in AppBar', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+    testWidgets('displays Sign In title in AppBar', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.text('Sign In'), findsWidgets);
     });
 
     testWidgets('has email input field', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.byType(TextField), findsWidgets);
       expect(find.text('Email'), findsOneWidget);
     });
 
     testWidgets('has password input field', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.text('Password'), findsOneWidget);
     });
 
     testWidgets('password field is obscured', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       final textFields = find.byType(TextField);
       expect(textFields, findsWidgets);
@@ -51,25 +37,15 @@ void main() {
     });
 
     testWidgets('email field is not obscured', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       final textFields = find.byType(TextField);
       final emailField = tester.widget<TextField>(textFields.at(0));
       expect(emailField.obscureText, false);
     });
 
-
-
     testWidgets('can enter email text', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       final emailField = find.byType(TextField).first;
       await tester.enterText(emailField, 'test@example.com');
@@ -78,11 +54,7 @@ void main() {
     });
 
     testWidgets('can enter password text', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       final passwordField = find.byType(TextField).at(1);
       await tester.enterText(passwordField, 'password123');
@@ -90,26 +62,18 @@ void main() {
       expect(find.text('password123'), findsOneWidget);
     });
 
-    testWidgets('email field has email keyboard type', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+    testWidgets('email field has email keyboard type', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       final textFields = find.byType(TextField);
       final emailField = tester.widget<TextField>(textFields.at(0));
       expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 
-
-
     testWidgets('has proper layout structure', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.byType(Scaffold), findsOneWidget);
       expect(find.byType(AppBar), findsOneWidget);
@@ -118,15 +82,9 @@ void main() {
     });
 
     testWidgets('displays with proper spacing', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignInScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.byType(SizedBox), findsWidgets);
     });
-
-
   });
 }

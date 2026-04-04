@@ -4,57 +4,37 @@ import 'package:swipe2eat_ui/features/auth/screens/sign_up_screen.dart';
 
 void main() {
   group('SignUpScreen Widget', () {
-    testWidgets('displays Sign Up title in AppBar', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+    testWidgets('displays Sign Up title in AppBar', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.text('Sign Up'), findsWidgets);
     });
 
     testWidgets('has email input field', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.byType(TextField), findsWidgets);
       expect(find.text('Email'), findsOneWidget);
     });
 
     testWidgets('has password input field', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.text('Password'), findsOneWidget);
     });
 
     testWidgets('password field is obscured', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       final textFields = find.byType(TextField);
       final passwordField = tester.widget<TextField>(textFields.at(2));
       expect(passwordField.obscureText, true);
     });
 
-
-
     testWidgets('can enter email text', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       final emailField = find.byType(TextField).at(1);
       await tester.enterText(emailField, 'newuser@example.com');
@@ -63,11 +43,7 @@ void main() {
     });
 
     testWidgets('can enter password text', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       final passwordField = find.byType(TextField).at(2);
       await tester.enterText(passwordField, 'newpass123');
@@ -75,21 +51,19 @@ void main() {
       expect(find.text('newpass123'), findsOneWidget);
     });
 
-    testWidgets('email field has email keyboard type', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+    testWidgets('email field has email keyboard type', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       final textFields = find.byType(TextField);
       final emailField = tester.widget<TextField>(textFields.at(1));
       expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 
-
-
-    testWidgets('Sign In link pops back to previous screen', (WidgetTester tester) async {
+    testWidgets('Sign In link pops back to previous screen', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -102,9 +76,7 @@ void main() {
                     ),
                   );
                 }
-                return MaterialPageRoute(
-                  builder: (_) => SignUpScreen(),
-                );
+                return MaterialPageRoute(builder: (_) => SignUpScreen());
               },
             ),
           ),
@@ -116,11 +88,7 @@ void main() {
     });
 
     testWidgets('has proper layout structure', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.byType(Scaffold), findsOneWidget);
       expect(find.byType(AppBar), findsOneWidget);
@@ -129,25 +97,15 @@ void main() {
     });
 
     testWidgets('displays with proper padding', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.byType(Padding), findsWidgets);
     });
 
     testWidgets('displays with proper spacing', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SignUpScreen(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
 
       expect(find.byType(SizedBox), findsWidgets);
     });
-
-
   });
 }
