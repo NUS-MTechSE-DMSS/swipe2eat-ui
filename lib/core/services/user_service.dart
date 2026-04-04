@@ -89,8 +89,13 @@ class UserService {
   /// Uses the Cognito userId (sub) as path parameter.
   ///
   /// Returns true if the backend deletion succeeds.
-  static Future<bool> deleteCurrentUserInBackend() async {
+  /// Treats an already-missing backend user as a successful delete so the
+  /// Cognito deletion step can be safely retried.
+  static Future<bool> deleteCurrentUserInBackend({http.Client? client}) async {
+    http.Client? ownedClient;
+
     try {
+      final effectiveClient = client ?? (ownedClient = http.Client());
       final userId = await TokenStorage.getUserId();
       if (userId == null || userId.trim().isEmpty) {
         return false;
@@ -112,13 +117,17 @@ class UserService {
       };
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
-      final response = await http
+      final response = await effectiveClient
           .delete(uri, headers: headers)
           .timeout(const Duration(seconds: 10));
 
-      return response.statusCode == 200 || response.statusCode == 204;
+      return response.statusCode == 200 ||
+          response.statusCode == 204 ||
+          response.statusCode == 404;
     } catch (_) {
       return false;
+    } finally {
+      ownedClient?.close();
     }
   }
 }

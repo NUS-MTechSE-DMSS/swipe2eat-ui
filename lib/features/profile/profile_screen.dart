@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/user_service.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/services/preferences_service.dart';
+import '../auth/services/cognito_service.dart';
 import '../auth/services/token_storage.dart';
 
 const List<String> _cuisineOptions = [
@@ -348,6 +349,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: Text('Unable to delete account. Please try again.'),
         ),
       );
+      return;
+    }
+
+    final accessToken = await TokenStorage.getAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'App data was deleted, but the sign-in account could not be removed. Please sign in again and retry.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final cognitoResult = await CognitoService.deleteUser(
+      accessToken: accessToken,
+    );
+    if (!mounted) return;
+
+    if (cognitoResult['success'] != true) {
+      final message =
+          cognitoResult['error'] as String? ??
+          'App data was deleted, but the sign-in account could not be removed. Please try again.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
 

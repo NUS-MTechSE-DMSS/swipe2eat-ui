@@ -30,7 +30,7 @@ test/
 - **models/food_item_test.dart** (9 tests)
   - FoodItem creation and field validation
   - Rating, spice level, budget level handling
-  - Price and distance comparisons
+  - Price comparisons
   - Tag management
 
 - **core/state/favorites_store_test.dart** (14 tests)

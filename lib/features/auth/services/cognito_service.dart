@@ -7,6 +7,7 @@ class CognitoService {
   static const String _cognitoEndpoint =
       'https://cognito-idp.ap-southeast-1.amazonaws.com/';
   static const String _clientId = '1d1jkchdvgt5tldbb0hivruird';
+  static Uri get _cognitoUri => Uri.parse(_cognitoEndpoint);
 
   /// Sign up a new user with AWS Cognito
   /// Returns a map with 'success' boolean and optional 'userId' or 'error' message
@@ -37,7 +38,7 @@ class CognitoService {
       };
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -119,7 +120,7 @@ class CognitoService {
       };
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -177,7 +178,7 @@ class CognitoService {
       final body = {'ClientId': _clientId, 'Username': email};
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -216,7 +217,7 @@ class CognitoService {
       final body = {'ClientId': _clientId, 'Username': email};
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -282,7 +283,7 @@ class CognitoService {
       };
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -347,7 +348,7 @@ class CognitoService {
       };
 
       final response = await http.post(
-        Uri.parse(_cognitoEndpoint),
+        _cognitoUri,
         headers: headers,
         body: jsonEncode(body),
       );
@@ -407,6 +408,64 @@ class CognitoService {
         'error': 'Network error. Please check your connection and try again',
         'details': e.toString(),
       };
+    }
+  }
+
+  /// Delete the currently signed-in Cognito user using the access token.
+  static Future<Map<String, dynamic>> deleteUser({
+    required String accessToken,
+    http.Client? client,
+  }) async {
+    http.Client? ownedClient;
+
+    try {
+      final effectiveClient = client ?? (ownedClient = http.Client());
+      final headers = {
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.DeleteUser',
+        'Content-Type': 'application/x-amz-json-1.1',
+      };
+
+      final response = await effectiveClient.post(
+        _cognitoUri,
+        headers: headers,
+        body: jsonEncode({'AccessToken': accessToken}),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Account deleted successfully.'};
+      }
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      final errorType = responseData['__type'] as String?;
+      final errorMessage =
+          responseData['message'] as String? ?? 'Failed to delete account';
+
+      var userFriendlyMessage = errorMessage;
+
+      if (errorType != null) {
+        if (errorType.contains('NotAuthorizedException')) {
+          userFriendlyMessage =
+              'Your sign-in session expired. Please sign in again and retry deleting your account.';
+        } else if (errorType.contains('UserNotFoundException')) {
+          userFriendlyMessage = 'Your sign-in account was already deleted.';
+        } else if (errorType.contains('TooManyRequestsException')) {
+          userFriendlyMessage = 'Too many requests. Please try again later.';
+        }
+      }
+
+      return {
+        'success': false,
+        'error': userFriendlyMessage,
+        'errorType': errorType,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error. Please check your connection and try again',
+        'details': e.toString(),
+      };
+    } finally {
+      ownedClient?.close();
     }
   }
 }
