@@ -203,6 +203,131 @@ class CognitoService {
     }
   }
 
+  /// Request a password reset code for the user.
+  static Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final headers = {
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.ForgotPassword',
+        'Content-Type': 'application/x-amz-json-1.1',
+      };
+
+      final body = {'ClientId': _clientId, 'Username': email};
+
+      final response = await http.post(
+        Uri.parse(_cognitoEndpoint),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Password reset code sent to your email',
+        };
+      }
+
+      final responseData = jsonDecode(response.body);
+      final errorType = responseData['__type'] as String?;
+      final errorMessage =
+          responseData['message'] as String? ??
+          'Failed to send password reset code';
+
+      String userFriendlyMessage = errorMessage;
+
+      if (errorType != null) {
+        if (errorType.contains('UserNotFoundException')) {
+          userFriendlyMessage = 'No account found for this email';
+        } else if (errorType.contains('InvalidParameterException')) {
+          userFriendlyMessage = 'Please enter a valid email address';
+        } else if (errorType.contains('LimitExceededException') ||
+            errorType.contains('TooManyRequestsException')) {
+          userFriendlyMessage = 'Too many requests. Please try again later';
+        }
+      }
+
+      return {
+        'success': false,
+        'error': userFriendlyMessage,
+        'errorType': errorType,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error. Please check your connection and try again',
+        'details': e.toString(),
+      };
+    }
+  }
+
+  /// Confirm a password reset with the code sent to the user's email.
+  static Future<Map<String, dynamic>> confirmForgotPassword({
+    required String email,
+    required String confirmationCode,
+    required String newPassword,
+  }) async {
+    try {
+      final headers = {
+        'X-Amz-Target':
+            'AWSCognitoIdentityProviderService.ConfirmForgotPassword',
+        'Content-Type': 'application/x-amz-json-1.1',
+      };
+
+      final body = {
+        'ClientId': _clientId,
+        'Username': email,
+        'ConfirmationCode': confirmationCode,
+        'Password': newPassword,
+      };
+
+      final response = await http.post(
+        Uri.parse(_cognitoEndpoint),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Password reset successful. You can now sign in.',
+        };
+      }
+
+      final responseData = jsonDecode(response.body);
+      final errorType = responseData['__type'] as String?;
+      final errorMessage =
+          responseData['message'] as String? ?? 'Password reset failed';
+
+      String userFriendlyMessage = errorMessage;
+
+      if (errorType != null) {
+        if (errorType.contains('CodeMismatchException')) {
+          userFriendlyMessage = 'Invalid reset code. Please try again';
+        } else if (errorType.contains('ExpiredCodeException')) {
+          userFriendlyMessage = 'Reset code has expired. Request a new one';
+        } else if (errorType.contains('InvalidPasswordException')) {
+          userFriendlyMessage =
+              'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and special characters';
+        } else if (errorType.contains('UserNotFoundException')) {
+          userFriendlyMessage = 'No account found for this email';
+        }
+      }
+
+      return {
+        'success': false,
+        'error': userFriendlyMessage,
+        'errorType': errorType,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error. Please check your connection and try again',
+        'details': e.toString(),
+      };
+    }
+  }
+
   /// Sign in user with email and password
   /// Returns tokens (IdToken, AccessToken, RefreshToken) on success
   static Future<Map<String, dynamic>> signIn({

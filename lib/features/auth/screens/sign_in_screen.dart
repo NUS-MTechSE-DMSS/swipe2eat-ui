@@ -3,6 +3,7 @@ import 'dart:async';
 // Sign In Screen
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_button.dart';
+import 'forgot_password_screen.dart';
 import '../services/cognito_service.dart';
 import '../services/token_storage.dart';
 import '../../../core/services/preferences_service.dart';
@@ -330,11 +331,11 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        // TODO: Implement forgot password flow
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Forgot password feature coming soon',
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ForgotPasswordScreen(
+                              initialEmail: _emailController.text.trim(),
                             ),
                           ),
                         );

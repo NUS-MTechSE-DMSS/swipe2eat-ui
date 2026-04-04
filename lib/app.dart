@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'core/services/preferences_service.dart';
 import 'features/onboarding/screens/welcome_screen.dart';
 import 'features/onboarding/screens/cuisine_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/auth/screens/sign_in_screen.dart';
 import 'features/auth/screens/sign_up_screen.dart';
 import 'features/auth/services/token_storage.dart';
@@ -24,6 +25,7 @@ class Swipe2EatApp extends StatelessWidget {
         '/': (_) => const _AuthenticatedOnly(child: WelcomeScreen()),
         '/sign-in': (_) => const SignInScreen(),
         '/sign-up': (_) => const SignUpScreen(),
+        '/forgot-password': (_) => const ForgotPasswordScreen(),
         '/cuisine': (_) => const _AuthenticatedOnly(child: CuisineScreen()),
         '/main': (_) => const _AuthenticatedOnly(
           child: MainShell(initialTab: MainTab.discover),

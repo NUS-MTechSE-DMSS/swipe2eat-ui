@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swipe2eat_ui/features/auth/screens/forgot_password_screen.dart';
 import 'package:swipe2eat_ui/features/auth/screens/sign_in_screen.dart';
 
 void main() {
@@ -85,6 +86,17 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: SignInScreen()));
 
       expect(find.byType(SizedBox), findsWidgets);
+    });
+
+    testWidgets('forgot password link opens forgot password screen', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: SignInScreen()));
+
+      await tester.tap(find.text('Forgot Password?'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ForgotPasswordScreen), findsOneWidget);
     });
   });
 }
