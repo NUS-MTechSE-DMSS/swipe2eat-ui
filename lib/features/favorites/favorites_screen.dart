@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/api_config.dart';
 import '../../core/state/favorites_store.dart';
+import '../../core/utils/food_image_url.dart';
 import '../../core/widgets/loading_placeholder.dart';
 import '../../models/food_item.dart';
 import 'food_detail_screen.dart';
@@ -327,7 +328,7 @@ FoodItem? _foodFromJson(dynamic raw) {
 
   final imageKey = readString('imageKey');
   final imageUrl =
-      _imageUrlFromKey(imageKey) ??
+      foodImageUrlFromKey(imageKey) ??
       'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200';
 
   const int spiceLevel = 2;
@@ -361,15 +362,6 @@ FoodItem? _foodFromJson(dynamic raw) {
     budgetLevel: budgetLevel,
     tags: tags,
   );
-}
-
-String? _imageUrlFromKey(String? imageKey) {
-  if (imageKey == null || imageKey.trim().isEmpty) return null;
-  final key = imageKey.trim();
-  if (key.startsWith('http://') || key.startsWith('https://')) {
-    return key;
-  }
-  return null;
 }
 
 class _FavoritesGridSkeleton extends StatelessWidget {

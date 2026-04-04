@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
+import '../../../core/utils/food_image_url.dart';
 import '../../../models/food_item.dart';
 import '../../../core/config/api_config.dart';
 import '../../auth/services/token_storage.dart';
@@ -175,7 +176,7 @@ class FoodService {
 
     final imageKey = readString('imageKey');
     final imageUrl =
-        _imageUrlFromKey(imageKey) ??
+        foodImageUrlFromKey(imageKey) ??
         "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
     const int spiceLevel = 2;
@@ -220,18 +221,5 @@ class FoodService {
       return id.trim();
     }
     return null;
-  }
-
-  /// Converts an image key to a full URL.
-  /// If the key is already a URL, returns it as-is.
-  /// Otherwise, constructs an S3 bucket URL.
-  static String? _imageUrlFromKey(String? imageKey) {
-    if (imageKey == null || imageKey.trim().isEmpty) return null;
-    final key = imageKey.trim();
-    if (key.startsWith('http://') || key.startsWith('https://')) {
-      return key;
-    }
-    // Append to S3 bucket URL
-    return 'https://swe5006-nus-g3-public-dev-ap-southeast-1-282793424364.s3.ap-southeast-1.amazonaws.com/images/$key';
   }
 }
