@@ -411,6 +411,81 @@ class CognitoService {
     }
   }
 
+  /// Refresh the Cognito session using a stored refresh token.
+  static Future<Map<String, dynamic>> refreshSession({
+    required String refreshToken,
+    http.Client? client,
+  }) async {
+    http.Client? ownedClient;
+
+    try {
+      final effectiveClient = client ?? (ownedClient = http.Client());
+      final headers = {
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        'Content-Type': 'application/x-amz-json-1.1',
+      };
+
+      final body = {
+        'AuthFlow': 'REFRESH_TOKEN_AUTH',
+        'ClientId': _clientId,
+        'AuthParameters': {'REFRESH_TOKEN': refreshToken},
+      };
+
+      final response = await effectiveClient.post(
+        _cognitoUri,
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        final authResult =
+            responseData['AuthenticationResult'] as Map<String, dynamic>?;
+        if (authResult == null) {
+          return {'success': false, 'error': 'Session refresh failed'};
+        }
+
+        return {
+          'success': true,
+          'idToken': authResult['IdToken'],
+          'accessToken': authResult['AccessToken'],
+          'refreshToken': authResult['RefreshToken'],
+          'expiresIn': authResult['ExpiresIn'],
+          'tokenType': authResult['TokenType'],
+        };
+      }
+
+      final errorType = responseData['__type'] as String?;
+      final errorMessage =
+          responseData['message'] as String? ?? 'Session refresh failed';
+
+      var userFriendlyMessage = errorMessage;
+      if (errorType != null) {
+        if (errorType.contains('NotAuthorizedException')) {
+          userFriendlyMessage =
+              'Your sign-in session has expired. Please sign in again.';
+        } else if (errorType.contains('TooManyRequestsException')) {
+          userFriendlyMessage = 'Too many requests. Please try again later';
+        }
+      }
+
+      return {
+        'success': false,
+        'error': userFriendlyMessage,
+        'errorType': errorType,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error. Please check your connection and try again',
+        'details': e.toString(),
+      };
+    } finally {
+      ownedClient?.close();
+    }
+  }
+
   /// Delete the currently signed-in Cognito user using the access token.
   static Future<Map<String, dynamic>> deleteUser({
     required String accessToken,

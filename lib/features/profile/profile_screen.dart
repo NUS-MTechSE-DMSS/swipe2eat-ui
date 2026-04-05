@@ -135,6 +135,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirmed == true) {
+      await UserService.logoutCurrentUser();
+
       // Clear all tokens
       await TokenStorage.clearTokens();
 

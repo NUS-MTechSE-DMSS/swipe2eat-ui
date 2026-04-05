@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/auth/services/cognito_service.dart';
 import '../../features/auth/services/token_storage.dart';
 import '../config/api_config.dart';
 
@@ -75,12 +76,99 @@ class UserService {
     }
   }
 
+  /// Logs out the currently signed-in user in the backend.
+  /// Uses the Cognito access token so the backend can trigger global sign-out.
+  ///
+  /// Returns true if the backend logout succeeds.
+  static Future<bool> logoutCurrentUser({
+    http.Client? client,
+    http.Client? cognitoClient,
+  }) async {
+    try {
+      final accessToken = await TokenStorage.getAccessToken();
+      if (accessToken == null || accessToken.trim().isEmpty) {
+        return false;
+      }
+
+      final initialResponse = await _sendLogoutRequest(
+        accessToken: accessToken,
+        client: client,
+      );
+      if (initialResponse.statusCode == 204) {
+        return true;
+      }
+      if (initialResponse.statusCode != 401) {
+        return false;
+      }
+
+      final refreshToken = await TokenStorage.getRefreshToken();
+      if (refreshToken == null || refreshToken.trim().isEmpty) {
+        return false;
+      }
+
+      final refreshResult = await CognitoService.refreshSession(
+        refreshToken: refreshToken,
+        client: cognitoClient,
+      );
+      if (refreshResult['success'] != true) {
+        return false;
+      }
+
+      final refreshedAccessToken = refreshResult['accessToken'] as String?;
+      final refreshedIdToken = refreshResult['idToken'] as String?;
+      if (refreshedAccessToken == null ||
+          refreshedAccessToken.isEmpty ||
+          refreshedIdToken == null ||
+          refreshedIdToken.isEmpty) {
+        return false;
+      }
+
+      await TokenStorage.updateTokens(
+        idToken: refreshedIdToken,
+        accessToken: refreshedAccessToken,
+        refreshToken: refreshResult['refreshToken'] as String?,
+      );
+
+      final retryResponse = await _sendLogoutRequest(
+        accessToken: refreshedAccessToken,
+        client: client,
+      );
+      return retryResponse.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<http.Response> _sendLogoutRequest({
+    required String accessToken,
+    http.Client? client,
+  }) async {
+    http.Client? ownedClient;
+
+    try {
+      final effectiveClient = client ?? (ownedClient = http.Client());
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      };
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/user/logout');
+      return await effectiveClient
+          .post(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      rethrow;
+    } finally {
+      ownedClient?.close();
+    }
+  }
+
   /// Clears the user created flag (useful on logout)
-  static Future<void> clearUserCreatedFlag() async {
+  static Future<void> clearUserCreatedFlag({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = await TokenStorage.getUserId();
-    if (userId != null) {
-      final userCreatedKey = '$_userCreatedFlagKey.$userId';
+    final effectiveUserId = userId ?? await TokenStorage.getUserId();
+    if (effectiveUserId != null) {
+      final userCreatedKey = '$_userCreatedFlagKey.$effectiveUserId';
       await prefs.remove(userCreatedKey);
     }
   }

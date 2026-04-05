@@ -32,6 +32,21 @@ class TokenStorage {
     }
   }
 
+  /// Update the active session tokens while preserving existing user metadata.
+  static Future<void> updateTokens({
+    required String idToken,
+    required String accessToken,
+    String? refreshToken,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_idTokenKey, idToken);
+    await prefs.setString(_accessTokenKey, accessToken);
+
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await prefs.setString(_refreshTokenKey, refreshToken);
+    }
+  }
+
   /// Get the ID token (used for API authentication)
   static Future<String?> getIdToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -71,6 +86,7 @@ class TokenStorage {
   /// Clear all stored tokens (logout)
   static Future<void> clearTokens() async {
     final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString(_userIdKey);
     await prefs.remove(_idTokenKey);
     await prefs.remove(_accessTokenKey);
     await prefs.remove(_refreshTokenKey);
@@ -78,7 +94,7 @@ class TokenStorage {
     await prefs.remove(_emailKey);
 
     // Clear user backend creation flag
-    await UserService.clearUserCreatedFlag();
+    await UserService.clearUserCreatedFlag(userId: userId);
   }
 
   /// Get authorization header value for API requests
