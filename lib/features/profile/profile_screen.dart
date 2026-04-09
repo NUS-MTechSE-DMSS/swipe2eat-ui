@@ -76,6 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadUserNameFromToken();
     _loadPreferences();
+    _loadUserProfile();
     // Listen for preference updates
     PreferencesService.preferencesUpdated.addListener(_onPreferencesUpdated);
   }
