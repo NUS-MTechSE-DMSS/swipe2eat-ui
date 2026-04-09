@@ -61,6 +61,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _cuisinesDisplay = "Loading...";
   String _spiceDisplay = "Loading...";
   String _budgetDisplay = "Loading...";
+  String _genderDisplay = "Not set";
+  String _dobDisplay = "Not set";
 
   static const String _prefsCuisinesKey = 'prefs.cuisines';
   static const String _prefsBudgetKey = 'prefs.budget';
