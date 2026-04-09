@@ -334,6 +334,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 10),
 
                   _ActionTile(
+                    icon: Icons.person_outline_rounded,
+                    title: "Edit Profile Info",
+                    onTap: () => _showEditProfileDialog(context),
+                  ),
+                  _ActionTile(
                     icon: Icons.edit_rounded,
                     title: "Edit Preferences",
                     onTap: () {
