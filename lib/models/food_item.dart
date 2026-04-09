@@ -9,6 +9,7 @@ class FoodItem {
   final int spiceLevel; // low, medium, high
   final int budgetLevel; // low, medium, high
   final List<String> tags;
+  final String? address;
 
   FoodItem({
     required this.id,
@@ -21,5 +22,6 @@ class FoodItem {
     required this.spiceLevel,
     required this.budgetLevel,
     required this.tags,
+    this.address,
   });
 }
