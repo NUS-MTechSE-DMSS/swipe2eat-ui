@@ -12,6 +12,15 @@ class FoodDetailScreen extends StatelessWidget {
 
   const FoodDetailScreen({super.key, required this.item});
 
+  Future<void> _openInGoogleMaps(String address) async {
+    final encoded = Uri.encodeComponent(address);
+    final uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$encoded');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _handleFavoriteTap(BuildContext context, bool isFav) async {
     final liked = !isFav;
     final messenger = ScaffoldMessenger.maybeOf(context);
