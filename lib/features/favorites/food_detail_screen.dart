@@ -129,6 +129,34 @@ class FoodDetailScreen extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    if (item.address != null && item.address!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: () => _openInGoogleMaps(item.address!),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: Color(0xFF2563EB),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                item.address!,
+                                style: const TextStyle(
+                                  color: Color(0xFF2563EB),
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Color(0xFF2563EB),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 12),
 
                     Row(
