@@ -274,6 +274,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 18),
 
                   const Text(
+                    "Personal Info",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 10),
+
+                  _PrefTile(
+                    icon: Icons.wc_rounded,
+                    title: "Gender",
+                    value: _genderDisplay,
+                    onTap: () => _showEditProfileDialog(context),
+                  ),
+                  _PrefTile(
+                    icon: Icons.cake_rounded,
+                    title: "Date of Birth",
+                    value: _dobDisplay,
+                    onTap: () => _showEditProfileDialog(context),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  const Text(
                     "Your Preferences",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
