@@ -91,6 +91,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadPreferences();
   }
 
+  Future<void> _loadUserProfile() async {
+    final profile = await UserService.getUserProfile();
+    if (!mounted || profile == null) return;
+    final gender = profile['gender'] as String?;
+    final dobRaw = profile['dateOfBirth'] as String?;
+    String dobDisplay = "Not set";
+    if (dobRaw != null && dobRaw.isNotEmpty) {
+      final dob = DateTime.tryParse(dobRaw);
+      if (dob != null) {
+        dobDisplay =
+            "${dob.year}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}";
+      }
+    }
+    setState(() {
+      _genderDisplay = gender != null && gender.isNotEmpty ? gender : "Not set";
+      _dobDisplay = dobDisplay;
+    });
+  }
+
   Future<void> _loadUserNameFromToken() async {
     try {
       final idToken = await TokenStorage.getIdToken();
