@@ -1251,6 +1251,142 @@ class _BudgetEditorSheetState extends State<_BudgetEditorSheet> {
   }
 }
 
+const List<String> _genderOptions = [
+  'male',
+  'female',
+  'non-binary',
+  'prefer not to say',
+];
+
+class _ProfileInfoDialog extends StatefulWidget {
+  final String? initialGender;
+  final DateTime? initialDateOfBirth;
+  final Future<void> Function(String? gender, DateTime? dateOfBirth) onSave;
+
+  const _ProfileInfoDialog({
+    required this.initialGender,
+    required this.initialDateOfBirth,
+    required this.onSave,
+  });
+
+  @override
+  State<_ProfileInfoDialog> createState() => _ProfileInfoDialogState();
+}
+
+class _ProfileInfoDialogState extends State<_ProfileInfoDialog> {
+  String? _selectedGender;
+  DateTime? _selectedDob;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedGender = widget.initialGender;
+    _selectedDob = widget.initialDateOfBirth;
+  }
+
+  String _formatDate(DateTime dt) =>
+      "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDob ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _selectedDob = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Profile Info'),
+      scrollable: true,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Gender',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedGender,
+            hint: const Text('Select gender'),
+            items: _genderOptions
+                .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                .toList(),
+            onChanged: (v) => setState(() => _selectedGender = v),
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Date of Birth',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _pickDate,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF9CA3AF)),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _selectedDob != null
+                          ? _formatDate(_selectedDob!)
+                          : 'Select date',
+                      style: TextStyle(
+                        color: _selectedDob != null
+                            ? const Color(0xFF111827)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.calendar_today_rounded,
+                      size: 18, color: Color(0xFF6B7280)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _saving
+              ? null
+              : () async {
+                  setState(() => _saving = true);
+                  await widget.onSave(_selectedGender, _selectedDob);
+                },
+          child: _saving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
 class _SpiceEditorSheet extends StatefulWidget {
   final String initialSpice;
 
