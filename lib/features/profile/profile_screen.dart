@@ -92,6 +92,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserProfile() async {
+    final token = await TokenStorage.getAccessToken();
+    // ignore: avoid_print
+    print('ACCESS TOKEN: $token');
     final profile = await UserService.getUserProfile();
     if (!mounted || profile == null) return;
     final gender = profile['gender'] as String?;
