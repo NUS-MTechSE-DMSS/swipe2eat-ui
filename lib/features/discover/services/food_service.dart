@@ -196,6 +196,8 @@ class FoodService {
       tags = cuisineRaw.map((e) => e.toString()).toList();
     }
 
+    final address = readString('address');
+
     return FoodItem(
       id: id,
       name: name,
@@ -207,6 +209,7 @@ class FoodService {
       spiceLevel: spiceLevel,
       budgetLevel: budgetLevel,
       tags: tags,
+      address: address,
     );
   }
 
