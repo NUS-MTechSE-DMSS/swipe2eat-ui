@@ -450,6 +450,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await TokenStorage.clearTokens();
   }
 
+  void _showEditProfileDialog(BuildContext context) async {
+    final currentGender =
+        _genderDisplay == "Not set" ? null : _genderDisplay;
+    final currentDob = _dobDisplay == "Not set"
+        ? null
+        : DateTime.tryParse(_dobDisplay);
+
+    showDialog(
+      context: context,
+      builder: (_) => _ProfileInfoDialog(
+        initialGender: currentGender,
+        initialDateOfBirth: currentDob,
+        onSave: (gender, dob) async {
+          final success = await UserService.updateUserProfile(
+            gender: gender,
+            dateOfBirth: dob,
+          );
+          if (context.mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success
+                      ? 'Profile updated successfully'
+                      : 'Failed to update profile. Please try again.',
+                ),
+              ),
+            );
+          }
+          if (success) await _loadUserProfile();
+        },
+      ),
+    );
+  }
+
   void _showEditPreferencesDialog(BuildContext context) async {
     final prefs = await PreferencesService.getLocalPreferences();
     final currentCuisines = List<String>.from(prefs['cuisines'] ?? []);
