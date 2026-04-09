@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/preferences_service.dart';
 import '../../models/food_item.dart';
 import '../../core/state/favorites_store.dart';
