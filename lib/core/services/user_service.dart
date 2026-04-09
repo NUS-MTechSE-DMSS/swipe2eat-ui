@@ -164,6 +164,73 @@ class UserService {
     }
   }
 
+  /// Fetches the current user's profile from the backend.
+  /// Returns a map with user fields (name, city, gender, dateOfBirth) or null on failure.
+  static Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final userId = await TokenStorage.getUserId();
+      final accessToken = await TokenStorage.getAccessToken();
+      final idToken = await TokenStorage.getIdToken();
+      if (userId == null || accessToken == null || idToken == null) return null;
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+        'X-Id-Token': idToken,
+      };
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
+      final response =
+          await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Updates the current user's profile (name, city, gender, dateOfBirth).
+  /// Returns true on success.
+  static Future<bool> updateUserProfile({
+    String? name,
+    String? city,
+    String? gender,
+    DateTime? dateOfBirth,
+  }) async {
+    try {
+      final accessToken = await TokenStorage.getAccessToken();
+      final idToken = await TokenStorage.getIdToken();
+      if (accessToken == null || idToken == null) return false;
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+        'X-Id-Token': idToken,
+      };
+
+      final body = jsonEncode({
+        if (name != null) 'name': name,
+        if (city != null) 'city': city,
+        'gender': gender,
+        'dateOfBirth': dateOfBirth != null
+            ? dateOfBirth.toIso8601String().split('T').first
+            : null,
+      });
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/user/me');
+      final response = await http
+          .put(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Clears the user created flag (useful on logout)
   static Future<void> clearUserCreatedFlag({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
