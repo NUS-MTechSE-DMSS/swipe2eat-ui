@@ -36,6 +36,7 @@ class _MainShellState extends State<MainShell> {
           children: const [
             DiscoverScreen(showBottomNav: false),
             FavoritesScreen(showBottomNav: false),
+            ChatScreen(showBottomNav: false),
             ProfileScreen(showBottomNav: false),
           ],
         ),
