@@ -23,7 +23,7 @@ class FoodService {
   /// Builds HTTP headers with AWS Cognito authentication.
   /// Retrieves the ID token from TokenStorage and includes it in the Authorization header.
   static Future<Map<String, String>> _buildAuthHeaders() async {
-    final headers = {'Content-Type': 'application/json'};
+    final headers = <String, String>{};
     final authHeader = await TokenStorage.getAuthorizationHeader();
     if (authHeader != null) {
       headers['Authorization'] = authHeader;
@@ -63,7 +63,7 @@ class FoodService {
     String? dietType,
     List<String>? allergens,
   }) async {
-    final baseUri = Uri.parse('${ApiConfig.baseUrl}/food');
+    final baseUri = Uri.parse('${ApiConfig.baseUrl}/food/');
 
     final params = <String>['budget=${Uri.encodeQueryComponent(budget)}'];
 
