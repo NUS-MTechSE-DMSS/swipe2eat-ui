@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../features/discover/discover_screen.dart';
 import '../../features/favorites/favorites_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/chat/screens/chat_screen.dart';
 
-enum MainTab { discover, favorites, profile }
+enum MainTab { discover, favorites, chat, profile }
 
 class MainShell extends StatefulWidget {
   final MainTab initialTab;
