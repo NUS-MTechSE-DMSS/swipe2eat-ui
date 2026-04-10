@@ -63,7 +63,7 @@ class FoodService {
     String? dietType,
     List<String>? allergens,
   }) async {
-    final baseUri = Uri.parse('${ApiConfig.baseUrl}/food');
+    final baseUri = Uri.parse('${ApiConfig.baseUrl}/food/');
 
     final params = <String>['budget=${Uri.encodeQueryComponent(budget)}'];
 
