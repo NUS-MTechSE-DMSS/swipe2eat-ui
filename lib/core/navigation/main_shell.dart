@@ -68,7 +68,8 @@ class _BottomNav extends StatelessWidget {
         children: [
           _navBtn(icon: Icons.restaurant_menu, label: "Discover", index: 0),
           _navBtn(icon: Icons.favorite_border, label: "Favorites", index: 1),
-          _navBtn(icon: Icons.person_outline, label: "Profile", index: 2),
+          _navBtn(icon: Icons.chat_bubble_outline, label: "Ask AI", index: 2),
+          _navBtn(icon: Icons.person_outline, label: "Profile", index: 3),
         ],
       ),
     );
