@@ -49,12 +49,61 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  security:
+    name: Snyk Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.6
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Validate Snyk token
+        run: test -n "${SNYK_TOKEN}" || { echo "SNYK_TOKEN is not set"; exit 1; }
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Create SBOM config
+        run: |
+          cat > sbom.yaml <<'EOF'
+          type: spdx
+          spdx:
+            SPDXFormat: 'tagvalue'
+          EOF
+
+      - name: Generate pub dependency SBOM
+        run: |
+          dart pub global activate sbom
+          dart pub global run sbom
+
+      - name: Run Snyk scan
+        run: snyk sbom test --file sbom-pub.json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   deploy:
     name: Deploy To Netlify
-    needs: ci
+    needs:
+      - ci
+      - security
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      deploy_url: ${{ steps.netlify.outputs.deploy-url }}
 
     steps:
       - name: Checkout code
@@ -74,13 +123,41 @@ jobs:
           name: flutter-web-build
           path: build/web
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: ./build/web
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          netlify-config-path: ./netlify.toml
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+# Uncomment the following block to enable Netlify deployment. Make sure to set the required secrets in your repository settings.
+      # - name: Deploy to Netlify
+      #   id: netlify
+      #   uses: nwtgck/actions-netlify@v3.0
+      #   with:
+      #     publish-dir: ./build/web
+      #     production-deploy: true
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     netlify-config-path: ./netlify.toml
+      #   env:
+      #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  # headers-check:
+  #   name: Security Headers Check
+  #   needs: deploy
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 10
+
+  #   steps:
+  #     - name: Validate deploy URL
+  #       run: test -n "${DEPLOY_URL}" || { echo "Deploy URL is empty"; exit 1; }
+  #       env:
+  #         DEPLOY_URL: ${{ needs.deploy.outputs.deploy_url }}
+
+  #     - name: Fetch response headers
+  #       run: curl --silent --show-error --fail --location --head "${DEPLOY_URL}" > headers.txt
+  #       env:
+  #         DEPLOY_URL: ${{ needs.deploy.outputs.deploy_url }}
+
+  #     - name: Verify security headers
+  #       run: |
+  #         grep -iq '^x-frame-options: DENY$' headers.txt
+  #         grep -iq '^x-content-type-options: nosniff$' headers.txt
+  #         grep -iq '^referrer-policy: strict-origin-when-cross-origin$' headers.txt
+  #         grep -iq '^permissions-policy: geolocation=\(\), camera=\(\), microphone=\(\)$' headers.txt
+  #         grep -iq '^strict-transport-security:' headers.txt
