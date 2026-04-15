@@ -76,18 +76,13 @@ jobs:
       - name: Setup Snyk CLI
         uses: snyk/actions/setup@master
 
-      - name: Create SBOM config
-        run: |
-          cat > sbom.yaml <<'EOF'
-          type: spdx
-          spdx:
-            SPDXFormat: 'tagvalue'
-          EOF
-
       - name: Generate pub dependency SBOM
-        run: |
-          dart pub global activate sbom
-          dart pub global run sbom
+        run: snyk sbom --format=spdx2.3+json --file=pubspec.yaml --json-file-output=sbom-pub.json .
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Verify SBOM output
+        run: test -f sbom-pub.json || { echo "sbom-pub.json was not created"; exit 1; }
 
       - name: Run Snyk scan
         run: snyk sbom test --file sbom-pub.json

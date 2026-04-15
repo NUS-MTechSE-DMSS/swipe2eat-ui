@@ -1,0 +1,372 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: swipe2eat_ui
+DocumentNamespace: https://pub.dev/packages/swipe2eat_ui
+LicenseListVersion: 3.8
+Creator: Tool: https://pub.dev/packages/sbom
+Created: 2026-04-16T03:23:55Z
+
+
+PackageName: swipe2eat-ui
+SPDXID: SPDXRef-Package-swipe2eat-ui
+PackageVersion: 1.0.0+1
+PackageFileName: swipe2eat_ui
+PackageSupplier: NOASSERTION
+PackageOriginator: NOASSERTION
+PackageDownloadLocation: https://pub.dev/packages/swipe2eat_ui
+FilesAnalyzed: true
+PackageVerificationCode: fc91ea711d9d7a224709d3dde9fb7c88845d7cea
+PackageHomePage: https://pub.dev/packages/swipe2eat_ui
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseInfoFromFiles: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A new Flutter project.</text>
+
+
+FileName: lib/app.dart
+SPDXID: SPDXRef-app-0
+FileType: SOURCE
+FileChecksum: SHA1: 4e4bfcaf7424cacc8402f2e6bb054ddeeb3a83fe
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/config/api_config.dart
+SPDXID: SPDXRef-api-config-1
+FileType: SOURCE
+FileChecksum: SHA1: a8cb1d24a24ed6d152538e51a08b99c53edad71f
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/navigation/main_shell.dart
+SPDXID: SPDXRef-main-shell-2
+FileType: SOURCE
+FileChecksum: SHA1: 511d50084392805ba0ef6e97f995a4e9a1f7becf
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/services/preferences_service.dart
+SPDXID: SPDXRef-preferences-service-3
+FileType: SOURCE
+FileChecksum: SHA1: e9421d67e68479fcb8e01680cd5c5a77621f54ef
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/services/user_service.dart
+SPDXID: SPDXRef-user-service-4
+FileType: SOURCE
+FileChecksum: SHA1: 3a414995a4b178dbe69486177fd7719999d615be
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/state/favorites_store.dart
+SPDXID: SPDXRef-favorites-store-5
+FileType: SOURCE
+FileChecksum: SHA1: 3ef053563e851746807986a47b691d6c548f1038
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/theme/app_colors.dart
+SPDXID: SPDXRef-app-colors-6
+FileType: SOURCE
+FileChecksum: SHA1: fec9092a4262aa55a1bffb87c6ac48460f73dc07
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/theme/app_theme.dart
+SPDXID: SPDXRef-app-theme-7
+FileType: SOURCE
+FileChecksum: SHA1: 295cac3b286a20c805d5ade72156fae9e80e30ec
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/utils/food_image_url.dart
+SPDXID: SPDXRef-food-image-url-8
+FileType: SOURCE
+FileChecksum: SHA1: 50f1fc6dc6416184f4f8ebf17cbb34bbab3e4508
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/widgets/gradient_button.dart
+SPDXID: SPDXRef-gradient-button-9
+FileType: SOURCE
+FileChecksum: SHA1: 7665f1a8bfca854310017ec5b240da29ba897311
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/widgets/loading_placeholder.dart
+SPDXID: SPDXRef-loading-placeholder-10
+FileType: SOURCE
+FileChecksum: SHA1: adc83b19e793491b1c6ea0fd8b46cd9f32e592fc
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/core/widgets/progress_indicator.dart
+SPDXID: SPDXRef-progress-indicator-11
+FileType: SOURCE
+FileChecksum: SHA1: d7ab406d6f26ac4af496d26442fa3aac228cf905
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/models/user_model.dart
+SPDXID: SPDXRef-user-model-12
+FileType: SOURCE
+FileChecksum: SHA1: 8ed69bc23f9a6deed49b3cab617348024fd1b02c
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/screens/confirmation_screen.dart
+SPDXID: SPDXRef-confirmation-screen-13
+FileType: SOURCE
+FileChecksum: SHA1: 2a084ddd8ee96de043007e0bd9efc57fd5cf2ff5
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/screens/forgot_password_screen.dart
+SPDXID: SPDXRef-forgot-password-screen-14
+FileType: SOURCE
+FileChecksum: SHA1: 3c60211a39acd67b1729cad54fdc8d231a2eb35c
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/screens/sign_in_screen.dart
+SPDXID: SPDXRef-sign-in-screen-15
+FileType: SOURCE
+FileChecksum: SHA1: 8ee1667f25742fc609bf670b29db420a7142ea2b
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/screens/sign_up_screen.dart
+SPDXID: SPDXRef-sign-up-screen-16
+FileType: SOURCE
+FileChecksum: SHA1: 2372c15df70029fa84c73acd74c44deea38aa331
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/services/cognito_service.dart
+SPDXID: SPDXRef-cognito-service-17
+FileType: SOURCE
+FileChecksum: SHA1: 1168b48c942be7cc2f3b47d8bb913a058a4b4d68
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/auth/services/token_storage.dart
+SPDXID: SPDXRef-token-storage-18
+FileType: SOURCE
+FileChecksum: SHA1: ad653d6db23eb5e43a1cecbd4f9a7fec4957bdc5
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/chat/models/chat_message.dart
+SPDXID: SPDXRef-chat-message-19
+FileType: SOURCE
+FileChecksum: SHA1: dda2f239c56f8d3a8cf86928e3ee8ea415ee82a7
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/chat/screens/chat_screen.dart
+SPDXID: SPDXRef-chat-screen-20
+FileType: SOURCE
+FileChecksum: SHA1: 0edaaaef7e8c6fff9918a4c647c4029842ba0a88
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/chat/services/chat_service.dart
+SPDXID: SPDXRef-chat-service-21
+FileType: SOURCE
+FileChecksum: SHA1: 69a33243bb6615f4018ba834572fe4e2d0a7cdb9
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/discover/discover_screen.dart
+SPDXID: SPDXRef-discover-screen-22
+FileType: SOURCE
+FileChecksum: SHA1: 9d2d510888d02bea3d35c6f82179f2673ee08614
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/discover/services/food_service.dart
+SPDXID: SPDXRef-food-service-23
+FileType: SOURCE
+FileChecksum: SHA1: 25be7e4a6eb57a358d1bec3faccc355896710317
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/favorites/favorites_screen.dart
+SPDXID: SPDXRef-favorites-screen-24
+FileType: SOURCE
+FileChecksum: SHA1: f06672986c93a868ed0ba4864d12bb3e21300e1b
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/favorites/food_detail_screen.dart
+SPDXID: SPDXRef-food-detail-screen-25
+FileType: SOURCE
+FileChecksum: SHA1: c0e5764fda69b811b679e4753d5db8ff27151c2d
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/models/dietary_options.dart
+SPDXID: SPDXRef-dietary-options-26
+FileType: SOURCE
+FileChecksum: SHA1: 6483587052ebbdec3634e8d7f2a71d1676e40ebc
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/budget_screen.dart
+SPDXID: SPDXRef-budget-screen-27
+FileType: SOURCE
+FileChecksum: SHA1: 0c95ebe29b9a302277e1a0dd8f6f2e7bc39c2ec4
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/cuisine_screen.dart
+SPDXID: SPDXRef-cuisine-screen-28
+FileType: SOURCE
+FileChecksum: SHA1: 6451e753138d56c52fe488607d77aa7761555a69
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/dietary_screen.dart
+SPDXID: SPDXRef-dietary-screen-29
+FileType: SOURCE
+FileChecksum: SHA1: d528a17d399ecf81d0cac109ca9864ed3d77dbb3
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/done_screen.dart
+SPDXID: SPDXRef-done-screen-30
+FileType: SOURCE
+FileChecksum: SHA1: 37e06dc1b741c2e7932e2b3c7ee18b213689a388
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/spice_screen.dart
+SPDXID: SPDXRef-spice-screen-31
+FileType: SOURCE
+FileChecksum: SHA1: e64155143a9af74ef10f70f3cd38150ddaa0ccbf
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/onboarding/screens/welcome_screen.dart
+SPDXID: SPDXRef-welcome-screen-32
+FileType: SOURCE
+FileChecksum: SHA1: 6fd4d8ee060ece1c5b776827596f81f661b7202f
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/features/profile/profile_screen.dart
+SPDXID: SPDXRef-profile-screen-33
+FileType: SOURCE
+FileChecksum: SHA1: ad9a23d4c9d27c71072b373b322637c1fd3124fe
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/main.dart
+SPDXID: SPDXRef-main-34
+FileType: SOURCE
+FileChecksum: SHA1: 80ecab4fcf1abe0963a8fc9ef90d1100ae00a349
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/models/cuisine_option.dart
+SPDXID: SPDXRef-cuisine-option-35
+FileType: SOURCE
+FileChecksum: SHA1: 57cdd2fa02e0f7e19d39fd93df9c952915368fe1
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: lib/models/food_item.dart
+SPDXID: SPDXRef-food-item-36
+FileType: SOURCE
+FileChecksum: SHA1: fca6059d9ddf43e60b4b5a9f8fee4d3406476153
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+FileName: pubspec.yaml
+SPDXID: SPDXRef-pubspec-37
+FileType: TEXT
+FileChecksum: SHA1: 468533ec0852aace6c7c9ce7acd240396216705c
+LicenseConcluded: NOASSERTION
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+
+Relationship: SPDXRef-pubspec-37 DEPENDENCY_MANIFEST_OF SPDXRef-Package-swipe2eat-ui
+
+
