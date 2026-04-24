@@ -20,6 +20,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       TextEditingController();
 
   String? _selectedCity;
+  String? _selectedGender;
+  DateTime? _selectedDateOfBirth;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _isLoading = false;
@@ -37,6 +39,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'Phnom Penh',
     'Yangon',
     'Vientiane',
+  ];
+
+  final List<String> _genderOptions = const [
+    'male',
+    'female',
+    'non-binary',
+    'prefer not to say',
   ];
 
   @override
@@ -78,6 +87,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
+  String? _validateGender(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please select your gender';
+    }
+    return null;
+  }
+
+  String? _validateDateOfBirth() {
+    if (_selectedDateOfBirth == null) {
+      return 'Please select your date of birth';
+    }
+    return null;
+  }
+
+  String _formatDate(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedDateOfBirth ?? DateTime(now.year - 18, now.month, now.day),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+      });
+      _formKey.currentState?.validate();
+    }
+  }
+
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
@@ -114,6 +158,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         password: _passwordController.text,
         name: _nameController.text.trim(),
         city: _selectedCity,
+        gender: _selectedGender,
+        dateOfBirth: _selectedDateOfBirth,
       );
 
       if (mounted) {
@@ -304,6 +350,130 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   validator: _validateEmail,
                   enabled: !_isLoading,
                   textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 20),
+
+                // Gender Field
+                DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    labelText: 'Gender',
+                    hintText: 'Select your gender',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF6B4A),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.person_pin_outlined,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  items: _genderOptions.map((String gender) {
+                    return DropdownMenuItem<String>(
+                      value: gender,
+                      child: Text(gender),
+                    );
+                  }).toList(),
+                  onChanged: _isLoading
+                      ? null
+                      : (String? newValue) {
+                          setState(() {
+                            _selectedGender = newValue;
+                          });
+                        },
+                  validator: _validateGender,
+                ),
+                const SizedBox(height: 20),
+
+                // Date of Birth Field
+                FormField<DateTime>(
+                  validator: (_) => _validateDateOfBirth(),
+                  builder: (FormFieldState<DateTime> field) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InkWell(
+                          onTap: _isLoading ? null : _pickDateOfBirth,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Date of Birth',
+                              hintText: 'Select your date of birth',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFFF6B4A),
+                                  width: 2,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Colors.red),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Colors.red,
+                                  width: 2,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.calendar_today_outlined,
+                                color: Color(0xFF6B7280),
+                              ),
+                              errorText: field.errorText,
+                            ),
+                            child: Text(
+                              _selectedDateOfBirth != null
+                                  ? _formatDate(_selectedDateOfBirth!)
+                                  : 'Select your date of birth',
+                              style: TextStyle(
+                                color: _selectedDateOfBirth != null
+                                    ? const Color(0xFF111827)
+                                    : const Color(0xFF6B7280),
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
 

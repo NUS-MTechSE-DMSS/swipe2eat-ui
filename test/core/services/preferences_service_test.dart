@@ -158,5 +158,34 @@ void main() {
         expect(prefs.getString('prefs.spice'), equals('Mild'));
       },
     );
+
+    test(
+      'saveLocalDietaryPreferences stores diet type and allergens',
+      () async {
+        await PreferencesService.saveLocalDietaryPreferences(
+          dietType: 'Vegetarian',
+          allergens: const ['Soy', 'Peanut'],
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('prefs.dietType'), equals('Vegetarian'));
+        expect(
+          prefs.getStringList('prefs.allergens'),
+          equals(['Peanut', 'Soy']),
+        );
+      },
+    );
+
+    test('getLocalPreferences returns saved dietary preferences', () async {
+      await PreferencesService.saveLocalDietaryPreferences(
+        dietType: 'Vegan',
+        allergens: const ['Gluten'],
+      );
+
+      final prefs = await PreferencesService.getLocalPreferences();
+
+      expect(prefs['dietType'], equals('Vegan'));
+      expect(prefs['allergens'], equals(['Gluten']));
+    });
   });
 }

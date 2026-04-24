@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/preferences_service.dart';
 import 'done_screen.dart';
 import '../models/dietary_options.dart';
@@ -21,9 +20,6 @@ class DietaryScreen extends StatefulWidget {
 }
 
 class _DietaryScreenState extends State<DietaryScreen> {
-  static const String _prefsDietTypeKey = 'prefs.dietType';
-  static const String _prefsAllergensKey = 'prefs.allergens';
-
   late Future<DietaryOptions> _future;
   String? _selectedDietType;
   final Set<String> _selectedAllergens = {};
@@ -177,17 +173,11 @@ class _DietaryScreenState extends State<DietaryScreen> {
                       enabled: canContinue,
                       onTap: canContinue
                           ? () async {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setString(
-                                _prefsDietTypeKey,
-                                _selectedDietType!,
-                              );
                               final allergens = _selectedAllergens.toList()
                                 ..sort();
-                              await prefs.setStringList(
-                                _prefsAllergensKey,
-                                allergens,
+                              await PreferencesService.saveLocalDietaryPreferences(
+                                dietType: _selectedDietType!,
+                                allergens: allergens,
                               );
                               Navigator.push(
                                 context,

@@ -195,13 +195,30 @@ class DoneScreen extends StatelessWidget {
                                       .where((c) => c.trim().isNotEmpty)
                                       .toList();
 
-                                  // Save preferences to backend first.
-                                  final synced =
+                                  // Save both preference sets to backend.
+                                  final preferenceSynced =
                                       await PreferencesService.updatePreferences(
                                         cuisines: cuisines,
                                         budget: backendBudget,
                                         spiceLevel: selectedSpiceLabel,
                                       );
+                                  final dietarySynced =
+                                      await PreferencesService.updateDietaryPreferences(
+                                        dietType: selectedDietType,
+                                        allergens:
+                                            selectedAllergensLabel == 'None'
+                                            ? const []
+                                            : selectedAllergensLabel
+                                                  .split(', ')
+                                                  .where(
+                                                    (allergen) => allergen
+                                                        .trim()
+                                                        .isNotEmpty,
+                                                  )
+                                                  .toList(),
+                                      );
+                                  final synced =
+                                      preferenceSynced && dietarySynced;
 
                                   // Fallback: keep preferences locally when backend sync fails.
                                   if (!synced) {
@@ -209,6 +226,20 @@ class DoneScreen extends StatelessWidget {
                                       cuisines: cuisines,
                                       budget: backendBudget,
                                       spiceLevel: selectedSpiceLabel,
+                                    );
+                                    await PreferencesService.saveLocalDietaryPreferences(
+                                      dietType: selectedDietType,
+                                      allergens:
+                                          selectedAllergensLabel == 'None'
+                                          ? const []
+                                          : selectedAllergensLabel
+                                                .split(', ')
+                                                .where(
+                                                  (allergen) => allergen
+                                                      .trim()
+                                                      .isNotEmpty,
+                                                )
+                                                .toList(),
                                     );
                                   }
 

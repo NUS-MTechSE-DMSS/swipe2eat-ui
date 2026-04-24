@@ -11,6 +11,8 @@ class PreferencesService {
   static const String _prefsCuisinesKey = 'prefs.cuisines';
   static const String _prefsBudgetKey = 'prefs.budget';
   static const String _prefsSpiceKey = 'prefs.spice';
+  static const String _prefsDietTypeKey = 'prefs.dietType';
+  static const String _prefsAllergensKey = 'prefs.allergens';
 
   /// ValueNotifier that emits when preferences are updated
   /// Subscribers (like DiscoverScreen) can listen to this to refresh their data
@@ -217,6 +219,35 @@ class PreferencesService {
     }
   }
 
+  /// Updates dietary preferences on the backend.
+  /// Returns true if successful, false otherwise.
+  static Future<bool> updateDietaryPreferences({
+    required String dietType,
+    required List<String> allergens,
+  }) async {
+    try {
+      final cognitoUserId = await TokenStorage.getUserId();
+      if (cognitoUserId == null || cognitoUserId.trim().isEmpty) {
+        return false;
+      }
+
+      final uri = Uri.parse(
+        '${ApiConfig.preferenceBaseUrl}/dietary/users/$cognitoUserId',
+      );
+      final headers = await _buildAuthHeaders();
+      final payload = jsonEncode({
+        'dietType': dietType,
+        // Backend DTO uses `allergies`; keep frontend storage naming separate.
+        'allergies': allergens,
+      });
+
+      final res = await http.put(uri, headers: headers, body: payload);
+      return res.statusCode == 200 || res.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Gets current preferences from local storage
   static Future<Map<String, dynamic>> getLocalPreferences() async {
     final prefs = await SharedPreferences.getInstance();
@@ -225,8 +256,16 @@ class PreferencesService {
         ['Chinese', 'Thai', 'Western'];
     final budget = prefs.getString(_prefsBudgetKey) ?? 'low';
     final spiceLevel = prefs.getString(_prefsSpiceKey) ?? 'Medium';
+    final dietType = prefs.getString(_prefsDietTypeKey) ?? 'None';
+    final allergens = prefs.getStringList(_prefsAllergensKey) ?? <String>[];
 
-    return {'cuisines': cuisines, 'budget': budget, 'spiceLevel': spiceLevel};
+    return {
+      'cuisines': cuisines,
+      'budget': budget,
+      'spiceLevel': spiceLevel,
+      'dietType': dietType,
+      'allergens': allergens,
+    };
   }
 
   /// Saves preferences to local storage and notifies listeners
@@ -243,6 +282,19 @@ class PreferencesService {
     }
 
     // Notify listeners that preferences have been updated
+    preferencesUpdated.value++;
+  }
+
+  /// Saves dietary preferences to local storage and notifies listeners.
+  static Future<void> saveLocalDietaryPreferences({
+    required String dietType,
+    required List<String> allergens,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final sortedAllergens = List<String>.from(allergens)..sort();
+    await prefs.setString(_prefsDietTypeKey, dietType);
+    await prefs.setStringList(_prefsAllergensKey, sortedAllergens);
+
     preferencesUpdated.value++;
   }
 

@@ -4,108 +4,118 @@ import 'package:swipe2eat_ui/features/auth/screens/sign_up_screen.dart';
 
 void main() {
   group('SignUpScreen Widget', () {
-    testWidgets('displays Sign Up title in AppBar', (
+    testWidgets('renders the signup form fields', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SignUpScreen()));
+
+      expect(find.text('Create Account'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Name'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
+      expect(
+        find.widgetWithText(DropdownButtonFormField<String>, 'Gender'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(InputDecorator, 'Date of Birth'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(DropdownButtonFormField<String>, 'City'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, 'Confirm Password'),
+        findsOneWidget,
+      );
+      expect(find.text('Sign Up'), findsOneWidget);
+    });
+
+    testWidgets('email field uses email keyboard type', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
+      await tester.pumpWidget(const MaterialApp(home: SignUpScreen()));
 
-      expect(find.text('Sign Up'), findsWidgets);
-    });
-
-    testWidgets('has email input field', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      expect(find.byType(TextField), findsWidgets);
-      expect(find.text('Email'), findsOneWidget);
-    });
-
-    testWidgets('has password input field', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      expect(find.text('Password'), findsOneWidget);
-    });
-
-    testWidgets('password field is obscured', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      final textFields = find.byType(TextField);
-      final passwordField = tester.widget<TextField>(textFields.at(2));
-      expect(passwordField.obscureText, true);
-    });
-
-    testWidgets('can enter email text', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      final emailField = find.byType(TextField).at(1);
-      await tester.enterText(emailField, 'newuser@example.com');
-
-      expect(find.text('newuser@example.com'), findsOneWidget);
-    });
-
-    testWidgets('can enter password text', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      final passwordField = find.byType(TextField).at(2);
-      await tester.enterText(passwordField, 'newpass123');
-
-      expect(find.text('newpass123'), findsOneWidget);
-    });
-
-    testWidgets('email field has email keyboard type', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
-
-      final textFields = find.byType(TextField);
-      final emailField = tester.widget<TextField>(textFields.at(1));
-      expect(emailField.keyboardType, TextInputType.emailAddress);
-    });
-
-    testWidgets('Sign In link pops back to previous screen', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Navigator(
-              onGenerateRoute: (settings) {
-                if (settings.name == '/') {
-                  return MaterialPageRoute(
-                    builder: (_) => const Scaffold(
-                      body: Center(child: Text('Previous Screen')),
-                    ),
-                  );
-                }
-                return MaterialPageRoute(builder: (_) => SignUpScreen());
-              },
-            ),
-          ),
+      final emailField = tester.widget<TextField>(
+        find.descendant(
+          of: find.widgetWithText(TextFormField, 'Email'),
+          matching: find.byType(TextField),
         ),
       );
 
-      // Navigate to sign up
-      expect(find.byType(SignUpScreen), findsNothing);
+      expect(emailField.keyboardType, TextInputType.emailAddress);
     });
 
-    testWidgets('has proper layout structure', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
+    testWidgets('password fields are obscured by default', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: SignUpScreen()));
 
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(AppBar), findsOneWidget);
-      expect(find.byType(Center), findsWidgets);
-      expect(find.byType(Column), findsOneWidget);
+      final passwordField = tester.widget<TextField>(
+        find.descendant(
+          of: find.widgetWithText(TextFormField, 'Password'),
+          matching: find.byType(TextField),
+        ),
+      );
+      final confirmPasswordField = tester.widget<TextField>(
+        find.descendant(
+          of: find.widgetWithText(TextFormField, 'Confirm Password'),
+          matching: find.byType(TextField),
+        ),
+      );
+
+      expect(passwordField.obscureText, true);
+      expect(confirmPasswordField.obscureText, true);
     });
 
-    testWidgets('displays with proper padding', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
+    testWidgets('allows entering name and email', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SignUpScreen()));
 
-      expect(find.byType(Padding), findsWidgets);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Name'),
+        'Jane Doe',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email'),
+        'jane@example.com',
+      );
+
+      expect(find.text('Jane Doe'), findsOneWidget);
+      expect(find.text('jane@example.com'), findsOneWidget);
     });
 
-    testWidgets('displays with proper spacing', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: SignUpScreen()));
+    testWidgets(
+      'shows validation errors for missing gender and date of birth',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const MaterialApp(home: SignUpScreen()));
 
-      expect(find.byType(SizedBox), findsWidgets);
-    });
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Name'),
+          'Jane Doe',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Email'),
+          'jane@example.com',
+        );
+        await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Singapore').last);
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Password'),
+          'Password123!',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Confirm Password'),
+          'Password123!',
+        );
+
+        await tester.ensureVisible(find.text('Sign Up'));
+        await tester.tap(find.text('Sign Up'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Please select your gender'), findsOneWidget);
+        expect(find.text('Please select your date of birth'), findsOneWidget);
+      },
+    );
   });
 }

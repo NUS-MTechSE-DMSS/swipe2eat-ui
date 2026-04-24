@@ -17,6 +17,8 @@ class CognitoService {
     required String password,
     String? name,
     String? city,
+    String? gender,
+    DateTime? dateOfBirth,
   }) async {
     try {
       final headers = {
@@ -31,6 +33,13 @@ class CognitoService {
         'UserAttributes': [
           {'Name': 'email', 'Value': email},
           if (name != null && name.isNotEmpty) {'Name': 'name', 'Value': name},
+          if (gender != null && gender.isNotEmpty)
+            {'Name': 'gender', 'Value': gender},
+          if (dateOfBirth != null)
+            {
+              'Name': 'birthdate',
+              'Value': dateOfBirth.toIso8601String().split('T').first,
+            },
           // NOTE: custom:City attribute configured in AWS Cognito User Pool (case-sensitive)
           if (city != null && city.isNotEmpty)
             {'Name': 'custom:City', 'Value': city},
