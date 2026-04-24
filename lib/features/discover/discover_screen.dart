@@ -308,14 +308,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                             subtitle: _lastDroppedInvalidIds > 0
                                 ? "Skipped $_lastDroppedInvalidIds dishes because of invalid data. Please try again shortly."
                                 : "No dishes match your current preferences right now.",
-                            onRetry: _fetchFoods,
+                            onAction: _fetchFoods,
                           )
-                        : const Text(
-                            "No more dishes 🎉",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        : _EmptyState(
+                            title: "No more dishes 🎉",
+                            subtitle:
+                                "You've swiped through all available dishes. Refresh to load another batch.",
+                            actionLabel: "Refresh dishes",
+                            actionIcon: Icons.refresh_rounded,
+                            onAction: _fetchFoods,
                           )
                   : LayoutBuilder(
                       builder: (context, constraints) {
@@ -1387,12 +1388,16 @@ class _BottomNavMock extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   final String title;
   final String subtitle;
-  final VoidCallback onRetry;
+  final String actionLabel;
+  final IconData? actionIcon;
+  final VoidCallback onAction;
 
   const _EmptyState({
     required this.title,
     required this.subtitle,
-    required this.onRetry,
+    required this.onAction,
+    this.actionLabel = "Retry",
+    this.actionIcon,
   });
 
   @override
@@ -1418,7 +1423,7 @@ class _EmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         GestureDetector(
-          onTap: onRetry,
+          onTap: onAction,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(
@@ -1426,9 +1431,18 @@ class _EmptyState extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: const Text(
-              "Retry",
-              style: TextStyle(fontWeight: FontWeight.w800),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (actionIcon != null) ...[
+                  Icon(actionIcon, size: 18, color: const Color(0xFFFF6B4A)),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  actionLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
             ),
           ),
         ),
