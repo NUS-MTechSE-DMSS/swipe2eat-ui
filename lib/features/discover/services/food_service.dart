@@ -63,34 +63,48 @@ class FoodService {
     String? dietType,
     List<String>? allergens,
   }) async {
-    final baseUri = Uri.parse('${ApiConfig.baseUrl}/food/');
+    final userId = await TokenStorage.getUserId();
+    final headers = await _buildAuthHeaders();
 
-    final params = <String>['budget=${Uri.encodeQueryComponent(budget)}'];
+    if (userId != null && userId.trim().isNotEmpty) {
+      final personalizedFoods = await _fetchFoodsByQuery(
+        queryParameters: {
+          'userId': [userId.trim()],
+        },
+        headers: headers,
+      );
+      if (personalizedFoods.isNotEmpty) {
+        return personalizedFoods;
+      }
+    }
+
+    final fallbackParams = <String, List<String>>{
+      'budget': [budget],
+    };
 
     if (cuisines.isNotEmpty) {
-      params.addAll(
-        cuisines.map((c) => 'cuisines=${Uri.encodeQueryComponent(c)}'),
-      );
+      fallbackParams['cuisines'] = cuisines;
     }
 
     if (spiceLevel.trim().isNotEmpty) {
-      final spiceNum = _spiceLevelToNumber(spiceLevel);
-      params.add('spiceLevel=$spiceNum');
+      fallbackParams['spiceLevel'] = [
+        _spiceLevelToNumber(spiceLevel).toString(),
+      ];
     }
 
-    if (dietType != null && dietType.trim().isNotEmpty && dietType != 'None') {
-      params.add('dietType=${Uri.encodeQueryComponent(dietType)}');
-    }
+    return _fetchFoodsByQuery(
+      queryParameters: fallbackParams,
+      headers: headers,
+    );
+  }
 
-    if (allergens != null && allergens.isNotEmpty) {
-      params.addAll(
-        allergens.map((a) => 'allergens=${Uri.encodeQueryComponent(a)}'),
-      );
-    }
-
-    final query = params.join('&');
-    final uri = baseUri.replace(query: query);
-    final headers = await _buildAuthHeaders();
+  static Future<List<FoodItem>> _fetchFoodsByQuery({
+    required Map<String, List<String>> queryParameters,
+    required Map<String, String> headers,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/food/',
+    ).replace(query: _buildQueryString(queryParameters));
 
     final res = await http.get(uri, headers: headers);
     if (res.statusCode != 200) {
@@ -133,6 +147,17 @@ class FoodService {
     }
 
     return foods;
+  }
+
+  static String _buildQueryString(Map<String, List<String>> queryParameters) {
+    final params = <String>[];
+    for (final entry in queryParameters.entries) {
+      for (final value in entry.value) {
+        if (value.trim().isEmpty) continue;
+        params.add('${entry.key}=${Uri.encodeQueryComponent(value)}');
+      }
+    }
+    return params.join('&');
   }
 
   /// Extracts the list of food items from various response formats.
