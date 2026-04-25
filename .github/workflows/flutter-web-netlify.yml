@@ -77,7 +77,9 @@ jobs:
         uses: snyk/actions/setup@master
 
       - name: Generate pub dependency SBOM
-        run: snyk sbom --format=spdx2.3+json --file=pubspec.yaml --json-file-output=sbom-pub.json .
+        run: |
+          test -f pubspec.lock || { echo "pubspec.lock not found; did flutter pub get run?"; exit 1; }
+          snyk sbom --format=spdx2.3+json --file=pubspec.lock --json-file-output=sbom-pub.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
