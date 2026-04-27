@@ -1,0 +1,166 @@
+default_platform(:android)
+
+require "base64"
+require "json"
+require "shellwords"
+
+def build_number
+  ENV.fetch("BUILD_NUMBER", Time.now.utc.strftime("%Y%m%d%H%M"))
+end
+
+def app_version
+  ENV.fetch("APP_VERSION", "1.0.0")
+end
+
+def dart_defines_file
+  ENV.fetch("DART_DEFINES_FILE")
+end
+
+def bundle_identifier_for(environment_name)
+  base_identifier = "me.keiyam.swipe2eat"
+  return base_identifier if environment_name == "prod"
+
+  "#{base_identifier}.#{environment_name}"
+end
+
+def display_name_for(environment_name)
+  case environment_name
+  when "dev"
+    "Swipe2Eat Dev"
+  when "staging"
+    "Swipe2Eat Staging"
+  else
+    "Swipe2Eat"
+  end
+end
+
+def encoded_dart_defines
+  JSON.parse(File.read(dart_defines_file)).map do |key, value|
+    Base64.strict_encode64("#{key}=#{value}")
+  end.join(",")
+end
+
+def app_store_connect_api_key_config
+  app_store_connect_api_key(
+    key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+    issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+    key_content: ENV.fetch("APP_STORE_CONNECT_PRIVATE_KEY"),
+    is_key_content_base64: ENV.fetch("APP_STORE_CONNECT_PRIVATE_KEY_IS_BASE64", "false") == "true",
+    in_house: false
+  )
+end
+
+platform :android do
+  desc "Upload the staging Android bundle to Play Internal or Closed tracks"
+  lane :staging do
+    flavor = ENV.fetch("ANDROID_FLAVOR", "staging")
+    track = ENV.fetch("ANDROID_PLAY_TRACK", "internal")
+
+    sh(
+      "flutter build appbundle --release " \
+      "--flavor #{flavor} " \
+      "--dart-define-from-file=#{dart_defines_file.shellescape} " \
+      "--build-name=#{app_version.shellescape} " \
+      "--build-number=#{build_number.shellescape}"
+    )
+
+    upload_to_play_store(
+      json_key: ENV.fetch("SUPPLY_JSON_KEY"),
+      package_name: bundle_identifier_for(flavor),
+      track: track,
+      aab: "build/app/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"
+    )
+  end
+
+  desc "Upload the production Android bundle to Google Play production"
+  lane :production do
+    flavor = ENV.fetch("ANDROID_FLAVOR", "prod")
+
+    sh(
+      "flutter build appbundle --release " \
+      "--flavor #{flavor} " \
+      "--dart-define-from-file=#{dart_defines_file.shellescape} " \
+      "--build-name=#{app_version.shellescape} " \
+      "--build-number=#{build_number.shellescape}"
+    )
+
+    upload_to_play_store(
+      json_key: ENV.fetch("SUPPLY_JSON_KEY"),
+      package_name: bundle_identifier_for(flavor),
+      track: "production",
+      aab: "build/app/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"
+    )
+  end
+end
+
+platform :ios do
+  desc "Upload the staging iOS build to TestFlight"
+  lane :staging do
+    environment_name = ENV.fetch("IOS_SCHEME", "staging")
+    build_ios_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: environment_name,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build/ios/ipa",
+      output_name: "#{environment_name}.ipa",
+      build_path: "build/ios/archive",
+      clean: true,
+      export_options: {
+        signingStyle: "automatic"
+      },
+      xcargs: [
+        "PRODUCT_BUNDLE_IDENTIFIER=#{bundle_identifier_for(environment_name)}",
+        "APP_DISPLAY_NAME='#{display_name_for(environment_name)}'",
+        "FLUTTER_BUILD_NAME=#{app_version}",
+        "FLUTTER_BUILD_NUMBER=#{build_number}",
+        "DART_DEFINES=#{encoded_dart_defines}",
+        ("DEVELOPMENT_TEAM=#{ENV['IOS_DEVELOPMENT_TEAM']}" if ENV["IOS_DEVELOPMENT_TEAM"])
+      ].compact.join(" ")
+    )
+
+    pilot(
+      api_key: app_store_connect_api_key_config,
+      ipa: "build/ios/ipa/#{environment_name}.ipa",
+      app_identifier: bundle_identifier_for(environment_name),
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+  end
+
+  desc "Upload the production iOS build to App Store Connect"
+  lane :production do
+    environment_name = ENV.fetch("IOS_SCHEME", "prod")
+    build_ios_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: environment_name,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build/ios/ipa",
+      output_name: "#{environment_name}.ipa",
+      build_path: "build/ios/archive",
+      clean: true,
+      export_options: {
+        signingStyle: "automatic"
+      },
+      xcargs: [
+        "PRODUCT_BUNDLE_IDENTIFIER=#{bundle_identifier_for(environment_name)}",
+        "APP_DISPLAY_NAME='#{display_name_for(environment_name)}'",
+        "FLUTTER_BUILD_NAME=#{app_version}",
+        "FLUTTER_BUILD_NUMBER=#{build_number}",
+        "DART_DEFINES=#{encoded_dart_defines}",
+        ("DEVELOPMENT_TEAM=#{ENV['IOS_DEVELOPMENT_TEAM']}" if ENV["IOS_DEVELOPMENT_TEAM"])
+      ].compact.join(" ")
+    )
+
+    upload_to_app_store(
+      api_key: app_store_connect_api_key_config,
+      ipa: "build/ios/ipa/#{environment_name}.ipa",
+      app_identifier: bundle_identifier_for(environment_name),
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false
+    )
+  end
+end

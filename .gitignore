@@ -33,6 +33,12 @@ migrate_working_dir/
 .vscode/
 /build/
 /coverage/
+/android/key.properties
+/android/app/upload-keystore.jks
+/fastlane/report.xml
+/fastlane/Preview.html
+/fastlane/screenshots/
+/config/env/*.local.json
 
 # Symbolication related
 app.*.symbols
