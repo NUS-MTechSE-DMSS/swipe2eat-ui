@@ -133,6 +133,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                 _prefsBudgetLabelKey,
                                 selected,
                               );
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -240,7 +241,7 @@ class _BudgetOptionCard extends StatelessWidget {
                 height: 46,
                 decoration: BoxDecoration(
                   color: selected
-                      ? Colors.white.withOpacity(0.15)
+                      ? Colors.white.withValues(alpha: 0.15)
                       : const Color(0xFFEFFDF4),
                   borderRadius: BorderRadius.circular(14),
                 ),

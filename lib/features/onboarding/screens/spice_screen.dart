@@ -101,6 +101,7 @@ class _SpiceScreenState extends State<SpiceScreen> {
                               final prefs =
                                   await SharedPreferences.getInstance();
                               await prefs.setString(_prefsSpiceKey, selected);
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -111,6 +112,7 @@ class _SpiceScreenState extends State<SpiceScreen> {
                                   ),
                                 ),
                               );
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Spice: $selected")),
                               );

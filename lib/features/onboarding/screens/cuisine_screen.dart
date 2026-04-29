@@ -126,6 +126,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
                                 cuisines,
                               );
                               final cuisinesLabel = cuisines.join(", ");
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -135,6 +136,7 @@ class _CuisineScreenState extends State<CuisineScreen> {
                                 ),
                               );
 
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text("Selected: $cuisinesLabel"),

@@ -80,7 +80,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) =>
                         _MessageBubble(message: _messages[index]),
@@ -103,7 +105,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     'Swipe2Eat AI is thinking...',
                     style: TextStyle(
-                        color: Color(0xFF9CA3AF), fontStyle: FontStyle.italic),
+                      color: Color(0xFF9CA3AF),
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
@@ -128,8 +132,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.restaurant_menu,
-              size: 56, color: Color(0xFFFF6B4A)),
+          Icon(Icons.restaurant_menu, size: 56, color: Color(0xFFFF6B4A)),
           SizedBox(height: 16),
           Text(
             'Ask me for food recommendations!',
@@ -162,19 +165,17 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isUser
-                  ? const Color(0xFFFF6B4A)
-                  : const Color(0xFFFFEDE6),
+              color: isUser ? const Color(0xFFFF6B4A) : const Color(0xFFFFEDE6),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -185,9 +186,7 @@ class _MessageBubble extends StatelessWidget {
             child: Text(
               message.text,
               style: TextStyle(
-                color: isUser
-                    ? Colors.white
-                    : const Color(0xFF1F2937),
+                color: isUser ? Colors.white : const Color(0xFF1F2937),
                 fontSize: 14,
                 height: 1.4,
               ),
@@ -195,8 +194,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           if (message.recommendations.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ...message.recommendations
-                .map((r) => _RecommendationCard(rec: r)),
+            ...message.recommendations.map((r) => _RecommendationCard(rec: r)),
           ],
         ],
       ),
@@ -234,30 +232,31 @@ class _RecommendationCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.attach_money,
-                  size: 14, color: Color(0xFF6B7280)),
+              const Icon(
+                Icons.attach_money,
+                size: 14,
+                color: Color(0xFF6B7280),
+              ),
               Text(
                 rec.price.toStringAsFixed(2),
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
               const SizedBox(width: 10),
-              const Text('🌶️',
-                  style: TextStyle(fontSize: 12)),
+              const Text('🌶️', style: TextStyle(fontSize: 12)),
               Text(
                 ' ${rec.spiceLevel}',
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
               const SizedBox(width: 10),
-              const Icon(Icons.restaurant,
-                  size: 14, color: Color(0xFF6B7280)),
+              const Icon(Icons.restaurant, size: 14, color: Color(0xFF6B7280)),
               const SizedBox(width: 2),
               Expanded(
                 child: Text(
                   rec.cuisine,
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF6B7280)),
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -305,26 +304,24 @@ class _InputBar extends StatelessWidget {
                 enabled: !isLoading,
                 decoration: InputDecoration(
                   hintText: 'What are you craving?',
-                  hintStyle:
-                      const TextStyle(color: Color(0xFF9CA3AF)),
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB)),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB)),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(
-                        color: Color(0xFFFF6B4A)),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B4A)),
                   ),
                 ),
               ),

@@ -376,7 +376,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                 duration: const Duration(milliseconds: 180),
                                 curve: Curves.easeOut,
                                 transform: Matrix4.identity()
-                                  ..translate(_dragOffset.dx, _dragOffset.dy)
+                                  ..translateByDouble(
+                                    _dragOffset.dx,
+                                    _dragOffset.dy,
+                                    0,
+                                    1,
+                                  )
                                   ..rotateZ(_dragRotation),
                                 child: _FoodCard(
                                   item: item,

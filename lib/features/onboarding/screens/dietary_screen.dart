@@ -179,6 +179,7 @@ class _DietaryScreenState extends State<DietaryScreen> {
                                 dietType: _selectedDietType!,
                                 allergens: allergens,
                               );
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

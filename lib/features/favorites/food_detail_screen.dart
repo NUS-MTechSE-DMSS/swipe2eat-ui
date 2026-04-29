@@ -15,7 +15,8 @@ class FoodDetailScreen extends StatelessWidget {
   Future<void> _openInGoogleMaps(String address) async {
     final encoded = Uri.encodeComponent(address);
     final uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$encoded');
+      'https://www.google.com/maps/search/?api=1&query=$encoded',
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

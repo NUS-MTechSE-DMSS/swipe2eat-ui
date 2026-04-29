@@ -27,11 +27,10 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'name': name,
-        'gender': gender,
-        'dateOfBirth':
-            dateOfBirth != null ? dateOfBirth!.toIso8601String().split('T').first : null,
-      };
+    'id': id,
+    'email': email,
+    'name': name,
+    'gender': gender,
+    'dateOfBirth': dateOfBirth?.toIso8601String().split('T').first,
+  };
 }
