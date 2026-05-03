@@ -17,7 +17,7 @@ def dart_defines_file
 end
 
 def bundle_identifier_for(environment_name)
-  base_identifier = "me.keiyam.swipe2eat"
+  base_identifier = "edu.nus.swipe2eat"
   return base_identifier if environment_name == "prod"
 
   "#{base_identifier}.#{environment_name}"

@@ -57,6 +57,7 @@ jobs:
         with:
           name: release-web-build
           path: build/web
+          if-no-files-found: error
           retention-days: 30
 
   deploy-android:
@@ -102,6 +103,7 @@ jobs:
         with:
           name: release-android-bundle
           path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          if-no-files-found: error
           retention-days: 30
 
   deploy-ios:
@@ -139,6 +141,7 @@ jobs:
         with:
           name: release-ios-ipa
           path: build/ios/ipa/prod.ipa
+          if-no-files-found: error
           retention-days: 30
 
   desktop-artifacts:
@@ -189,6 +192,7 @@ jobs:
         with:
           name: release-${{ matrix.name }}
           path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
           retention-days: 30
 
   github-release:

@@ -44,7 +44,22 @@ jobs:
         with:
           name: coverage-lcov
           path: coverage/lcov.info
+          if-no-files-found: error
           retention-days: 14
+
+  snyk-open-source:
+    name: snyk-open-source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install -g snyk@latest
+      - name: Run Snyk Open Source scan
+        run: snyk test --all-projects --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   web-build:
     name: web-build
@@ -63,6 +78,7 @@ jobs:
         with:
           name: web-release
           path: build/web
+          if-no-files-found: error
           retention-days: 14
 
   web-integration:
@@ -125,11 +141,13 @@ jobs:
         with:
           name: android-debug-apk
           path: build/app/outputs/flutter-apk/app-dev-debug.apk
+          if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: android-test-apk
           path: android/app/build/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
+          if-no-files-found: error
           retention-days: 14
 
   ios-testlab-package:
@@ -161,6 +179,7 @@ jobs:
         with:
           name: ios-testlab
           path: build/ios_testlab/Build/Products/ios-testlab.zip
+          if-no-files-found: error
           retention-days: 14
 
   linux-build:
@@ -182,6 +201,7 @@ jobs:
         with:
           name: linux-release
           path: build/linux/x64/release/bundle
+          if-no-files-found: error
           retention-days: 14
 
   macos-build:
@@ -201,6 +221,7 @@ jobs:
         with:
           name: macos-release
           path: build/macos/Build/Products/Release
+          if-no-files-found: error
           retention-days: 14
 
   windows-build:
@@ -222,4 +243,5 @@ jobs:
         with:
           name: windows-release
           path: build/windows/x64/runner/Release
+          if-no-files-found: error
           retention-days: 14

@@ -33,7 +33,7 @@ val hasReleaseSigning =
         !releaseKeyPassword.isNullOrBlank()
 
 android {
-    namespace = "me.keiyam.swipe2eat"
+    namespace = "edu.nus.swipe2eat"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -58,7 +58,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.keiyam.swipe2eat"
+        applicationId = "edu.nus.swipe2eat"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

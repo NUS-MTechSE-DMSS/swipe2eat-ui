@@ -40,6 +40,10 @@ migrate_working_dir/
 /fastlane/screenshots/
 /config/env/*.local.json
 
+# Signing and certificate artifacts
+*.jks
+*.pem
+
 # Symbolication related
 app.*.symbols
 

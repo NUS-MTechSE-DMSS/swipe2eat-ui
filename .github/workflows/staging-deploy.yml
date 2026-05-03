@@ -56,9 +56,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-node@v4
         with:
-          bundler-cache: true
+          node-version: "20"
       - uses: subosito/flutter-action@v2.21.0
         with:
           flutter-version: 3.41.6
@@ -71,19 +71,81 @@ jobs:
       - run: printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      - run: printf '%s' "${ANDROID_PLAY_JSON_KEY_BASE64}" | base64 --decode > "$RUNNER_TEMP/play.json"
+      - run: printf '%s' "${FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64}" | base64 --decode > "$RUNNER_TEMP/firebase-appdist.json"
         env:
-          ANDROID_PLAY_JSON_KEY_BASE64: ${{ secrets.ANDROID_PLAY_JSON_KEY_BASE64 }}
-      - run: bundle exec fastlane android staging
+          FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64 }}
+      - run: npm install -g firebase-tools
+      - run: flutter build apk --release --flavor staging --dart-define-from-file="$RUNNER_TEMP/dart-defines.json" --build-number="${{ github.event.workflow_run.run_number }}"
         env:
-          DART_DEFINES_FILE: ${{ runner.temp }}/dart-defines.json
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          SUPPLY_JSON_KEY: ${{ runner.temp }}/play.json
-          ANDROID_PLAY_TRACK: ${{ vars.ANDROID_PLAY_TRACK || 'internal' }}
-          BUILD_NUMBER: ${{ github.event.workflow_run.run_number }}
+      - name: Distribute staging APK to Firebase App Distribution
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FIREBASE_ANDROID_APP_ID_STAGING:-}" ]]; then
+            echo "Set FIREBASE_ANDROID_APP_ID_STAGING as a staging environment variable." >&2
+            exit 1
+          fi
+
+          head_sha="${{ github.event.workflow_run.head_sha }}"
+
+          args=(
+            appdistribution:distribute
+            build/app/outputs/flutter-apk/app-staging-release.apk
+            --app
+            "${FIREBASE_ANDROID_APP_ID_STAGING}"
+            --release-notes
+            "Staging build from ${GITHUB_REPOSITORY}@${head_sha}"
+          )
+
+          if [[ -n "${FIREBASE_APPDISTRO_GROUPS:-}" ]]; then
+            args+=(--groups "${FIREBASE_APPDISTRO_GROUPS}")
+          fi
+
+          if [[ -n "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
+            args+=(--testers "${FIREBASE_APPDISTRO_TESTERS}")
+          fi
+
+          if [[ -z "${FIREBASE_APPDISTRO_GROUPS:-}" && -z "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
+            echo "Set FIREBASE_APPDISTRO_GROUPS or FIREBASE_APPDISTRO_TESTERS for the staging environment." >&2
+            exit 1
+          fi
+
+          firebase "${args[@]}" 2>&1 | tee "$RUNNER_TEMP/firebase-appdist.log"
+
+          console_uri=$(sed -n 's/.*firebase_console_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+          testing_uri=$(sed -n 's/.*testing_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+          binary_uri=$(sed -n 's/.*binary_download_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+
+          {
+            echo "### Android Staging Distribution"
+            echo
+            echo "- Package: \`edu.nus.swipe2eat.staging\`"
+            echo "- Artifact: \`app-staging-release.apk\`"
+            if [[ -n "$console_uri" ]]; then
+              echo "- Firebase console: $console_uri"
+            fi
+            if [[ -n "$testing_uri" ]]; then
+              echo "- Tester install page: $testing_uri"
+            fi
+            if [[ -n "$binary_uri" ]]; then
+              echo "- Direct download link: $binary_uri"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          FIREBASE_ANDROID_APP_ID_STAGING: ${{ vars.FIREBASE_ANDROID_APP_ID_STAGING }}
+          FIREBASE_APPDISTRO_GROUPS: ${{ vars.FIREBASE_APPDISTRO_GROUPS }}
+          FIREBASE_APPDISTRO_TESTERS: ${{ vars.FIREBASE_APPDISTRO_TESTERS }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-appdist.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staging-android-apk
+          path: build/app/outputs/flutter-apk/app-staging-release.apk
+          if-no-files-found: error
+          retention-days: 14
 
   deploy-ios:
     name: deploy-ios
@@ -134,4 +196,5 @@ jobs:
         with:
           name: desktop-validation-assets
           path: desktop-assets
+          if-no-files-found: error
           retention-days: 14
