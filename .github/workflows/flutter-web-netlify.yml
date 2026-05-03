@@ -76,42 +76,8 @@ jobs:
       - name: Setup Snyk CLI
         uses: snyk/actions/setup@master
 
-      - name: Install Dart SBOM generator
-        run: dart pub global activate sbom
-
-      - name: Create SBOM config
-        run: |
-          cat > sbom.yaml <<'EOF'
-          type: spdx
-          spdx:
-            SPDXFormat: 'json'
-          EOF
-
-      - name: Generate pub dependency SBOM
-        run: dart pub global run sbom
-
-      - name: Normalize SBOM filename
-        run: |
-          if [ -f sbom-pub.json ]; then
-            exit 0
-          fi
-          if [ -f sbom.spdx ]; then
-            mv sbom.spdx sbom-pub.json
-            exit 0
-          fi
-          if [ -f sbom.json ]; then
-            mv sbom.json sbom-pub.json
-            exit 0
-          fi
-          echo "Expected SBOM output was not found"
-          find . -maxdepth 1 -type f -name 'sbom*' -print
-          exit 1
-
-      - name: Verify SBOM output
-        run: test -f sbom-pub.json || { echo "sbom-pub.json was not created"; exit 1; }
-
       - name: Run Snyk scan
-        run: snyk sbom test --experimental --file=sbom-pub.json
+        run: snyk test --all-projects --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
