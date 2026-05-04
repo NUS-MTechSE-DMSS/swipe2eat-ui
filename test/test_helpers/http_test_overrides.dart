@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 typedef TestHttpMatcher = bool Function(CapturedHttpRequest request);
 typedef TestHttpHandler =

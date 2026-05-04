@@ -9,7 +9,6 @@ import 'package:swipe2eat_ui/core/state/favorites_store.dart';
 import 'package:swipe2eat_ui/features/auth/services/token_storage.dart';
 import 'package:swipe2eat_ui/features/favorites/favorites_screen.dart';
 import 'package:swipe2eat_ui/features/favorites/food_detail_screen.dart';
-import 'package:swipe2eat_ui/models/food_item.dart';
 
 import '../../test_helpers/http_test_overrides.dart';
 
