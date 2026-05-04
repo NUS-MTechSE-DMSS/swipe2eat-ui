@@ -111,17 +111,39 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  snyk-open-source:
-    name: snyk-open-source
+  security:
+    name: Snyk Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: "20"
-      - run: npm install -g snyk@latest
-      - name: Run Snyk Open Source scan
-        run: snyk test --all-projects --severity-threshold=high
+          flutter-version: 3.41.6
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Check Snyk token
+        id: snyk-token
+        run: |
+          if [[ -z "${SNYK_TOKEN}" ]]; then
+            echo "SNYK_TOKEN is not set; skipping report-only Snyk scan."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Setup Snyk CLI
+        if: steps.snyk-token.outputs.available == 'true'
+        uses: snyk/actions/setup@master
+        continue-on-error: true
+      - name: Run Snyk scan
+        if: steps.snyk-token.outputs.available == 'true'
+        run: bash .github/scripts/run_snyk_scans.sh
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 

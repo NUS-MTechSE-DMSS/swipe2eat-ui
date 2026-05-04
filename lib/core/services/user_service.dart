@@ -213,8 +213,8 @@ class UserService {
       };
 
       final body = jsonEncode({
-        if (name != null) 'name': name,
-        if (city != null) 'city': city,
+        'name': ?name,
+        'city': ?city,
         'gender': gender,
         'dateOfBirth': dateOfBirth?.toIso8601String().split('T').first,
       });
