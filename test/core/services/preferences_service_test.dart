@@ -1,11 +1,37 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:swipe2eat_ui/core/config/api_config.dart';
 import 'package:swipe2eat_ui/core/services/preferences_service.dart';
+import 'package:swipe2eat_ui/features/auth/services/token_storage.dart';
+
+import '../../test_helpers/http_test_overrides.dart';
 
 void main() {
+  Future<void> saveSession({String userId = 'user-123'}) {
+    return TokenStorage.saveTokens(
+      idToken: 'id-token',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      userId: userId,
+    );
+  }
+
   group('PreferencesService', () {
+    late HttpTestOverrides httpOverrides;
+
     setUp(() {
       SharedPreferences.setMockInitialValues({});
+      PreferencesService.preferencesUpdated.value = 0;
+      httpOverrides = HttpTestOverrides();
+      HttpOverrides.global = httpOverrides;
+    });
+
+    tearDown(() {
+      HttpOverrides.global = null;
     });
 
     test('saveLocalPreferences stores cuisines and budget', () async {
@@ -42,15 +68,22 @@ void main() {
         expect(prefs['cuisines'], equals(['Chinese', 'Thai', 'Western']));
         expect(prefs['budget'], equals('low'));
         expect(prefs['spiceLevel'], equals('Medium'));
+        expect(prefs['dietType'], equals('None'));
+        expect(prefs['allergens'], isEmpty);
       },
     );
 
     test(
       'preferencesUpdated notifier increments when preferences change',
       () async {
-        int notificationCount = 0;
-        PreferencesService.preferencesUpdated.addListener(() {
+        var notificationCount = 0;
+        void listener() {
           notificationCount++;
+        }
+
+        PreferencesService.preferencesUpdated.addListener(listener);
+        addTearDown(() {
+          PreferencesService.preferencesUpdated.removeListener(listener);
         });
 
         await PreferencesService.saveLocalPreferences(
@@ -59,14 +92,12 @@ void main() {
         );
 
         expect(notificationCount, greaterThan(0));
-
-        PreferencesService.preferencesUpdated.removeListener(() {});
       },
     );
 
     test('saveLocalPreferences with empty cuisines', () async {
       await PreferencesService.saveLocalPreferences(
-        cuisines: [],
+        cuisines: const [],
         budget: 'low',
       );
 
@@ -75,13 +106,10 @@ void main() {
     });
 
     test('saveLocalPreferences updates existing preferences', () async {
-      // First save
       await PreferencesService.saveLocalPreferences(
         cuisines: ['Thai'],
         budget: 'low',
       );
-
-      // Second save (update)
       await PreferencesService.saveLocalPreferences(
         cuisines: ['Japanese', 'Indian'],
         budget: 'high',
@@ -93,21 +121,15 @@ void main() {
     });
 
     test('budget values map correctly', () async {
-      final budgetTests = [
-        ('low', 'low'),
-        ('medium', 'medium'),
-        ('high', 'high'),
-      ];
-
-      for (final (input, expected) in budgetTests) {
+      for (final value in const ['low', 'medium', 'high']) {
         SharedPreferences.setMockInitialValues({});
         await PreferencesService.saveLocalPreferences(
           cuisines: ['Thai'],
-          budget: input,
+          budget: value,
         );
 
         final prefs = await PreferencesService.getLocalPreferences();
-        expect(prefs['budget'], equals(expected));
+        expect(prefs['budget'], equals(value));
       }
     });
 
@@ -160,7 +182,7 @@ void main() {
     );
 
     test(
-      'saveLocalDietaryPreferences stores diet type and allergens',
+      'saveLocalDietaryPreferences stores diet type and sorted allergens',
       () async {
         await PreferencesService.saveLocalDietaryPreferences(
           dietType: 'Vegetarian',
@@ -186,6 +208,389 @@ void main() {
 
       expect(prefs['dietType'], equals('Vegan'));
       expect(prefs['allergens'], equals(['Gluten']));
+    });
+
+    test('fetchDietaryOptions returns parsed values', () async {
+      await saveSession();
+      httpOverrides.addResponse(
+        method: 'GET',
+        url: ApiConfig.dietaryOptionsUrl,
+        response: StubHttpResponse.json({
+          'dietType': ['Omnivore', 'Vegan'],
+          'allergens': ['Soy', 'Gluten'],
+        }),
+      );
+
+      final options = await PreferencesService.fetchDietaryOptions();
+
+      expect(options.dietType, equals(['Omnivore', 'Vegan']));
+      expect(options.allergens, equals(['Soy', 'Gluten']));
+      expect(
+        httpOverrides.requests.single.headers['authorization'],
+        'Bearer id-token',
+      );
+    });
+
+    test('fetchDietaryOptions throws on non-200 response', () async {
+      httpOverrides.addResponse(
+        method: 'GET',
+        url: ApiConfig.dietaryOptionsUrl,
+        response: const StubHttpResponse(statusCode: 500, body: '{}'),
+      );
+
+      expect(PreferencesService.fetchDietaryOptions, throwsA(isA<Exception>()));
+    });
+
+    test('hasUserPreferences returns false when not logged in', () async {
+      expect(await PreferencesService.hasUserPreferences(), isFalse);
+      expect(httpOverrides.requests, isEmpty);
+    });
+
+    test(
+      'hasUserPreferences returns true for a complete backend payload',
+      () async {
+        await saveSession();
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.preferenceBaseUrl}/users/user-123',
+          response: StubHttpResponse.json({
+            'cuisines': ['Thai'],
+            'budget': 'medium',
+            'spiceLevel': 2,
+          }),
+        );
+
+        expect(await PreferencesService.hasUserPreferences(), isTrue);
+      },
+    );
+
+    test('hasUserPreferences returns false for incomplete payload', () async {
+      await saveSession();
+      httpOverrides.addResponse(
+        method: 'GET',
+        url: '${ApiConfig.preferenceBaseUrl}/users/user-123',
+        response: StubHttpResponse.json({
+          'cuisines': const [],
+          'budget': 'medium',
+          'spiceLevel': 2,
+        }),
+      );
+
+      expect(await PreferencesService.hasUserPreferences(), isFalse);
+    });
+
+    test(
+      'hasUserPreferences returns false for invalid JSON, 404, and exceptions',
+      () async {
+        await saveSession(userId: 'invalid-json');
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.preferenceBaseUrl}/users/invalid-json',
+          response: const StubHttpResponse(statusCode: 200, body: 'not-json'),
+        );
+
+        expect(await PreferencesService.hasUserPreferences(), isFalse);
+
+        await saveSession(userId: 'missing');
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.preferenceBaseUrl}/users/missing',
+          response: const StubHttpResponse(statusCode: 404, body: '{}'),
+        );
+        expect(await PreferencesService.hasUserPreferences(), isFalse);
+
+        await saveSession(userId: 'throws');
+        expect(await PreferencesService.hasUserPreferences(), isFalse);
+      },
+    );
+
+    test(
+      'updatePreferences sends normalized spice level and returns true on success statuses',
+      () async {
+        await saveSession();
+
+        for (final statusCode in const [200, 204]) {
+          httpOverrides.clear();
+          httpOverrides.addResponse(
+            method: 'PUT',
+            url: '${ApiConfig.preferenceBaseUrl}/users/user-123',
+            response: StubHttpResponse(statusCode: statusCode, body: '{}'),
+          );
+
+          final updated = await PreferencesService.updatePreferences(
+            cuisines: const ['Thai', 'Japanese'],
+            budget: 'high',
+            spiceLevel: 'spicy',
+          );
+
+          expect(updated, isTrue);
+          expect(
+            jsonDecode(httpOverrides.requests.single.body),
+            equals({
+              'cuisines': ['Thai', 'Japanese'],
+              'budget': 'high',
+              'spiceLevel': 3,
+            }),
+          );
+        }
+      },
+    );
+
+    test(
+      'updatePreferences returns false when user or request fails',
+      () async {
+        expect(
+          await PreferencesService.updatePreferences(
+            cuisines: const ['Thai'],
+            budget: 'low',
+          ),
+          isFalse,
+        );
+
+        await saveSession();
+        httpOverrides.addResponse(
+          method: 'PUT',
+          url: '${ApiConfig.preferenceBaseUrl}/users/user-123',
+          response: const StubHttpResponse(statusCode: 500, body: '{}'),
+        );
+
+        expect(
+          await PreferencesService.updatePreferences(
+            cuisines: const ['Thai'],
+            budget: 'low',
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'updateDietaryPreferences sends allergies payload and handles failure',
+      () async {
+        await saveSession();
+        httpOverrides.addResponse(
+          method: 'PUT',
+          url: '${ApiConfig.preferenceBaseUrl}/dietary/users/user-123',
+          response: const StubHttpResponse(statusCode: 204, body: '{}'),
+        );
+
+        expect(
+          await PreferencesService.updateDietaryPreferences(
+            dietType: 'Vegan',
+            allergens: const ['Soy', 'Peanut'],
+          ),
+          isTrue,
+        );
+        expect(
+          jsonDecode(httpOverrides.requests.single.body),
+          equals({
+            'dietType': 'Vegan',
+            'allergies': ['Soy', 'Peanut'],
+          }),
+        );
+
+        httpOverrides.clear();
+        httpOverrides.addResponse(
+          method: 'PUT',
+          url: '${ApiConfig.preferenceBaseUrl}/dietary/users/user-123',
+          response: const StubHttpResponse(statusCode: 500, body: '{}'),
+        );
+        expect(
+          await PreferencesService.updateDietaryPreferences(
+            dietType: 'Vegan',
+            allergens: const ['Soy'],
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'fetchPreferencesFromBackend parses array cuisines and saves normalized spice level',
+      () async {
+        await saveSession();
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.baseUrl}/preference/users/user-123',
+          response: StubHttpResponse.json({
+            'cuisines': ['Thai', 'Japanese'],
+            'budget': 'medium',
+            'spiceLevel': 1,
+          }),
+        );
+
+        final result = await PreferencesService.fetchPreferencesFromBackend();
+
+        expect(
+          result,
+          equals({
+            'cuisines': ['Thai', 'Japanese'],
+            'budget': 'medium',
+            'spiceLevel': 'Mild',
+          }),
+        );
+
+        final prefs = await PreferencesService.getLocalPreferences();
+        expect(prefs['cuisines'], equals(['Thai', 'Japanese']));
+        expect(prefs['spiceLevel'], equals('Mild'));
+      },
+    );
+
+    test(
+      'fetchPreferencesFromBackend handles string cuisines and null-on-error cases',
+      () async {
+        await saveSession(userId: 'single');
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.baseUrl}/preference/users/single',
+          response: StubHttpResponse.json({
+            'cuisines': 'Korean',
+            'budget': 'high',
+            'spice': 'hot',
+          }),
+        );
+
+        final single = await PreferencesService.fetchPreferencesFromBackend();
+        expect(
+          single,
+          equals({
+            'cuisines': ['Korean'],
+            'budget': 'high',
+            'spiceLevel': 'Hot',
+          }),
+        );
+
+        await saveSession(userId: 'bad-status');
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.baseUrl}/preference/users/bad-status',
+          response: const StubHttpResponse(statusCode: 500, body: '{}'),
+        );
+        expect(await PreferencesService.fetchPreferencesFromBackend(), isNull);
+
+        await saveSession(userId: 'throws');
+        expect(await PreferencesService.fetchPreferencesFromBackend(), isNull);
+      },
+    );
+
+    test(
+      'sendSwipePreference returns false when user is unavailable',
+      () async {
+        expect(
+          await PreferencesService.sendSwipePreference(
+            foodId: 'food-1',
+            liked: true,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'sendSwipePreference accepts 200, 201, and 204 success responses',
+      () async {
+        await saveSession();
+
+        for (final statusCode in const [200, 201, 204]) {
+          httpOverrides.clear();
+          httpOverrides.addResponse(
+            method: 'POST',
+            url: '${ApiConfig.baseUrl}/preference/food/swipe',
+            response: StubHttpResponse(statusCode: statusCode, body: '{}'),
+          );
+
+          final sent = await PreferencesService.sendSwipePreference(
+            foodId: 'food-1',
+            liked: true,
+          );
+
+          expect(sent, isTrue);
+          expect(
+            jsonDecode(httpOverrides.requests.single.body),
+            equals({'userId': 'user-123', 'foodId': 'food-1', 'status': true}),
+          );
+        }
+      },
+    );
+
+    test(
+      'sendSwipePreference returns false for failed responses and exceptions',
+      () async {
+        await saveSession();
+        httpOverrides.addResponse(
+          method: 'POST',
+          url: '${ApiConfig.baseUrl}/preference/food/swipe',
+          response: const StubHttpResponse(statusCode: 500, body: '{}'),
+        );
+
+        expect(
+          await PreferencesService.sendSwipePreference(
+            foodId: 'food-1',
+            liked: false,
+          ),
+          isFalse,
+        );
+
+        httpOverrides.clear();
+        expect(
+          await PreferencesService.sendSwipePreference(
+            foodId: 'food-1',
+            liked: false,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('queueSwipePreference preserves backend submission order', () async {
+      await saveSession();
+      final order = <String>[];
+      final blocker = Completer<void>();
+      var callCount = 0;
+
+      httpOverrides.addHandler(
+        matcher: (request) =>
+            request.method == 'POST' &&
+            request.uri.toString() ==
+                '${ApiConfig.baseUrl}/preference/food/swipe',
+        handler: (request) async {
+          callCount++;
+          order.add(jsonDecode(request.body)['foodId'] as String);
+          if (callCount == 1) {
+            await blocker.future;
+          }
+          return const StubHttpResponse(statusCode: 204, body: '{}');
+        },
+      );
+
+      final first = PreferencesService.queueSwipePreference(
+        foodId: 'first',
+        liked: true,
+      );
+      final second = PreferencesService.queueSwipePreference(
+        foodId: 'second',
+        liked: false,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(order, equals(['first']));
+
+      blocker.complete();
+
+      expect(await first, isTrue);
+      expect(await second, isTrue);
+      expect(order, equals(['first', 'second']));
+    });
+
+    test('queueSwipePreference resolves false when sync fails', () async {
+      await saveSession();
+
+      final result = await PreferencesService.queueSwipePreference(
+        foodId: 'food-1',
+        liked: true,
+      );
+
+      expect(result, isFalse);
     });
   });
 }
