@@ -355,7 +355,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 // Gender Field
                 DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  initialValue: _selectedGender,
                   decoration: InputDecoration(
                     labelText: 'Gender',
                     hintText: 'Select your gender',
@@ -479,7 +479,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 // City Field
                 DropdownButtonFormField<String>(
-                  value: _selectedCity,
+                  initialValue: _selectedCity,
                   decoration: InputDecoration(
                     labelText: 'City',
                     hintText: 'Select your city',

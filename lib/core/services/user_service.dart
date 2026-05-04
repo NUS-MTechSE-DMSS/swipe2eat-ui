@@ -180,8 +180,9 @@ class UserService {
       };
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
-      final response =
-          await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -215,9 +216,7 @@ class UserService {
         if (name != null) 'name': name,
         if (city != null) 'city': city,
         'gender': gender,
-        'dateOfBirth': dateOfBirth != null
-            ? dateOfBirth.toIso8601String().split('T').first
-            : null,
+        'dateOfBirth': dateOfBirth?.toIso8601String().split('T').first,
       });
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/me');

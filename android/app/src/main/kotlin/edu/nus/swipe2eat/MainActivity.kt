@@ -1,4 +1,4 @@
-package com.example.swipe2eat_ui
+package edu.nus.swipe2eat
 
 import io.flutter.embedding.android.FlutterActivity
 

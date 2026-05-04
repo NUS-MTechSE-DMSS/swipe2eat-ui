@@ -403,6 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final accessToken = await TokenStorage.getAccessToken();
+    if (!mounted) return;
     if (accessToken == null || accessToken.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -451,8 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showEditProfileDialog(BuildContext context) async {
-    final currentGender =
-        _genderDisplay == "Not set" ? null : _genderDisplay;
+    final currentGender = _genderDisplay == "Not set" ? null : _genderDisplay;
     final currentDob = _dobDisplay == "Not set"
         ? null
         : DateTime.tryParse(_dobDisplay);
@@ -1313,7 +1313,7 @@ class _ProfileInfoDialogState extends State<_ProfileInfoDialog> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedGender,
+            initialValue: _selectedGender,
             hint: const Text('Select gender'),
             items: _genderOptions
                 .map((g) => DropdownMenuItem(value: g, child: Text(g)))
@@ -1321,8 +1321,10 @@ class _ProfileInfoDialogState extends State<_ProfileInfoDialog> {
             onChanged: (v) => setState(() => _selectedGender = v),
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1334,8 +1336,7 @@ class _ProfileInfoDialogState extends State<_ProfileInfoDialog> {
           GestureDetector(
             onTap: _pickDate,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
                 border: Border.all(color: const Color(0xFF9CA3AF)),
                 borderRadius: BorderRadius.circular(4),
@@ -1354,8 +1355,11 @@ class _ProfileInfoDialogState extends State<_ProfileInfoDialog> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.calendar_today_rounded,
-                      size: 18, color: Color(0xFF6B7280)),
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: Color(0xFF6B7280),
+                  ),
                 ],
               ),
             ),

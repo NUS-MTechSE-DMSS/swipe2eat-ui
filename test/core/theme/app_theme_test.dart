@@ -33,15 +33,18 @@ void main() {
 
     test('colors have correct color values', () {
       // Background should be a light cream color
-      expect(AppColors.background.value, greaterThan(0xFFFFFFFF - 0xFF00FFFF));
+      expect(
+        AppColors.background.toARGB32(),
+        greaterThan(0xFFFFFFFF - 0xFF00FFFF),
+      );
 
       // Primary colors should be warm (orange/red tones)
-      expect(AppColors.primaryStart.value, greaterThan(0xFF000000));
-      expect(AppColors.primaryEnd.value, greaterThan(0xFF000000));
+      expect(AppColors.primaryStart.toARGB32(), greaterThan(0xFF000000));
+      expect(AppColors.primaryEnd.toARGB32(), greaterThan(0xFF000000));
 
       // Green colors should be green tones
-      expect(AppColors.greenStart.value, greaterThan(0xFF000000));
-      expect(AppColors.greenEnd.value, greaterThan(0xFF000000));
+      expect(AppColors.greenStart.toARGB32(), greaterThan(0xFF000000));
+      expect(AppColors.greenEnd.toARGB32(), greaterThan(0xFF000000));
     });
   });
 
@@ -165,15 +168,15 @@ void main() {
   group('Color Contrast', () {
     test('primary colors have sufficient contrast with white text', () {
       // Check that primary colors are dark enough for white text
-      expect(AppColors.primaryStart.value, isNotNull);
-      expect(AppColors.primaryEnd.value, isNotNull);
+      expect(AppColors.primaryStart.toARGB32(), isNotNull);
+      expect(AppColors.primaryEnd.toARGB32(), isNotNull);
     });
 
     test('text colors have sufficient contrast with background', () {
       // Primary text should be dark (for use on light background)
-      expect(AppColors.textPrimary.value, lessThan(0xFF888888));
+      expect(AppColors.textPrimary.toARGB32(), lessThan(0xFF888888));
       // Secondary text should be medium (for use on light background)
-      expect(AppColors.textSecondary.value, lessThan(0xFF999999));
+      expect(AppColors.textSecondary.toARGB32(), lessThan(0xFF999999));
     });
   });
 }
