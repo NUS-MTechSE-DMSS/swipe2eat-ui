@@ -162,11 +162,8 @@ jobs:
           lighthouse "${DEPLOY_URL}" \
             --chrome-flags="--headless --no-sandbox" \
             --output=html \
-            --output-path=lighthouse-report/report.html
-          lighthouse "${DEPLOY_URL}" \
-            --chrome-flags="--headless --no-sandbox" \
             --output=json \
-            --output-path=lighthouse-report/report.json
+            --output-path=lighthouse-report/report
 
           node - lighthouse-report/report.json <<'NODE' >> "$GITHUB_STEP_SUMMARY"
           const fs = require('fs');
