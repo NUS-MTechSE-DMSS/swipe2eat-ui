@@ -211,7 +211,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         with:
           name: android-test-apk
-          path: android/app/build/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
+          path: build/app/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
           if-no-files-found: error
           retention-days: 14
 
