@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../../core/config/api_config.dart';
+import '../../../core/services/authenticated_http_client.dart';
 import '../../../features/auth/services/token_storage.dart';
 import '../models/chat_message.dart';
 
@@ -28,9 +28,12 @@ class ChatService {
       final headers = await _buildAuthHeaders();
       final body = jsonEncode({'message': message, 'user_id': userId});
 
-      final res = await http
-          .post(uri, headers: headers, body: body)
-          .timeout(const Duration(seconds: 90));
+      final res = await AuthenticatedHttpClient.post(
+        uri,
+        headers: headers,
+        body: body,
+        tokenType: AuthTokenType.idToken,
+      ).timeout(const Duration(seconds: 90));
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as Map<String, dynamic>;

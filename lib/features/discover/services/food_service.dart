@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:http/http.dart' as http;
+import '../../../core/services/authenticated_http_client.dart';
 import '../../../core/utils/food_image_url.dart';
 import '../../../models/food_item.dart';
 import '../../../core/config/api_config.dart';
@@ -106,7 +106,14 @@ class FoodService {
       '${ApiConfig.baseUrl}/food/',
     ).replace(query: _buildQueryString(queryParameters));
 
-    final res = await http.get(uri, headers: headers);
+    final tokenType = headers.containsKey('Authorization')
+        ? AuthTokenType.idToken
+        : AuthTokenType.none;
+    final res = await AuthenticatedHttpClient.get(
+      uri,
+      headers: headers,
+      tokenType: tokenType,
+    );
     if (res.statusCode != 200) {
       throw Exception('Failed to load foods (${res.statusCode})');
     }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import '../../core/config/api_config.dart';
+import '../../core/services/authenticated_http_client.dart';
 import '../../core/state/favorites_store.dart';
 import '../../core/utils/food_image_url.dart';
 import '../../core/widgets/loading_placeholder.dart';
@@ -53,7 +53,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       final uri = Uri.parse(
         '${ApiConfig.baseUrl}/preference/food/users/$userId',
       );
-      final res = await http.get(uri, headers: await _buildAuthHeaders());
+      final res = await AuthenticatedHttpClient.get(
+        uri,
+        headers: await _buildAuthHeaders(),
+        tokenType: AuthTokenType.idToken,
+      );
       if (res.statusCode != 200) {
         throw Exception('Failed to load favorites (${res.statusCode})');
       }

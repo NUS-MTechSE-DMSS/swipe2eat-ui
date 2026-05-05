@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/onboarding/models/dietary_options.dart';
 import '../../features/auth/services/token_storage.dart';
 import '../config/api_config.dart';
+import 'authenticated_http_client.dart';
 
 class PreferencesService {
   static const String _prefsCuisinesKey = 'prefs.cuisines';
@@ -132,9 +132,11 @@ class PreferencesService {
   /// Fetches dietary options from the preference service.
   static Future<DietaryOptions> fetchDietaryOptions() async {
     final uri = Uri.parse(ApiConfig.dietaryOptionsUrl);
-    final res = await http
-        .get(uri, headers: await _buildAuthHeaders())
-        .timeout(const Duration(seconds: 2));
+    final res = await AuthenticatedHttpClient.get(
+      uri,
+      headers: await _buildAuthHeaders(),
+      tokenType: AuthTokenType.idToken,
+    ).timeout(const Duration(seconds: 2));
 
     if (res.statusCode != 200) {
       throw Exception('Failed to load options (${res.statusCode})');
@@ -158,9 +160,11 @@ class PreferencesService {
       final uri = Uri.parse(
         '${ApiConfig.preferenceBaseUrl}/users/$cognitoUserId',
       );
-      final res = await http
-          .get(uri, headers: await _buildAuthHeaders())
-          .timeout(const Duration(seconds: 5));
+      final res = await AuthenticatedHttpClient.get(
+        uri,
+        headers: await _buildAuthHeaders(),
+        tokenType: AuthTokenType.idToken,
+      ).timeout(const Duration(seconds: 5));
 
       // 200 with valid preferences
       if (res.statusCode == 200) {
@@ -212,7 +216,12 @@ class PreferencesService {
       }
       final payload = jsonEncode(payloadMap);
 
-      final res = await http.put(uri, headers: headers, body: payload);
+      final res = await AuthenticatedHttpClient.put(
+        uri,
+        headers: headers,
+        body: payload,
+        tokenType: AuthTokenType.idToken,
+      );
       return res.statusCode == 200 || res.statusCode == 204;
     } catch (_) {
       return false;
@@ -241,7 +250,12 @@ class PreferencesService {
         'allergies': allergens,
       });
 
-      final res = await http.put(uri, headers: headers, body: payload);
+      final res = await AuthenticatedHttpClient.put(
+        uri,
+        headers: headers,
+        body: payload,
+        tokenType: AuthTokenType.idToken,
+      );
       return res.statusCode == 200 || res.statusCode == 204;
     } catch (_) {
       return false;
@@ -311,7 +325,11 @@ class PreferencesService {
       final uri = Uri.parse(
         '${ApiConfig.baseUrl}/preference/users/$cognitoUserId',
       );
-      final res = await http.get(uri, headers: await _buildAuthHeaders());
+      final res = await AuthenticatedHttpClient.get(
+        uri,
+        headers: await _buildAuthHeaders(),
+        tokenType: AuthTokenType.idToken,
+      );
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as Map<String, dynamic>;
@@ -375,7 +393,12 @@ class PreferencesService {
     });
 
     try {
-      final res = await http.post(uri, headers: headers, body: payload);
+      final res = await AuthenticatedHttpClient.post(
+        uri,
+        headers: headers,
+        body: payload,
+        tokenType: AuthTokenType.idToken,
+      );
       // Backend contract is 204 No Content; keep 200/201 for compatibility.
       return res.statusCode == 204 ||
           res.statusCode == 200 ||
