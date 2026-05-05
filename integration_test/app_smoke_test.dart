@@ -17,9 +17,10 @@ void main() {
     expect(find.text('Welcome Back'), findsOneWidget);
     expect(find.text('Forgot Password?'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Forgot Password?'));
     await tester.tap(find.text('Forgot Password?'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Forgot Password'), findsWidgets);
+    expect(find.text('Send Reset Code'), findsOneWidget);
   });
 }

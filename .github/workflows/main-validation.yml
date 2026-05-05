@@ -147,7 +147,7 @@ jobs:
         run: |
           cat > "$RUNNER_TEMP/chrome-no-sandbox" <<SH
           #!/usr/bin/env bash
-          exec "${CHROME_BIN}" --no-sandbox "\$@"
+          exec "${CHROME_BIN}" --headless=new --disable-gpu --disable-dev-shm-usage --no-sandbox "\$@"
           SH
           chmod +x "$RUNNER_TEMP/chrome-no-sandbox"
         env:
@@ -186,7 +186,10 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_7
-          script: flutter test integration_test/app_smoke_test.dart -d emulator-5554 --flavor dev --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: |
+            flutter build apk --debug --flavor dev --target integration_test/app_smoke_test.dart --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
+            flutter test --reporter expanded integration_test/app_smoke_test.dart -d emulator-5554 --flavor dev --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
 
   android-testlab-packages:
     name: android-testlab-packages
