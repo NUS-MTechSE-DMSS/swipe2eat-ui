@@ -17,8 +17,8 @@ jobs:
     name: format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -30,8 +30,8 @@ jobs:
     name: analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -43,18 +43,28 @@ jobs:
     name: unit-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
           cache: true
       - run: flutter pub get
       - run: flutter test --coverage
-      - uses: actions/upload-artifact@v4
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+      - name: Generate HTML coverage report
+        run: genhtml coverage/lcov.info -o coverage/html
+      - uses: actions/upload-artifact@v6
         with:
           name: coverage-lcov
           path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: coverage-html
+          path: coverage/html
           if-no-files-found: error
           retention-days: 14
 
@@ -64,7 +74,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -98,8 +108,8 @@ jobs:
     name: web-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -107,7 +117,7 @@ jobs:
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh staging "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: web-release
           path: build/web
@@ -119,8 +129,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -145,12 +155,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -168,12 +178,12 @@ jobs:
     name: android-testlab-packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -183,13 +193,13 @@ jobs:
       - run: flutter build apk --debug --flavor dev --target integration_test/app_smoke_test.dart --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
       - run: ./gradlew app:assembleDevDebugAndroidTest -Ptarget=integration_test/app_smoke_test.dart
         working-directory: android
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: android-debug-apk
           path: build/app/outputs/flutter-apk/app-dev-debug.apk
           if-no-files-found: error
           retention-days: 14
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: android-test-apk
           path: android/app/build/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
@@ -200,8 +210,8 @@ jobs:
     name: ios-testlab-package
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -221,7 +231,7 @@ jobs:
       - run: |
           cd build/ios_testlab/Build/Products
           zip -r ios-testlab.zip Debug-iphoneos *.xctestrun
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ios-testlab
           path: build/ios_testlab/Build/Products/ios-testlab.zip
@@ -232,10 +242,10 @@ jobs:
     name: linux-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: sudo apt-get update
       - run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -243,7 +253,7 @@ jobs:
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build linux --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-release
           path: build/linux/x64/release/bundle
@@ -254,8 +264,8 @@ jobs:
     name: macos-build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -263,7 +273,7 @@ jobs:
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build macos --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: macos-release
           path: build/macos/Build/Products/Release
@@ -274,8 +284,8 @@ jobs:
     name: windows-build
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -285,7 +295,7 @@ jobs:
         shell: bash
       - run: flutter build windows --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
         shell: bash
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: windows-release
           path: build/windows/x64/runner/Release

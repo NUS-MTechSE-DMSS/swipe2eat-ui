@@ -17,8 +17,8 @@ jobs:
     name: format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -30,8 +30,8 @@ jobs:
     name: analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -43,18 +43,28 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
           cache: true
       - run: flutter pub get
       - run: flutter test --coverage
-      - uses: actions/upload-artifact@v4
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+      - name: Generate HTML coverage report
+        run: genhtml coverage/lcov.info -o coverage/html
+      - uses: actions/upload-artifact@v6
         with:
           name: pr-coverage
           path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 5
+      - uses: actions/upload-artifact@v6
+        with:
+          name: pr-coverage-html
+          path: coverage/html
           if-no-files-found: error
           retention-days: 5
 
@@ -64,7 +74,7 @@ jobs:
     container:
       image: semgrep/semgrep:1.160.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run semgrep
         id: semgrep
         run: |
@@ -75,7 +85,7 @@ jobs:
           exit 0
       - name: Upload semgrep report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: semgrep-report
           path: semgrep-report.sarif
@@ -86,7 +96,7 @@ jobs:
     name: secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Run gitleaks
@@ -104,7 +114,7 @@ jobs:
         id: gitleaks
       - name: Upload gitleaks report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: gitleaks-report
           path: gitleaks-report.sarif
@@ -117,7 +127,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -151,8 +161,8 @@ jobs:
     name: build-web
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -160,7 +170,7 @@ jobs:
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: pr-web-build
           path: build/web
@@ -171,12 +181,12 @@ jobs:
     name: build-android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-      - uses: subosito/flutter-action@v2.21.0
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
           channel: stable
@@ -184,7 +194,7 @@ jobs:
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build appbundle --debug --flavor dev --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: pr-android-bundle
           path: build/app/outputs/bundle/devDebug/app-dev-debug.aab
