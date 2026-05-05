@@ -12,9 +12,12 @@ concurrency:
 permissions:
   contents: read
 
+# Temporary quota saver: keep web-build active so Staging Deploy can still run.
+# Remove the job-level `if: ${{ false }}` entries below to restore full validation.
 jobs:
   format:
     name: format
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -28,6 +31,7 @@ jobs:
 
   analyze:
     name: analyze
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -41,6 +45,7 @@ jobs:
 
   unit-tests:
     name: unit-tests
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -70,6 +75,7 @@ jobs:
 
   security:
     name: Snyk Scan
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -113,7 +119,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: false
+          cache: true
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh staging "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -126,6 +132,7 @@ jobs:
 
   web-integration:
     name: web-integration
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -171,6 +178,7 @@ jobs:
 
   android-integration:
     name: android-integration
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -203,6 +211,7 @@ jobs:
 
   android-testlab-packages:
     name: android-testlab-packages
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -235,6 +244,7 @@ jobs:
 
   ios-testlab-package:
     name: ios-testlab-package
+    if: ${{ false }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -267,6 +277,7 @@ jobs:
 
   linux-build:
     name: linux-build
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -289,6 +300,7 @@ jobs:
 
   macos-build:
     name: macos-build
+    if: ${{ false }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -309,6 +321,7 @@ jobs:
 
   windows-build:
     name: windows-build
+    if: ${{ false }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5

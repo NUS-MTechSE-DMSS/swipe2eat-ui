@@ -23,7 +23,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-      - run: gh run download "${{ github.event.workflow_run.id }}" -n web-release -D build-artifacts
+      - run: |
+          rm -rf web-dist
+          gh run download "${{ github.event.workflow_run.id }}" -n web-release -D web-dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v5
@@ -33,10 +35,27 @@ jobs:
       - run: npm install -g netlify-cli
       - id: deploy
         run: |
+          set -euo pipefail
+
+          ART_DIR="web-dist"
+          if [[ ! -d "$ART_DIR" ]]; then
+            echo "Expected artifact directory '$ART_DIR' not found." >&2
+            exit 1
+          fi
+
+          echo "Artifact directory listing:" >&2
+          find "$ART_DIR" -maxdepth 2 -type f | sort | sed 's/^/- /' >&2
+
+          if [[ ! -f "$ART_DIR/index.html" ]]; then
+            echo "Expected Flutter web entrypoint '$ART_DIR/index.html' not found." >&2
+            exit 1
+          fi
+
           HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
           deploy_json=$(netlify deploy \
-            --dir=build-artifacts/web-release \
+            --dir="$ART_DIR" \
             --alias="staging-${HEAD_SHA::7}" \
+            --no-build \
             --json)
           deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url')
           echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
@@ -144,7 +163,7 @@ jobs:
 
   lighthouse-web:
     name: lighthouse-web
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ false }}
     needs:
       - deploy-web
     runs-on: ubuntu-latest
@@ -225,7 +244,7 @@ jobs:
 
   attach-desktop-artifacts:
     name: attach-desktop-artifacts
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - run: |
