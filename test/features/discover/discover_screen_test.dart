@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swipe2eat_ui/core/config/api_config.dart';
-import 'package:swipe2eat_ui/core/services/preferences_service.dart';
 import 'package:swipe2eat_ui/core/state/favorites_store.dart';
 import 'package:swipe2eat_ui/features/auth/services/token_storage.dart';
 import 'package:swipe2eat_ui/features/discover/discover_screen.dart';

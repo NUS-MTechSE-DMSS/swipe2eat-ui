@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'core/navigation/app_session.dart';
 import 'core/navigation/main_shell.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/preferences_service.dart';
@@ -17,6 +18,8 @@ class Swipe2EatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: AppSession.navigatorKey,
+      scaffoldMessengerKey: AppSession.scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: appTheme(),
       initialRoute: '/launch',

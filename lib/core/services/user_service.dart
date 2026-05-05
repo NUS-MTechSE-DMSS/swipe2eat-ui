@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../features/auth/services/cognito_service.dart';
 import '../../features/auth/services/token_storage.dart';
 import '../config/api_config.dart';
+import 'authenticated_http_client.dart';
 
 /// Service for managing user operations with the backend
 class UserService {
@@ -54,9 +54,11 @@ class UserService {
 
       // Call backend to create user
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/create-user');
-      final response = await http
-          .post(uri, headers: headers)
-          .timeout(const Duration(seconds: 10));
+      final response = await AuthenticatedHttpClient.post(
+        uri,
+        headers: headers,
+        tokenType: AuthTokenType.accessToken,
+      ).timeout(const Duration(seconds: 10));
 
       // Backend returns 201 CREATED on success
       if (response.statusCode == 201) {
@@ -81,60 +83,18 @@ class UserService {
   /// Uses the Cognito access token so the backend can trigger global sign-out.
   ///
   /// Returns true if the backend logout succeeds.
-  static Future<bool> logoutCurrentUser({
-    http.Client? client,
-    http.Client? cognitoClient,
-  }) async {
+  static Future<bool> logoutCurrentUser({http.Client? client}) async {
     try {
       final accessToken = await TokenStorage.getAccessToken();
       if (accessToken == null || accessToken.trim().isEmpty) {
         return false;
       }
 
-      final initialResponse = await _sendLogoutRequest(
+      final response = await _sendLogoutRequest(
         accessToken: accessToken,
         client: client,
       );
-      if (initialResponse.statusCode == 204) {
-        return true;
-      }
-      if (initialResponse.statusCode != 401) {
-        return false;
-      }
-
-      final refreshToken = await TokenStorage.getRefreshToken();
-      if (refreshToken == null || refreshToken.trim().isEmpty) {
-        return false;
-      }
-
-      final refreshResult = await CognitoService.refreshSession(
-        refreshToken: refreshToken,
-        client: cognitoClient,
-      );
-      if (refreshResult['success'] != true) {
-        return false;
-      }
-
-      final refreshedAccessToken = refreshResult['accessToken'] as String?;
-      final refreshedIdToken = refreshResult['idToken'] as String?;
-      if (refreshedAccessToken == null ||
-          refreshedAccessToken.isEmpty ||
-          refreshedIdToken == null ||
-          refreshedIdToken.isEmpty) {
-        return false;
-      }
-
-      await TokenStorage.updateTokens(
-        idToken: refreshedIdToken,
-        accessToken: refreshedAccessToken,
-        refreshToken: refreshResult['refreshToken'] as String?,
-      );
-
-      final retryResponse = await _sendLogoutRequest(
-        accessToken: refreshedAccessToken,
-        client: client,
-      );
-      return retryResponse.statusCode == 204;
+      return response.statusCode == 204;
     } catch (_) {
       return false;
     }
@@ -180,9 +140,11 @@ class UserService {
       };
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 10));
+      final response = await AuthenticatedHttpClient.get(
+        uri,
+        headers: headers,
+        tokenType: AuthTokenType.accessToken,
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -213,16 +175,19 @@ class UserService {
       };
 
       final body = jsonEncode({
-        if (name != null) 'name': name,
-        if (city != null) 'city': city,
+        'name': ?name,
+        'city': ?city,
         'gender': gender,
         'dateOfBirth': dateOfBirth?.toIso8601String().split('T').first,
       });
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/me');
-      final response = await http
-          .put(uri, headers: headers, body: body)
-          .timeout(const Duration(seconds: 10));
+      final response = await AuthenticatedHttpClient.put(
+        uri,
+        headers: headers,
+        body: body,
+        tokenType: AuthTokenType.accessToken,
+      ).timeout(const Duration(seconds: 10));
 
       return response.statusCode == 200;
     } catch (_) {
@@ -272,9 +237,12 @@ class UserService {
       };
 
       final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId');
-      final response = await effectiveClient
-          .delete(uri, headers: headers)
-          .timeout(const Duration(seconds: 10));
+      final response = await AuthenticatedHttpClient.delete(
+        uri,
+        headers: headers,
+        tokenType: AuthTokenType.accessToken,
+        client: effectiveClient,
+      ).timeout(const Duration(seconds: 10));
 
       return response.statusCode == 200 ||
           response.statusCode == 204 ||

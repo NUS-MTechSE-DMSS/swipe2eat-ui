@@ -83,6 +83,7 @@ class _SignInScreenState extends State<SignInScreen> {
             idToken: idToken,
             accessToken: result['accessToken'],
             refreshToken: result['refreshToken'],
+            expiresIn: (result['expiresIn'] as num?)?.toInt(),
             userId: userId,
             email: _emailController.text.trim(),
           );

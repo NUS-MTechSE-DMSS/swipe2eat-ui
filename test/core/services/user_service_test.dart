@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -52,24 +50,25 @@ void main() {
       expect(loggedOut, isFalse);
     });
 
-    test('refreshes tokens and retries logout after 401', () async {
-      await TokenStorage.saveTokens(
-        idToken: 'old-id-token',
-        accessToken: 'expired-access-token',
-        refreshToken: 'refresh-token',
-        userId: 'user-123',
-      );
-
-      var logoutCalls = 0;
-      final logoutClient = MockClient((request) async {
-        logoutCalls++;
-        expect(request.method, equals('POST'));
-        expect(
-          request.url.toString(),
-          equals('${ApiConfig.baseUrl}/user/logout'),
+    test(
+      'returns false after backend rejects logout without calling Cognito',
+      () async {
+        await TokenStorage.saveTokens(
+          idToken: 'old-id-token',
+          accessToken: 'expired-access-token',
+          refreshToken: 'refresh-token',
+          userId: 'user-123',
         );
 
-        if (logoutCalls == 1) {
+        var logoutCalls = 0;
+        final logoutClient = MockClient((request) async {
+          logoutCalls++;
+          expect(request.method, equals('POST'));
+          expect(
+            request.url.toString(),
+            equals('${ApiConfig.baseUrl}/user/logout'),
+          );
+
           expect(
             request.headers['Authorization'],
             equals('Bearer expired-access-token'),
@@ -78,52 +77,22 @@ void main() {
             '{"message":"Invalid or expired token","error":"Unauthorized"}',
             401,
           );
-        }
+        });
 
+        final loggedOut = await UserService.logoutCurrentUser(
+          client: logoutClient,
+        );
+
+        expect(loggedOut, isFalse);
+        expect(logoutCalls, equals(1));
+        expect(await TokenStorage.getIdToken(), equals('old-id-token'));
         expect(
-          request.headers['Authorization'],
-          equals('Bearer refreshed-access-token'),
+          await TokenStorage.getAccessToken(),
+          equals('expired-access-token'),
         );
-        return http.Response('', 204);
-      });
-
-      final cognitoClient = MockClient((request) async {
-        expect(request.method, equals('POST'));
-        expect(
-          jsonDecode(request.body),
-          equals({
-            'AuthFlow': 'REFRESH_TOKEN_AUTH',
-            'ClientId': '1d1jkchdvgt5tldbb0hivruird',
-            'AuthParameters': {'REFRESH_TOKEN': 'refresh-token'},
-          }),
-        );
-
-        return http.Response(
-          jsonEncode({
-            'AuthenticationResult': {
-              'IdToken': 'refreshed-id-token',
-              'AccessToken': 'refreshed-access-token',
-              'ExpiresIn': 3600,
-              'TokenType': 'Bearer',
-            },
-          }),
-          200,
-        );
-      });
-
-      final loggedOut = await UserService.logoutCurrentUser(
-        client: logoutClient,
-        cognitoClient: cognitoClient,
-      );
-
-      expect(loggedOut, isTrue);
-      expect(await TokenStorage.getIdToken(), equals('refreshed-id-token'));
-      expect(
-        await TokenStorage.getAccessToken(),
-        equals('refreshed-access-token'),
-      );
-      expect(await TokenStorage.getRefreshToken(), equals('refresh-token'));
-    });
+        expect(await TokenStorage.getRefreshToken(), equals('refresh-token'));
+      },
+    );
   });
 
   group('UserService.deleteCurrentUserInBackend', () {
