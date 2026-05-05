@@ -17,7 +17,6 @@ on:
           - mobile
           - web
           - android
-          - ios
       release_notes:
         description: Optional release notes body
         required: false
@@ -72,9 +71,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-node@v5
         with:
-          bundler-cache: true
+          node-version: "20"
+          package-manager-cache: false
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.6
@@ -87,29 +87,79 @@ jobs:
       - run: printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      - run: printf '%s' "${ANDROID_PLAY_JSON_KEY_BASE64}" | base64 --decode > "$RUNNER_TEMP/play.json"
+      - run: printf '%s' "${FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64}" | base64 --decode > "$RUNNER_TEMP/firebase-appdist.json"
         env:
-          ANDROID_PLAY_JSON_KEY_BASE64: ${{ secrets.ANDROID_PLAY_JSON_KEY_BASE64 }}
-      - run: bundle exec fastlane android production
+          FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.FIREBASE_APPDISTRO_SERVICE_ACCOUNT_JSON_BASE64 }}
+      - run: npm install -g firebase-tools
+      - run: flutter build apk --release --flavor prod --dart-define-from-file="$RUNNER_TEMP/dart-defines.json" --build-name="${{ inputs.version }}" --build-number="${{ github.run_number }}"
         env:
-          DART_DEFINES_FILE: ${{ runner.temp }}/dart-defines.json
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          SUPPLY_JSON_KEY: ${{ runner.temp }}/play.json
+      - name: Distribute production APK to Firebase App Distribution
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FIREBASE_ANDROID_APP_ID_PROD:-}" ]]; then
+            echo "Set FIREBASE_ANDROID_APP_ID_PROD as a production environment variable." >&2
+            exit 1
+          fi
+
+          if [[ -z "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
+            echo "Set FIREBASE_APPDISTRO_TESTERS as comma-separated tester emails." >&2
+            exit 1
+          fi
+
+          release_notes="${RELEASE_NOTES:-}"
+          if [[ -z "$release_notes" ]]; then
+            release_notes="Manual Android release v${APP_VERSION} from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+          fi
+
+          firebase appdistribution:distribute \
+            build/app/outputs/flutter-apk/app-prod-release.apk \
+            --app "${FIREBASE_ANDROID_APP_ID_PROD}" \
+            --testers "${FIREBASE_APPDISTRO_TESTERS}" \
+            --release-notes "$release_notes" \
+            2>&1 | tee "$RUNNER_TEMP/firebase-appdist.log"
+
+          console_uri=$(sed -n 's/.*firebase_console_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+          testing_uri=$(sed -n 's/.*testing_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+          binary_uri=$(sed -n 's/.*binary_download_uri:[[:space:]]*//p' "$RUNNER_TEMP/firebase-appdist.log" | tail -n 1)
+
+          {
+            echo "### Android Production Distribution"
+            echo
+            echo "- Package: \`edu.nus.swipe2eat\`"
+            echo "- Artifact: \`app-prod-release.apk\`"
+            echo "- Version: \`v${APP_VERSION}+${BUILD_NUMBER}\`"
+            if [[ -n "$console_uri" ]]; then
+              echo "- Firebase console: $console_uri"
+            fi
+            if [[ -n "$testing_uri" ]]; then
+              echo "- Tester install page: $testing_uri"
+            fi
+            if [[ -n "$binary_uri" ]]; then
+              echo "- Direct download link: $binary_uri"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
           APP_VERSION: ${{ inputs.version }}
           BUILD_NUMBER: ${{ github.run_number }}
+          FIREBASE_ANDROID_APP_ID_PROD: ${{ vars.FIREBASE_ANDROID_APP_ID_PROD }}
+          FIREBASE_APPDISTRO_TESTERS: ${{ vars.FIREBASE_APPDISTRO_TESTERS }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-appdist.json
+          RELEASE_NOTES: ${{ inputs.release_notes }}
       - uses: actions/upload-artifact@v6
         with:
-          name: release-android-bundle
-          path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          name: release-android-apk
+          path: build/app/outputs/flutter-apk/app-prod-release.apk
           if-no-files-found: error
           retention-days: 30
 
   deploy-ios:
-    name: deploy-ios
-    if: ${{ inputs.target_platforms == 'all' || inputs.target_platforms == 'mobile' || inputs.target_platforms == 'ios' }}
+    name: deploy-ios-disabled
+    if: ${{ false }}
     runs-on: macos-latest
     environment: production
     steps:

@@ -103,18 +103,12 @@ jobs:
             "Staging build from ${GITHUB_REPOSITORY}@${head_sha}"
           )
 
-          if [[ -n "${FIREBASE_APPDISTRO_GROUPS:-}" ]]; then
-            args+=(--groups "${FIREBASE_APPDISTRO_GROUPS}")
-          fi
-
-          if [[ -n "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
-            args+=(--testers "${FIREBASE_APPDISTRO_TESTERS}")
-          fi
-
-          if [[ -z "${FIREBASE_APPDISTRO_GROUPS:-}" && -z "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
-            echo "Set FIREBASE_APPDISTRO_GROUPS or FIREBASE_APPDISTRO_TESTERS for the staging environment." >&2
+          if [[ -z "${FIREBASE_APPDISTRO_TESTERS:-}" ]]; then
+            echo "Set FIREBASE_APPDISTRO_TESTERS as comma-separated tester emails." >&2
             exit 1
           fi
+
+          args+=(--testers "${FIREBASE_APPDISTRO_TESTERS}")
 
           firebase "${args[@]}" 2>&1 | tee "$RUNNER_TEMP/firebase-appdist.log"
 
@@ -139,7 +133,6 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           FIREBASE_ANDROID_APP_ID_STAGING: ${{ vars.FIREBASE_ANDROID_APP_ID_STAGING }}
-          FIREBASE_APPDISTRO_GROUPS: ${{ vars.FIREBASE_APPDISTRO_GROUPS }}
           FIREBASE_APPDISTRO_TESTERS: ${{ vars.FIREBASE_APPDISTRO_TESTERS }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-appdist.json
       - uses: actions/upload-artifact@v6
@@ -150,8 +143,8 @@ jobs:
           retention-days: 14
 
   deploy-ios:
-    name: deploy-ios
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: deploy-ios-disabled
+    if: ${{ false }}
     runs-on: macos-latest
     environment: staging
     steps:
