@@ -143,12 +143,21 @@ jobs:
           install-chromedriver: true
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
+      - name: Configure Chrome for CI
+        run: |
+          cat > "$RUNNER_TEMP/chrome-no-sandbox" <<SH
+          #!/usr/bin/env bash
+          exec "${CHROME_BIN}" --no-sandbox "\$@"
+          SH
+          chmod +x "$RUNNER_TEMP/chrome-no-sandbox"
+        env:
+          CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
       - name: Start ChromeDriver
         run: |
           "${{ steps.setup-chrome.outputs.chromedriver-path }}" --port=4444 &
       - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_smoke_test.dart -d chrome --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
         env:
-          CHROME_EXECUTABLE: ${{ steps.setup-chrome.outputs.chrome-path }}
+          CHROME_EXECUTABLE: ${{ runner.temp }}/chrome-no-sandbox
 
   android-integration:
     name: android-integration
@@ -167,6 +176,11 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - uses: ReactiveCircus/android-emulator-runner@v2.35.0
         with:
           api-level: 35
@@ -202,7 +216,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         with:
           name: android-test-apk
-          path: android/app/build/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
+          path: build/app/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk
           if-no-files-found: error
           retention-days: 14
 
