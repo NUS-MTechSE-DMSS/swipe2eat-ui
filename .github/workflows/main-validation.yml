@@ -22,7 +22,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
 
@@ -35,7 +35,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: flutter analyze
 
@@ -48,7 +48,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: flutter test --coverage
       - name: Install lcov
@@ -80,7 +80,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - name: Install dependencies
         run: flutter pub get
       - name: Check Snyk token
@@ -113,7 +113,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh staging "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -134,7 +134,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - name: Setup Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v2
@@ -152,10 +152,20 @@ jobs:
           chmod +x "$RUNNER_TEMP/chrome-no-sandbox"
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Show Chrome versions
+        run: |
+          "${{ steps.setup-chrome.outputs.chrome-path }}" --version
+          "${{ steps.setup-chrome.outputs.chromedriver-path }}" --version
       - name: Start ChromeDriver
         run: |
           "${{ steps.setup-chrome.outputs.chromedriver-path }}" --port=4444 &
-      - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_smoke_test.dart -d chrome --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
+      - run: |
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/app_smoke_test.dart \
+            -d chrome \
+            --chrome-binary="${{ steps.setup-chrome.outputs.chrome-path }}" \
+            --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
         env:
           CHROME_EXECUTABLE: ${{ runner.temp }}/chrome-no-sandbox
 
@@ -173,7 +183,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - name: Enable KVM for Android emulator
@@ -204,7 +214,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build apk --debug --flavor dev --target integration_test/app_smoke_test.dart --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -232,7 +242,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: pod install
         working-directory: ios
@@ -266,7 +276,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build linux --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -286,7 +296,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build macos --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -306,7 +316,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
         shell: bash
