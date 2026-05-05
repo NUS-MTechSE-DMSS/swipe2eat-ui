@@ -142,6 +142,57 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  lighthouse-web:
+    name: lighthouse-web
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs:
+      - deploy-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          package-manager-cache: false
+      - run: npm install -g lighthouse
+      - name: Run Lighthouse audit
+        run: |
+          set -euo pipefail
+
+          mkdir -p lighthouse-report
+          lighthouse "${DEPLOY_URL}" \
+            --chrome-flags="--headless --no-sandbox" \
+            --output=html \
+            --output-path=lighthouse-report/report.html
+          lighthouse "${DEPLOY_URL}" \
+            --chrome-flags="--headless --no-sandbox" \
+            --output=json \
+            --output-path=lighthouse-report/report.json
+
+          node - lighthouse-report/report.json <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const categories = report.categories;
+          const score = (name) => Math.round(categories[name].score * 100);
+
+          console.log('### Lighthouse Web Performance');
+          console.log('');
+          console.log(`- URL: ${report.finalDisplayedUrl || report.finalUrl}`);
+          console.log(`- Performance: ${score('performance')}`);
+          console.log(`- Accessibility: ${score('accessibility')}`);
+          console.log(`- Best practices: ${score('best-practices')}`);
+          console.log(`- SEO: ${score('seo')}`);
+          NODE
+
+          echo "- HTML report: uploaded as \`staging-lighthouse-report\` artifact" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          DEPLOY_URL: ${{ needs.deploy-web.outputs.deploy_url }}
+      - uses: actions/upload-artifact@v6
+        with:
+          name: staging-lighthouse-report
+          path: lighthouse-report
+          if-no-files-found: error
+          retention-days: 14
+
   deploy-ios:
     name: deploy-ios-disabled
     if: ${{ false }}
