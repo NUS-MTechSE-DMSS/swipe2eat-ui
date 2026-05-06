@@ -10,7 +10,7 @@ This project uses GitHub Actions as the CI/CD engine, Netlify for Flutter web de
 - Build: Flutter dependency install and platform packaging.
 - Test: Flutter unit tests, integration tests, and coverage artifacts.
 - Performance: Lighthouse audit against the deployed staging web app.
-- Security: Snyk dependency scan, Semgrep SAST, and Gitleaks secret scan.
+- Security: Snyk dependency scan, Semgrep SAST, Gitleaks secret scan, and OWASP ZAP DAST baseline scan.
 - Deployment: Netlify staging web deploy and Firebase Android APK distribution.
 
 Container scanning is not part of the current pipeline because the frontend is deployed as static Netlify assets, not as a container image.
@@ -85,8 +85,9 @@ base64 -i upload-keystore.jks
 4. Open `Staging Deploy`, triggered by the successful validation run.
 5. Show the Netlify staging deployment URL.
 6. Show the Lighthouse score summary and the `staging-lighthouse-report` artifact.
-7. Show the Firebase App Distribution summary with the Android tester install link.
-8. Open the deployed web app in a browser.
+7. Show the OWASP ZAP `staging-zap-baseline-report` artifact for DAST coverage.
+8. Show the Firebase App Distribution summary with the Android tester install link.
+9. Open the deployed web app in a browser.
 
 ## Quality Attributes
 
