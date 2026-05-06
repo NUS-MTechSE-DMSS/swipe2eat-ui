@@ -1,4 +1,4 @@
 {
   "APP_ENV": "staging",
-  "API_BASE_URL": "https://staging.keiyam.me"
+  "API_BASE_URL": "https://dev.keiyam.me"
 }

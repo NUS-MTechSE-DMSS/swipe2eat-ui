@@ -1,4 +1,4 @@
 {
   "APP_ENV": "prod",
-  "API_BASE_URL": "https://keiyam.me"
+  "API_BASE_URL": "https://dev.keiyam.me"
 }

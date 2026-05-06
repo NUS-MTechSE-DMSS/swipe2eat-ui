@@ -116,16 +116,11 @@ cd ..
 
 ### Backend API Endpoint
 
-The app is configured to connect to the AWS ALB endpoint. Update the base URL in the following services if needed:
+The app reads the backend API base URL from `ApiConfig.baseUrl`, which is compiled from `API_BASE_URL` at build time. Update `config/env/*.json` instead of editing individual service files.
 
-- `lib/core/services/preferences_service.dart`
-- `lib/features/discover/discover_screen.dart`
-- `lib/features/favorites/favorites_screen.dart`
-- `lib/features/onboarding/screens/dietary_screen.dart`
-
-**Current API Base URL:**
+**Current Shared AWS Backend Base URL:**
 ```
-http://swe5006-nus-g3-alb-dev-1647279843.ap-southeast-1.elb.amazonaws.com
+https://dev.keiyam.me
 ```
 
 ### User ID Configuration
