@@ -59,6 +59,14 @@ jobs:
             --json)
           deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url')
           echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Web Staging Deploy"
+            echo
+            echo "- Artifact: \`web-release\`"
+            echo "- Alias: \`staging-${HEAD_SHA::7}\`"
+            echo "- Preview URL: $deploy_url"
+          } >> "$GITHUB_STEP_SUMMARY"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -163,7 +171,7 @@ jobs:
 
   lighthouse-web:
     name: lighthouse-web
-    if: ${{ false }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs:
       - deploy-web
     runs-on: ubuntu-latest
