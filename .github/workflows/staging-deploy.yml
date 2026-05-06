@@ -192,11 +192,23 @@ jobs:
             --output=json \
             --output-path=lighthouse-report/report
 
-          node - lighthouse-report/report.json <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          json_report="lighthouse-report/report.report.json"
+          html_report="lighthouse-report/report.report.html"
+
+          if [[ ! -f "$json_report" ]]; then
+            echo "Expected Lighthouse JSON report '$json_report' not found." >&2
+            find lighthouse-report -maxdepth 1 -type f | sort >&2
+            exit 1
+          fi
+
+          node - "$json_report" <<'NODE' >> "$GITHUB_STEP_SUMMARY"
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
           const categories = report.categories;
-          const score = (name) => Math.round(categories[name].score * 100);
+          const score = (name) => {
+            const value = categories?.[name]?.score;
+            return typeof value === 'number' ? Math.round(value * 100) : 'n/a';
+          };
 
           console.log('### Lighthouse Web Performance');
           console.log('');
@@ -207,7 +219,9 @@ jobs:
           console.log(`- SEO: ${score('seo')}`);
           NODE
 
-          echo "- HTML report: uploaded as \`staging-lighthouse-report\` artifact" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f "$html_report" ]]; then
+            echo "- HTML report: uploaded as \`staging-lighthouse-report\` artifact" >> "$GITHUB_STEP_SUMMARY"
+          fi
         env:
           DEPLOY_URL: ${{ needs.deploy-web.outputs.deploy_url }}
       - uses: actions/upload-artifact@v6
