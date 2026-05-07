@@ -12,12 +12,9 @@ concurrency:
 permissions:
   contents: read
 
-# Temporary quota saver: PR checks are paused while staging deploy remains active.
-# Remove the job-level `if: ${{ false }}` entries below to restore PR CI.
 jobs:
   format:
     name: format
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -25,13 +22,12 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
 
   analyze:
     name: analyze
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -39,13 +35,12 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: flutter analyze
 
   test:
     name: test
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -53,7 +48,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: flutter test --coverage
       - name: Install lcov
@@ -75,7 +70,6 @@ jobs:
 
   semgrep:
     name: semgrep
-    if: ${{ false }}
     runs-on: ubuntu-latest
     container:
       image: semgrep/semgrep:1.160.0
@@ -100,7 +94,6 @@ jobs:
 
   secrets:
     name: secrets
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -130,7 +123,6 @@ jobs:
 
   security:
     name: Snyk Scan
-    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -141,7 +133,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - name: Install dependencies
         run: flutter pub get
       - name: Check Snyk token
@@ -167,7 +159,6 @@ jobs:
 
   build-web:
     name: build-web
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -175,7 +166,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
@@ -188,7 +179,6 @@ jobs:
 
   build-android:
     name: build-android
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -200,7 +190,7 @@ jobs:
         with:
           flutter-version: 3.41.6
           channel: stable
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: bash .github/scripts/materialize_dart_defines.sh dev "$RUNNER_TEMP/dart-defines.json"
       - run: flutter build appbundle --debug --flavor dev --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
