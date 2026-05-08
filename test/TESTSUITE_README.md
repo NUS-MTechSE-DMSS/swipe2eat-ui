@@ -1,267 +1,205 @@
-# Swipe2Eat UI - Test Structure
+# Swipe2Eat UI Test Suite
 
-## Test File Organization
+This document describes the current test layout and the commands used to verify the app.
 
+## Current Status
+
+Latest local verification from this workspace:
+
+```text
+flutter analyze: no issues
+flutter test: 298 tests passed
+flutter test integration_test/favorites_location_link_test.dart: 2 tests passed
 ```
+
+Test files:
+
+- 38 unit/widget test files under `test/`
+- 2 integration test files under `integration_test/`
+- shared HTTP/image stubs under `test/test_helpers/`
+
+## Test Layout
+
+```text
 test/
-├── widget_test.dart                          # Original example test
-├── app_test.dart                             # ✨ NEW: App configuration & routes
-├── models/
-│   └── food_item_test.dart                   # ✨ NEW: FoodItem model tests
-├── core/
-│   ├── state/
-│   │   └── favorites_store_test.dart         # ✨ NEW: State management tests
-│   ├── theme/
-│   │   └── app_theme_test.dart               # ✨ NEW: Theme & colors tests
-│   └── widgets/
-│       └── gradient_button_test.dart         # ✨ NEW: GradientButton widget tests
-└── features/
-    ├── auth/
-    │   ├── sign_in_screen_test.dart          # ✨ NEW: SignInScreen tests
-    │   └── sign_up_screen_test.dart          # ✨ NEW: SignUpScreen tests
-    └── onboarding/
-        ├── welcome_screen_test.dart          # ✨ NEW: WelcomeScreen tests
-        └── spice_screen_test.dart            # ✨ NEW: SpiceScreen tests
+  app_test.dart
+  main_test.dart
+  models/
+    cuisine_option_test.dart
+    food_item_extensions_test.dart
+    food_item_test.dart
+  core/
+    config/api_config_test.dart
+    navigation/main_shell_test.dart
+    services/
+      authenticated_http_client_test.dart
+      preferences_service_test.dart
+      user_service_test.dart
+    state/favorites_store_test.dart
+    theme/app_theme_test.dart
+    utils/
+      auth_validation_test.dart
+      food_image_url_test.dart
+    widgets/
+      gradient_button_test.dart
+      loading_placeholder_test.dart
+  features/
+    auth/
+      auth_session_test.dart
+      cognito_service_test.dart
+      confirmation_screen_test.dart
+      forgot_password_screen_test.dart
+      sign_in_screen_test.dart
+      sign_up_screen_test.dart
+      token_storage_test.dart
+      user_model_test.dart
+    chat/
+      chat_message_test.dart
+      chat_screen_test.dart
+      chat_service_test.dart
+    discover/
+      discover_screen_test.dart
+      food_service_test.dart
+    favorites/
+      favorites_screen_test.dart
+      food_detail_screen_test.dart
+    onboarding/
+      budget_screen_test.dart
+      cuisine_screen_test.dart
+      dietary_options_test.dart
+      done_screen_test.dart
+      spice_screen_test.dart
+      welcome_screen_test.dart
+    profile/
+      profile_screen_test.dart
+  test_helpers/
+    http_test_overrides.dart
+    network_image_stub.dart
+
+integration_test/
+  app_smoke_test.dart
+  favorites_location_link_test.dart
 ```
 
-## Test Coverage Breakdown
+## What The Tests Cover
 
-### Unit Tests (2 files, 23 tests)
-- **models/food_item_test.dart** (9 tests)
-  - FoodItem creation and field validation
-  - Rating, spice level, budget level handling
-  - Price comparisons
-  - Tag management
+### Core
 
-- **core/state/favorites_store_test.dart** (14 tests)
-  - Singleton pattern
-  - Add/remove favorites
-  - Duplicate prevention
-  - Item lookup and clear
-  - ValueNotifier notifications
+- API configuration defaults and derived URLs.
+- Authenticated HTTP behavior, including token refresh after 401 responses.
+- Preferences service parsing, persistence, fallback behavior, and swipe requests.
+- User service profile/logout/delete interactions.
+- FavoritesStore add/remove/set/clear behavior.
+- Theme, validation utilities, image URL expansion, and shared widgets.
 
-### Widget Tests (2 files, 23 tests)
-- **core/widgets/gradient_button_test.dart** (11 tests)
-  - Text rendering and styling
-  - Button dimensions and appearance
-  - Gradient colors
-  - Tap callbacks
+### Auth
 
-- **core/theme/app_theme_test.dart** (17 tests)
-  - Color definitions
-  - ThemeData configuration
-  - Font family and text styles
-  - Theme integration
+- Cognito sign-up, confirmation, resend confirmation, forgot password, sign-in, refresh, and delete-user request handling.
+- Auth session freshness and refresh behavior.
+- TokenStorage persistence and JWT-derived metadata.
+- Sign-in, sign-up, confirmation, and forgot-password screen behavior.
 
-### Screen Tests (5 files, 69 tests)
-- **features/onboarding/welcome_screen_test.dart** (12 tests)
-  - Welcome text and subtitle
-  - Icon display
-  - Button functionality
-  - Navigation
+### Discover
 
-- **features/auth/sign_in_screen_test.dart** (13 tests)
-  - Form fields (email, password)
-  - Login button
-  - Sign Up navigation
-  - Text input
+- FoodService request selection: personalized user-id fetch first, preference fallback second.
+- Food JSON parsing, invalid-id filtering, fallback values, image URL mapping, cuisine tags, and address parsing.
+- DiscoverScreen loading, card rendering, food-detail navigation, preference editing, refresh, and swipe sync behavior.
 
-- **features/auth/sign_up_screen_test.dart** (15 tests)
-  - Registration form
-  - Input validation
-  - Navigation
-  - Layout structure
+### Favorites And Food Details
 
-- **features/onboarding/spice_screen_test.dart** (16 tests)
-  - Spice level selection
-  - Option cards
-  - Progress indicator
-  - Continue/Back navigation
+- FavoritesScreen reloads liked foods from `/preference/food/users/{userId}`.
+- Favorites parser supports direct and nested `food` payloads.
+- Favorites parser preserves `address` when provided by the backend.
+- FoodDetailScreen displays core food data and favorite-state actions.
+- FoodDetailScreen renders the map location link from `address` when available.
+- FoodDetailScreen falls back to `restaurantName` for the map location link when `address` is missing.
 
-- **app_test.dart** (10 tests)
-  - App configuration
-  - Route definitions
-  - Theme application
-  - Initial route setup
+### Profile, Chat, And Onboarding
 
----
+- Profile display, editing, local fallback, logout, and account deletion flows.
+- Chat message parsing, chat service calls, and recommendation rendering.
+- Onboarding cuisine, budget, spice, dietary, and completion screens.
 
-## Test Execution Summary
+## Integration Tests
 
-### All Tests Pass ✅
-```
-flutter test
-==========================================
-Total Tests:   92
-Passed:        92 ✅
-Failed:        0 ❌
-==========================================
-```
+### `integration_test/app_smoke_test.dart`
 
-### Test Commands
+Launches the app from a clean state and verifies basic sign-in/forgot-password navigation.
+
+Run:
 
 ```bash
-# Run all tests
+flutter test integration_test/app_smoke_test.dart
+```
+
+### `integration_test/favorites_location_link_test.dart`
+
+Verifies the food-location regression path:
+
+1. Saves a mock logged-in session.
+2. Stubs the favorites backend response.
+3. Opens `FavoritesScreen`.
+4. Opens `FoodDetailScreen`.
+5. Verifies the blue map location row is visible.
+
+It covers both:
+
+- explicit backend `address`
+- missing `address` with `restaurantName` fallback, for example `Dunman Food Centre`
+
+Run:
+
+```bash
+flutter test integration_test/favorites_location_link_test.dart
+```
+
+## Common Commands
+
+Analyze:
+
+```bash
+flutter analyze
+```
+
+Run all unit/widget tests:
+
+```bash
 flutter test
+```
 
-# Run specific test file
-flutter test test/models/food_item_test.dart
-flutter test test/features/auth/sign_in_screen_test.dart
+Run focused favorites/location tests:
 
-# Run with coverage
+```bash
+flutter test test/features/favorites/food_detail_screen_test.dart test/features/favorites/favorites_screen_test.dart
+flutter test integration_test/favorites_location_link_test.dart
+```
+
+Run one test file:
+
+```bash
+flutter test test/features/discover/food_service_test.dart
+```
+
+Run by test name:
+
+```bash
+flutter test --plain-name "uses restaurant name as map link when address is missing"
+```
+
+Run with coverage:
+
+```bash
 flutter test --coverage
-
-# Run with verbose output
-flutter test -v
-
-# Run specific test by name
-flutter test -k "FoodItem"
-flutter test -k "GradientButton"
 ```
 
----
+## Test Helpers
 
-## Test Categories
+`test/test_helpers/http_test_overrides.dart` provides deterministic HTTP stubbing for service and widget tests. It captures requests and returns configured JSON/image responses.
 
-### Model Tests
-- Data validation
-- Object creation
-- Field verification
-- Comparison logic
+`test/test_helpers/network_image_stub.dart` provides a lightweight transparent PNG response for widget tests that need network images.
 
-### State Management Tests
-- Singleton pattern
-- Add/remove operations
-- Listener notifications
-- Data persistence
+## Notes For Future Updates
 
-### Widget Tests
-- Visual rendering
-- User interactions
-- Callback execution
-- Styling validation
-
-### Screen Tests
-- Navigation flows
-- Form interactions
-- Button functionality
-- Layout verification
-
-### Theme Tests
-- Color definitions
-- Font configuration
-- Text styles
-- Theme consistency
-
----
-
-## Key Testing Concepts Demonstrated
-
-### 1. Unit Testing
-```dart
-test('description', () {
-  final foodItem = FoodItem(...);
-  expect(foodItem.name, 'Bibimbap');
-});
-```
-
-### 2. Widget Testing
-```dart
-testWidgets('description', (WidgetTester tester) async {
-  await tester.pumpWidget(MaterialApp(home: Widget()));
-  expect(find.byType(Button), findsOneWidget);
-});
-```
-
-### 3. State Testing
-```dart
-test('state management', () {
-  var store = Store.instance;
-  store.add(item);
-  expect(store.contains(item.id), true);
-});
-```
-
-### 4. Callback Testing
-```dart
-testWidgets('callback', (WidgetTester tester) async {
-  var called = false;
-  await tester.pumpWidget(Button(
-    onTap: () => called = true,
-  ));
-  await tester.tap(find.byType(Button));
-  expect(called, true);
-});
-```
-
----
-
-## Codebase Analysis Summary
-
-### Widgets Analyzed
-- ✅ GradientButton
-- ✅ ProgressPills (internal to screens)
-- ✅ SpiceOptionCard (internal to screens)
-- ✅ BudgetOptionCard (internal to screens)
-- ✅ DietaryOptionCard (internal to screens)
-- ✅ CuisineTile (internal to screens)
-
-### Screens Analyzed
-- ✅ WelcomeScreen
-- ✅ SignInScreen
-- ✅ SignUpScreen
-- ✅ CuisineScreen (API integration)
-- ✅ SpiceScreen
-- ✅ BudgetScreen
-- ✅ DietaryScreen (API integration)
-- ✅ DiscoverScreen (Card-based swipe interface)
-
-### State Management
-- ✅ FavoritesStore (Singleton with ValueNotifier)
-
-### Models
-- ✅ FoodItem
-- ✅ CuisineOption
-
-### Theme & Colors
-- ✅ AppColors
-- ✅ AppTheme
-- ✅ Swipe2EatApp configuration
-
----
-
-## Next Steps for Testing
-
-### Recommended Additions:
-1. **API Integration Tests** for CuisineScreen and DietaryScreen
-2. **DiscoverScreen Tests** with mocked swipe gestures
-3. **Integration Tests** for complete user flows
-4. **Error Handling Tests** for API failures
-5. **Accessibility Tests** for screen readers
-6. **Performance Tests** for large food lists
-7. **Widget Golden Tests** for visual regression
-
----
-
-## Test Quality Metrics
-
-| Metric | Status |
-|--------|--------|
-| Test Count | 92 ✅ |
-| Pass Rate | 100% ✅ |
-| Code Coverage | Good ✅ |
-| Test Isolation | Yes ✅ |
-| Deterministic | Yes ✅ |
-| Well-named | Yes ✅ |
-| Organized | Yes ✅ |
-
----
-
-## Documentation
-
-See `TEST_COVERAGE.md` for detailed test documentation including:
-- Complete test case listings
-- Test execution results
-- Best practices implemented
-- Running test commands
-- Future testing roadmap
+- Update this document when adding new test files or when the passing `flutter test` count changes.
+- Keep integration tests focused on user-visible flows that can regress across services/screens.
+- Prefer `HttpTestOverrides` over live backend calls for deterministic local and CI test runs.

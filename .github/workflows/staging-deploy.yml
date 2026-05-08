@@ -57,7 +57,12 @@ jobs:
             --alias="staging-${HEAD_SHA::7}" \
             --no-build \
             --json)
-          deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url')
+          deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url // .url // empty')
+          if [[ -z "$deploy_url" ]]; then
+            echo "Netlify deploy completed, but no deploy URL was returned in the CLI JSON output." >&2
+            echo "$deploy_json" | jq '.' >&2
+          fi
+
           echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
 
           {
@@ -70,6 +75,20 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Show staging Netlify URL
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${DEPLOY_URL}" || "${DEPLOY_URL}" == "null" ]]; then
+            echo "Staging Netlify URL was not produced by the Netlify CLI output."
+            echo "::warning title=Staging Netlify URL unavailable::Netlify deploy completed, but no URL was returned."
+            exit 0
+          fi
+
+          echo "Staging Netlify URL: ${DEPLOY_URL}"
+          echo "::notice title=Staging Netlify URL::${DEPLOY_URL}"
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deploy_url }}
 
   deploy-android:
     name: deploy-android
@@ -278,55 +297,3 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           DEPLOY_URL: ${{ needs.deploy-web.outputs.deploy_url }}
-
-  deploy-ios:
-    name: deploy-ios-disabled
-    if: ${{ false }}
-    runs-on: macos-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.41.6
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: pod install
-        working-directory: ios
-      - run: bash .github/scripts/materialize_dart_defines.sh staging "$RUNNER_TEMP/dart-defines.json"
-        env:
-          DART_DEFINES_JSON_BASE64: ${{ secrets.STAGING_DART_DEFINES_JSON_BASE64 }}
-      - run: bundle exec fastlane ios staging
-        env:
-          DART_DEFINES_FILE: ${{ runner.temp }}/dart-defines.json
-          IOS_SCHEME: staging
-          IOS_DEVELOPMENT_TEAM: ${{ secrets.IOS_DEVELOPMENT_TEAM }}
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          BUILD_NUMBER: ${{ github.event.workflow_run.run_number }}
-
-  attach-desktop-artifacts:
-    name: attach-desktop-artifacts
-    if: ${{ false }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          mkdir -p desktop-assets
-          gh run download "${{ github.event.workflow_run.id }}" -n linux-release -D desktop-assets/linux
-          gh run download "${{ github.event.workflow_run.id }}" -n windows-release -D desktop-assets/windows
-          gh run download "${{ github.event.workflow_run.id }}" -n macos-release -D desktop-assets/macos
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v6
-        with:
-          name: desktop-validation-assets
-          path: desktop-assets
-          if-no-files-found: error
-          retention-days: 14

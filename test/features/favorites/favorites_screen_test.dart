@@ -25,8 +25,9 @@ void main() {
       required String name,
       required String restaurant,
       required List<String> cuisines,
+      String? address,
     }) {
-      return {
+      final json = {
         'id': id,
         'name': name,
         'restaurantName': restaurant,
@@ -36,6 +37,10 @@ void main() {
         'description': '$name description',
         'cuisine': cuisines,
       };
+      if (address != null) {
+        json['address'] = address;
+      }
+      return json;
     }
 
     void stubImageTraffic() {
@@ -305,6 +310,40 @@ void main() {
       expect(find.byType(FoodDetailScreen), findsOneWidget);
       expect(find.text('Ramen description'), findsOneWidget);
     });
+
+    testWidgets(
+      'preserves favorite address so reopened details show the map link',
+      (tester) async {
+        await saveSession();
+        const address = '1 NUS Drive, Singapore';
+        httpOverrides.addResponse(
+          method: 'GET',
+          url: '${ApiConfig.baseUrl}/preference/food/users/user-123',
+          response: StubHttpResponse.json({
+            'foods': [
+              foodJson(
+                id: '77777777-7777-4777-8777-777777777777',
+                name: 'Chicken Rice',
+                restaurant: 'Campus Canteen',
+                cuisines: ['Chinese'],
+                address: address,
+              ),
+            ],
+          }),
+        );
+
+        await pumpFavorites(tester);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Chicken Rice'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(FoodDetailScreen), findsOneWidget);
+        expect(find.byIcon(Icons.location_on), findsOneWidget);
+        expect(find.text(address), findsOneWidget);
+        expect(FavoritesStore.instance.favorites.value.single.address, address);
+      },
+    );
 
     testWidgets(
       'shows and pops the close button only when bottom nav is enabled',
