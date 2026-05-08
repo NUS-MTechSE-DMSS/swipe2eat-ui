@@ -57,7 +57,12 @@ jobs:
             --alias="staging-${HEAD_SHA::7}" \
             --no-build \
             --json)
-          deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url')
+          deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url // .url // empty')
+          if [[ -z "$deploy_url" ]]; then
+            echo "Netlify deploy completed, but no deploy URL was returned in the CLI JSON output." >&2
+            echo "$deploy_json" | jq '.' >&2
+          fi
+
           echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
 
           {
@@ -70,6 +75,20 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Show staging Netlify URL
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${DEPLOY_URL}" || "${DEPLOY_URL}" == "null" ]]; then
+            echo "Staging Netlify URL was not produced by the Netlify CLI output."
+            echo "::warning title=Staging Netlify URL unavailable::Netlify deploy completed, but no URL was returned."
+            exit 0
+          fi
+
+          echo "Staging Netlify URL: ${DEPLOY_URL}"
+          echo "::notice title=Staging Netlify URL::${DEPLOY_URL}"
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deploy_url }}
 
   deploy-android:
     name: deploy-android
