@@ -218,64 +218,12 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  desktop-artifacts:
-    name: desktop-artifacts
-    if: ${{ inputs.target_platforms == 'all' }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            name: linux
-            build_command: flutter build linux --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-            artifact_path: build/linux/x64/release/bundle
-          - os: macos-latest
-            name: macos
-            build_command: flutter build macos --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-            artifact_path: build/macos/Build/Products/Release
-          - os: windows-latest
-            name: windows
-            build_command: flutter build windows --release --dart-define-from-file="$env:RUNNER_TEMP\\dart-defines.json"
-            artifact_path: build/windows/x64/runner/Release
-    runs-on: ${{ matrix.os }}
-    environment: production
-    steps:
-      - uses: actions/checkout@v5
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.41.6
-          channel: stable
-          cache: true
-      - if: ${{ matrix.name == 'linux' }}
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-      - run: flutter pub get
-      - if: ${{ matrix.name != 'windows' }}
-        run: bash .github/scripts/materialize_dart_defines.sh prod "$RUNNER_TEMP/dart-defines.json"
-        env:
-          DART_DEFINES_JSON_BASE64: ${{ secrets.PROD_DART_DEFINES_JSON_BASE64 }}
-      - if: ${{ matrix.name == 'windows' }}
-        run: bash .github/scripts/materialize_dart_defines.sh prod "$RUNNER_TEMP/dart-defines.json"
-        shell: bash
-        env:
-          DART_DEFINES_JSON_BASE64: ${{ secrets.PROD_DART_DEFINES_JSON_BASE64 }}
-      - if: ${{ matrix.name != 'windows' }}
-        run: ${{ matrix.build_command }}
-      - if: ${{ matrix.name == 'windows' }}
-        run: flutter build windows --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
-        shell: bash
-      - uses: actions/upload-artifact@v6
-        with:
-          name: release-${{ matrix.name }}
-          path: ${{ matrix.artifact_path }}
-          if-no-files-found: error
-          retention-days: 30
-
   github-release:
     name: github-release
     needs:
       - deploy-web
       - deploy-android
       - deploy-ios
-      - desktop-artifacts
     if: ${{ always() && !contains(join(needs.*.result, ','), 'failure') && !contains(join(needs.*.result, ','), 'cancelled') }}
     runs-on: ubuntu-latest
     environment: production
