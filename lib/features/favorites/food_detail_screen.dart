@@ -55,6 +55,13 @@ class FoodDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFav = FavoritesStore.instance.contains(item.id);
+    final address = item.address?.trim();
+    final restaurant = item.restaurant.trim();
+    final mapLocation = address != null && address.isNotEmpty
+        ? address
+        : restaurant;
+    final showMapLink =
+        mapLocation.isNotEmpty && mapLocation.toLowerCase() != 'unknown';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F1),
@@ -112,119 +119,125 @@ class FoodDetailScreen extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.restaurant,
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (item.address != null && item.address!.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      GestureDetector(
-                        onTap: () => _openInGoogleMaps(item.address!),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: Color(0xFF2563EB),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                item.address!,
-                                style: const TextStyle(
-                                  color: Color(0xFF2563EB),
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF2563EB),
-                                  fontSize: 13,
+                      Text(
+                        item.restaurant,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (showMapLink) ...[
+                        const SizedBox(height: 6),
+                        GestureDetector(
+                          key: const ValueKey('food-detail-map-location-link'),
+                          onTap: () => _openInGoogleMaps(mapLocation),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Color(0xFF2563EB),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  mapLocation,
+                                  key: const ValueKey(
+                                    'food-detail-map-location-text',
+                                  ),
+                                  style: const TextStyle(
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF2563EB),
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        _InfoChip(
-                          icon: Icons.star_rounded,
-                          text: item.rating.toStringAsFixed(1),
-                        ),
-                        const Spacer(),
-                        Text(
-                          "\$${item.price.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
+                            ],
                           ),
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 12),
 
-                    const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _InfoChip(
+                            icon: Icons.star_rounded,
+                            text: item.rating.toStringAsFixed(1),
+                          ),
+                          const Spacer(),
+                          Text(
+                            "\$${item.price.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
 
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: item.tags
-                          .map(
-                            (t) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF2E7),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                t,
-                                style: const TextStyle(
-                                  color: Color(0xFFFF6B4A),
-                                  fontWeight: FontWeight.w900,
+                      const SizedBox(height: 14),
+
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: item.tags
+                            .map(
+                              (t) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF2E7),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  t,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF6B4A),
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      "Description",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                            )
+                            .toList(),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.description,
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
 
-                    const Spacer(),
-                  ],
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        "Description",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.description,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),

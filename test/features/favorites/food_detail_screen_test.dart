@@ -61,12 +61,44 @@ void main() {
       await pumpDetail(tester, item);
 
       expect(find.text('Sushi Deluxe'), findsOneWidget);
-      expect(find.text('Sushi Bar'), findsOneWidget);
+      expect(find.text('Sushi Bar'), findsWidgets);
       expect(find.text(item.description), findsOneWidget);
       expect(find.text('\$${item.price.toStringAsFixed(2)}'), findsOneWidget);
       // tags present
       expect(find.text('Japanese'), findsOneWidget);
       expect(find.text('Seafood'), findsOneWidget);
+    });
+
+    testWidgets('uses restaurant name as map link when address is missing', (
+      tester,
+    ) async {
+      final item = FoodItem(
+        id: '1',
+        name: 'Thai Fried Rice',
+        restaurant: 'Dunman Food Centre',
+        imageUrl: 'https://example.com/thai-fried-rice.jpg',
+        rating: 4.1,
+        price: 5.93,
+        description: 'Thai Fried Rice description',
+        spiceLevel: 0,
+        budgetLevel: 1,
+        tags: const ['Thai'],
+      );
+
+      await pumpDetail(tester, item);
+
+      expect(find.byIcon(Icons.location_on), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('food-detail-map-location-link')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('food-detail-map-location-link')),
+          matching: find.text('Dunman Food Centre'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('back button pops without changing favorites', (tester) async {

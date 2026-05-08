@@ -354,6 +354,8 @@ FoodItem? _foodFromJson(dynamic raw) {
     tags = [cuisineRaw.trim()];
   }
 
+  final address = readString('address');
+
   return FoodItem(
     id: id,
     name: name,
@@ -365,6 +367,7 @@ FoodItem? _foodFromJson(dynamic raw) {
     spiceLevel: spiceLevel,
     budgetLevel: budgetLevel,
     tags: tags,
+    address: address,
   );
 }
 
