@@ -1,110 +1,73 @@
 # Swipe2Eat UI
 
-A Flutter application for discovering and saving food items through an intuitive swipe-based interface, with full backend integration for preferences, user authentication, and food discovery APIs.
+A Flutter app for discovering, swiping, saving, and revisiting food recommendations. The app integrates with the shared backend for authentication, preferences, food discovery, favorites, chat recommendations, and profile management.
 
-## Table of Contents
+## Contents
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Running the App](#running-the-app)
+- [Running The App](#running-the-app)
 - [Project Structure](#project-structure)
 - [API Integration](#api-integration)
+- [Food Location Flow](#food-location-flow)
+- [Testing](#testing)
 - [Dependencies](#dependencies)
 - [Troubleshooting](#troubleshooting)
-- [Resources](#resources)
 
 ## Features
 
-### 🍽️ Core Features
-- **Swipe-based Food Discovery**: Tinder-style interface for browsing restaurants and dishes
-- **User Preferences**: Customize cuisine preferences, budget, spice level, and dietary restrictions
-- **Favorites Management**: Save and manage favorite dishes
-- **User Profile**: View and edit personal preferences
-- **Responsive Design**: Works seamlessly on iOS, Android, and Web
+### Core App
 
-### 🔄 Backend Integration
-- **Food Discovery API**: Fetches restaurants based on user preferences (cuisines, budget, spice level, dietary restrictions, allergens)
-- **Preference Persistence**: Saves user preferences locally and syncs with backend
-- **Swipe Tracking**: Records user interactions (likes/dislikes) for personalized recommendations
-- **Favorites Sync**: Loads and displays user's liked items from backend
-- **AWS Cognito Ready**: Built-in infrastructure for user authentication (Cognito integration pending)
+- Swipe-based food discovery with card gestures and like/dislike actions.
+- Favorites screen that reloads liked foods from the backend.
+- Food detail screen with image, rating, price, tags, description, and map location link.
+- Profile screen for user details, preferences, logout, and account deletion.
+- Onboarding flow for cuisine, budget, spice, dietary type, and allergens.
+- Chat recommendations backed by the LLM chat API.
+- Responsive Flutter UI for iOS, Android, web, and desktop-capable builds.
 
-### 💾 Local Storage
-- **SharedPreferences Integration**: Persists user preferences across app sessions
-  - Cuisines selection
-  - Budget level (low/medium/high)
-  - Spice preference (Mild/Medium/Hot)
-  - Dietary type and allergens
-  - Temporary user ID
+### Authentication
+
+- AWS Cognito sign-up, confirmation, sign-in, forgot-password, token refresh, and delete-user flows.
+- ID token authentication for backend APIs.
+- Access token use where Cognito requires it.
+- SharedPreferences-backed local session storage.
+- Automatic session refresh through `AuthenticatedHttpClient`.
+
+### Backend And Local State
+
+- Food discovery fetches personalized results by Cognito user id first, then falls back to preference filters.
+- Preferences sync to the backend and are also saved locally.
+- Swipe preferences are queued through the backend swipe endpoint.
+- Favorites are synced from the backend and cached in `FavoritesStore`.
+- Backend image keys are expanded to public S3 image URLs.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed on your machine:
+- Flutter SDK with Dart SDK support for `sdk: ^3.10.7`.
+- Git.
+- Xcode and CocoaPods for iOS development on macOS.
+- Android Studio or Android SDK for Android development.
 
-### Required
-
-- **Flutter SDK** (version ^3.10.7)
-  - Download from [flutter.dev](https://flutter.dev/docs/get-started/install)
-  - Verify installation: `flutter --version`
-
-- **Dart SDK** (included with Flutter)
-  - Verify installation: `dart --version`
-
-- **Git**
-  - Download from [git-scm.com](https://git-scm.com/)
-  - Verify installation: `git --version`
-
-### Platform-Specific Requirements
-
-#### For iOS Development (macOS)
-- **Xcode** (14.0 or later)
-  - Install from App Store or: `xcode-select --install`
-- **CocoaPods**
-  - Install via: `sudo gem install cocoapods`
-- **iOS Deployment Target**: 11.0 or higher
-
-#### For Android Development
-- **Android Studio** or **Android SDK**
-  - Download from [developer.android.com](https://developer.android.com/studio)
-  - Minimum SDK version: 21
-  - Target SDK version: Latest available
-
-#### For Web Development
-- No additional prerequisites beyond Flutter SDK
-
-## Installation
-
-### 1. Clone the Repository
+Useful checks:
 
 ```bash
-git clone https://github.com/NUS-MTechSE-DMSS/swipe2eat-ui.git
-cd swipe2eat_ui
-```
-
-### 2. Verify Flutter Setup
-
-```bash
+flutter --version
+dart --version
 flutter doctor
 ```
 
-This command checks your environment and reports any missing dependencies. Address any issues reported before proceeding.
-
-### 3. Get Project Dependencies
+## Installation
 
 ```bash
+git clone https://github.com/NUS-MTechSE-DMSS/swipe2eat-ui.git
+cd swipe2eat-ui
 flutter pub get
 ```
 
-This fetches all required packages specified in `pubspec.yaml`:
-- **http**: HTTP client for API calls
-- **shared_preferences**: Local storage for user preferences
-- **provider**: State management (v6.1.2)
-- **google_fonts**: Custom fonts support (v6.2.1)
-- **cupertino_icons**: iOS-style icons (v1.0.8)
-
-### 4. (iOS Only) Install iOS Pods
+For iOS:
 
 ```bash
 cd ios
@@ -114,294 +77,283 @@ cd ..
 
 ## Configuration
 
-### Backend API Endpoint
+The backend base URL is read from `ApiConfig.baseUrl`, which uses the `API_BASE_URL` Dart define.
 
-The app reads the backend API base URL from `ApiConfig.baseUrl`, which is compiled from `API_BASE_URL` at build time. Update `config/env/*.json` instead of editing individual service files.
+Environment files live in `config/env/`:
 
-**Current Shared AWS Backend Base URL:**
+```text
+config/env/dev.json
+config/env/staging.json
+config/env/prod.json
 ```
-https://dev.keiyam.me
-```
 
-### User ID Configuration
-
-The app uses a temporary user ID stored in SharedPreferences. This will be replaced with actual AWS Cognito user IDs once authentication is implemented.
-
-**Storage Key:** `prefs.tempUserId`
-**Default Fallback:** `22222222-2222-2222-2222-222222222222`
-
-## Running the App
-
-### On iOS Simulator
+Example run using an environment file:
 
 ```bash
-flutter run -d <simulator_id>
+flutter run --dart-define-from-file=config/env/dev.json
 ```
 
-To list available simulators:
-```bash
-flutter emulators
-```
-
-Or open Xcode and select a simulator before running:
-```bash
-flutter run
-```
-
-### On Android Emulator
+Android builds also define product flavors in `android/app/build.gradle.kts`:
 
 ```bash
-flutter run -d <emulator_id>
+flutter run --flavor dev --dart-define-from-file=config/env/dev.json
 ```
 
-To list available emulators:
-```bash
-flutter emulators
-```
+## Running The App
 
-Or create a new Android Virtual Device (AVD) using Android Studio.
+List devices:
 
-### On Physical Device
-
-#### iOS Device
-1. Connect your iPhone via USB
-2. Trust the computer on the device
-3. Run: `flutter run -d <device_id>`
-
-#### Android Device
-1. Enable Developer Mode (tap Build Number 7 times in Settings > About)
-2. Enable USB Debugging in Developer Options
-3. Connect via USB
-4. Run: `flutter run -d <device_id>`
-
-To list connected devices:
 ```bash
 flutter devices
 ```
 
-### On Web
+iOS simulator:
 
 ```bash
-flutter run -d chrome
+flutter run -d <simulator_id> --dart-define-from-file=config/env/dev.json
 ```
 
-Other supported platforms: `firefox`, `edge`
+Android emulator:
+
+```bash
+flutter run -d <emulator_id> --flavor dev --dart-define-from-file=config/env/dev.json
+```
+
+Web:
+
+```bash
+flutter run -d chrome --dart-define-from-file=config/env/dev.json
+```
 
 ## Project Structure
 
-```
+```text
 lib/
-├── main.dart                           # App entry point
-├── app.dart                            # App configuration and routes
-├── core/                               # Core utilities and services
-│   ├── navigation/
-│   │   └── main_shell.dart            # Bottom navigation shell
-│   ├── services/
-│   │   └── preferences_service.dart   # API & local storage for preferences
-│   ├── state/
-│   │   └── favorites_store.dart       # In-memory favorites state management
-│   ├── theme/
-│   │   ├── app_theme.dart
-│   │   └── app_colors.dart
-│   └── widgets/
-│       └── gradient_button.dart       # Reusable gradient button
-└── features/
-    ├── auth/                           # Authentication screens
-    │   └── screens/
-    │       ├── sign_in_screen.dart    # Sign in with validations
-    │       └── sign_up_screen.dart    # Sign up with validations
-    ├── discover/                       # Food discovery feature
-    │   └── discover_screen.dart       # Swipeable food cards with API integration
-    ├── favorites/                      # Favorites management
-    │   ├── favorites_screen.dart      # Display liked foods from API
-    │   └── food_detail_screen.dart    # Food item details
-    ├── onboarding/                     # Onboarding flow
-    │   └── screens/
-    │       ├── welcome_screen.dart
-    │       ├── cuisine_screen.dart    # Select cuisines (hardcoded list)
-    │       ├── budget_screen.dart     # Select budget (map to API values)
-    │       ├── spice_screen.dart      # Select spice level
-    │       ├── dietary_screen.dart    # Select diet type & allergens with API fallback
-    │       └── done_screen.dart
-    └── profile/                        # User profile
-        └── profile_screen.dart        # Show preferences + edit dialog
-└── models/
-    └── food_item.dart                 # Food data model with flexible parsing
+  app.dart
+  main.dart
+  core/
+    config/api_config.dart
+    navigation/
+    services/
+    state/favorites_store.dart
+    theme/
+    utils/
+    widgets/
+  features/
+    auth/
+    chat/
+    discover/
+    favorites/
+    onboarding/
+    profile/
+  models/
+
+test/
+  core/
+  features/
+  models/
+  test_helpers/
+
+integration_test/
+  app_smoke_test.dart
+  favorites_location_link_test.dart
 ```
 
 ## API Integration
 
-### Overview
+The app uses authenticated backend calls through `AuthenticatedHttpClient` where a session is required.
 
-The app integrates with a backend API for food discovery, preference management, and user interactions.
+### Authentication
 
-### Endpoints
+AWS Cognito endpoint:
 
-#### Food Discovery
+```text
+https://cognito-idp.ap-southeast-1.amazonaws.com/
 ```
-GET /food?cuisines=Thai&cuisines=Chinese&budget=low&spice=Medium&dietType=Vegetarian&allergens=Peanut
-```
-Returns paginated list of restaurants and dishes matching user preferences.
 
-#### Dietary Options
-```
-GET /dietary/options
-```
-Returns available diet types and allergens. **2-second timeout with local fallback values.**
+Implemented Cognito operations:
 
-#### Swipe Preferences (Tracking)
+- `SignUp`
+- `ConfirmSignUp`
+- `ResendConfirmationCode`
+- `ForgotPassword`
+- `ConfirmForgotPassword`
+- `InitiateAuth` for sign-in
+- `InitiateAuth` for refresh-token auth
+- `DeleteUser`
+
+### Food Discovery
+
+Primary personalized request:
+
+```text
+GET /food/?userId={cognitoUserId}
 ```
+
+Fallback request when personalized results are empty:
+
+```text
+GET /food/?budget=medium&cuisines=Thai&cuisines=Japanese&spiceLevel=3
+```
+
+The parser accepts list responses directly, or wrapped in `data` or `foods`.
+
+### Favorites
+
+```text
+GET /preference/food/users/{cognitoUserId}
+```
+
+Favorites can be returned as food objects directly or nested under a `food` key. The favorites parser preserves `address` when the backend provides it.
+
+### Swipe Preferences
+
+```text
 POST /preference/food/swipe
-Body: { "userId": "...", "foodId": "...", "status": true }
 ```
-Records user interaction with food items (like/dislike).
 
-#### Get User Favorites
+This records like/dislike actions for the authenticated user.
+
+### User Preferences
+
+```text
+GET /preference/users/{cognitoUserId}
+PUT /preference/users/{cognitoUserId}
+GET /preference/dietary/options
+GET /preference/dietary/users/{cognitoUserId}
 ```
-GET /preference/food/users/{userId}
+
+Preferences are saved locally as a fallback when sync fails.
+
+### Profile And User
+
+```text
+GET /user/{cognitoUserId}
+GET /user/me
+PUT /user/me
+POST /user/create-user
+POST /user/logout
 ```
-Retrieves list of foods liked by the user.
 
-#### Update User Preferences
+## Food Location Flow
+
+Food details show two related location values:
+
+1. Static place label: the grey text under the dish title always shows `item.restaurant`, mapped from backend `restaurantName`.
+2. Map link: the blue underlined row uses `item.address` when present. If `address` is missing, it falls back to `item.restaurant`.
+
+Sequence:
+
+```text
+Backend food JSON
+  -> FoodService or FavoritesScreen parser
+  -> FoodItem(restaurant, address)
+  -> FoodDetailScreen
+  -> choose address if present, otherwise restaurant
+  -> render blue map link
+  -> tap opens Google Maps search via url_launcher
 ```
-PUT /preference/users/{userId}
-Body: { "cuisines": [...], "budget": "low" }
+
+Google Maps URL format:
+
+```text
+https://www.google.com/maps/search/?api=1&query=<encoded location>
 ```
-Updates user's cuisine and budget preferences.
 
-### Response Parsing
+This means a food item like `Thai Fried Rice` at `Dunman Food Centre` still gets a map link even if the backend did not send a full address.
 
-The app handles flexible API responses:
-- **Cuisine field**: Supports both string and array formats
-- **Budget values**: Maps user-friendly labels to API values (low/medium/high)
-- **Error handling**: Graceful fallbacks with local cached data where possible
-- **Timeouts**: 2-second timeout on dietary API with hardcoded fallback options
+## Testing
 
-### Authentication (In Progress)
+Current local verification:
 
-TODO: AWS Cognito integration for:
-- User sign in/sign up
-- ID token management
-- Bearer token in Authorization headers
+```bash
+flutter analyze
+flutter test
+flutter test integration_test/favorites_location_link_test.dart
+```
+
+As of this update:
+
+- `flutter test` passes 298 unit/widget tests.
+- `integration_test/favorites_location_link_test.dart` has 2 passing integration tests for the food location link flow.
+- `integration_test/app_smoke_test.dart` covers basic app launch/auth navigation.
+
+See [test/TESTSUITE_README.md](test/TESTSUITE_README.md) for the test layout and focused test commands.
 
 ## Dependencies
 
-### Core Dependencies
-- **flutter**: Flutter SDK for UI development
-- **http**: ^1.1.0 - HTTP client for API calls
-- **shared_preferences**: ^2.2.3 - Local data persistence
-- **provider**: v6.1.2 - State management and dependency injection
-- **google_fonts**: v6.2.1 - Access to Google Fonts
-- **cupertino_icons**: v1.0.8 - iOS-style icons
+Runtime dependencies:
 
-### Development Dependencies
-- **flutter_test**: SDK - Testing framework
-- **flutter_lints**: v6.0.0 - Linting rules for code quality
+- `flutter`
+- `http: ^1.2.2`
+- `shared_preferences: ^2.2.3`
+- `url_launcher: ^6.3.0`
+- `cupertino_icons: ^1.0.8`
 
-For a complete list, see `pubspec.yaml`.
+Development dependencies:
 
-## Development Commands
+- `flutter_test`
+- `integration_test`
+- `flutter_lints: ^6.0.0`
+- `mockito: ^5.4.4`
+- `build_runner: ^2.4.9`
 
-### Code Quality
-```bash
-# Run analysis
-flutter analyze
-
-# Format code
-dart format lib/
-```
-
-### Testing
-```bash
-# Run all tests
-flutter test
-
-# Run specific test file
-flutter test test/widget_test.dart
-```
-
-### Hot Reload / Hot Restart
-```bash
-# Hot reload (preserves state)
-r
-
-# Hot restart (clears state)
-R
-```
-
-### Building for Release
-```bash
-# iOS
-flutter build ios --release
-
-# Android
-flutter build apk --release
-# or for App Bundle:
-flutter build appbundle --release
-
-# Web
-flutter build web --release
-```
+For exact versions, see [pubspec.yaml](pubspec.yaml).
 
 ## Troubleshooting
 
-### "flutter: command not found"
-- Ensure Flutter SDK is installed and added to PATH
-- Run: `echo $PATH` to verify
-- Add Flutter to PATH if needed: `export PATH="$PATH:$(flutter config --flutter-root)/bin"`
+### Flutter Command Not Found
 
-### "Pod install" fails on iOS
-- Clear CocoaPods cache: `rm -rf ios/Pods ios/Podfile.lock`
-- Run: `cd ios && pod install && cd ..`
+Ensure Flutter is installed and on your PATH:
 
-### Build fails with "Permission denied"
 ```bash
-chmod +x ios/Runner/Runner-Bridging-Header.h
-chmod +x android/gradlew
+flutter --version
 ```
 
-### Gradle sync issues on Android
+### iOS Pods Or Build Issues
+
 ```bash
-cd android
-./gradlew clean
+cd ios
+pod install
 cd ..
 flutter clean
 flutter pub get
 ```
 
-### Device not recognized
+### Device Not Detected
+
 ```bash
-flutter clean
-flutter doctor --android-licenses  # For Android
+flutter doctor
 flutter devices
 ```
 
-### API Connection Issues
-- Verify the backend API is running and accessible
-- Check network connectivity
-- Verify the API base URL in service classes matches your backend
-- Some endpoints have timeouts (dietary API: 2 seconds) - check server response time
+For Android, also check USB debugging and Android licenses:
 
-### Preferences Not Persisting
-- Ensure SharedPreferences has been initialized: `await SharedPreferences.getInstance()`
-- Check that preference keys are not being modified between screens
-- Clear app data and reinstall if needed: `flutter clean && flutter pub get`
+```bash
+flutter doctor --android-licenses
+```
 
-## Resources
+### Backend Or Login Issues
 
-- [Flutter Documentation](https://docs.flutter.dev/)
-- [Dart Language Documentation](https://dart.dev/guides)
-- [Flutter Packages](https://pub.dev/flutter)
-- [State Management with Provider](https://pub.dev/packages/provider)
-- [Material Design Guidelines](https://material.io/design)
-- [HTTP Package Documentation](https://pub.dev/packages/http)
-- [SharedPreferences Documentation](https://pub.dev/packages/shared_preferences)
-- [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
+- Confirm `API_BASE_URL` points to the intended backend.
+- Confirm Cognito sign-in succeeds before testing authenticated screens.
+- Clear simulator app data when testing a fresh auth state.
+- Re-run with the expected environment file:
 
-## Contributing
+```bash
+flutter run --dart-define-from-file=config/env/dev.json
+```
 
-For contribution guidelines and pull request procedures, please refer to the project's contribution policy.
+### Food Location Link Missing
 
-## License
+Expected behavior:
 
-This project is private and not intended for public distribution.
+- If `address` is present, the blue map row shows the address.
+- If `address` is missing but `restaurantName` is present, the blue map row shows the restaurant/place name.
+- If both are missing or restaurant is `Unknown`, no map link is shown.
+
+Run the regression test:
+
+```bash
+flutter test integration_test/favorites_location_link_test.dart
+```
