@@ -127,7 +127,7 @@ jobs:
   web-integration:
     name: web-integration
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 3
     continue-on-error: true
     steps:
       - uses: actions/checkout@v5
