@@ -60,6 +60,10 @@ jobs:
           SHORT_SHA="${HEAD_SHA::7}"
           DEPLOY_PREFIX="staging/${SHORT_SHA}"
 
+          # 修复 Flutter base href: index.html 默认 <base href="/"> 导致 assets 从根目录加载
+          # 替换为正确的 staging 子路径，确保 flutter_bootstrap.js 等 assets 路径正确
+          sed -i "s|<base href=\"/\">|<base href=\"/${DEPLOY_PREFIX}/\">|g" "$ART_DIR/index.html"
+
           # Sync 整个 staging build 到独立 prefix; --delete 只影响这个 prefix 内
           aws s3 sync "$ART_DIR" "s3://${{ vars.S3_BUCKET }}/${DEPLOY_PREFIX}/" \
             --delete \
