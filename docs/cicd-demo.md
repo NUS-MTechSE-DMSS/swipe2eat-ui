@@ -15,6 +15,8 @@ This project uses GitHub Actions as the CI/CD engine, Netlify for Flutter web de
 
 Container scanning is not part of the current pipeline because the frontend is deployed as static Netlify assets, not as a container image.
 
+##CHANGE
+
 ## Firebase Setup
 
 Create one Firebase project and add two Android apps:
