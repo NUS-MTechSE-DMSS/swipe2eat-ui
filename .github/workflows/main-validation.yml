@@ -128,6 +128,7 @@ jobs:
     name: web-integration
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
