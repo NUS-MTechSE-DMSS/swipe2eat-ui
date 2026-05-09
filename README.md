@@ -357,5 +357,3 @@ Run the regression test:
 ```bash
 flutter test integration_test/favorites_location_link_test.dart
 ```
-
-## Test
