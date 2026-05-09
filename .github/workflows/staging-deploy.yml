@@ -10,6 +10,7 @@ on:
 permissions:
   actions: read
   contents: read
+  id-token: write   # 新增: AWS OIDC 必需
 
 jobs:
   deploy-web:
@@ -28,12 +29,16 @@ jobs:
           gh run download "${{ github.event.workflow_run.id }}" -n web-release -D web-dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/setup-node@v5
+
+      # ===== AWS deploy (staging path: /staging/{sha7}/) =====
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: "20"
-          package-manager-cache: false
-      - run: npm install -g netlify-cli
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-southeast-1
+
       - id: deploy
+        name: Deploy staging build to AWS S3 + CloudFront
         run: |
           set -euo pipefail
 
@@ -52,41 +57,68 @@ jobs:
           fi
 
           HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-          deploy_json=$(netlify deploy \
-            --dir="$ART_DIR" \
-            --alias="staging-${HEAD_SHA::7}" \
-            --no-build \
-            --json)
-          deploy_url=$(printf '%s' "$deploy_json" | jq -r '.deploy_url // .url // empty')
-          if [[ -z "$deploy_url" ]]; then
-            echo "Netlify deploy completed, but no deploy URL was returned in the CLI JSON output." >&2
-            echo "$deploy_json" | jq '.' >&2
-          fi
+          SHORT_SHA="${HEAD_SHA::7}"
+          DEPLOY_PREFIX="staging/${SHORT_SHA}"
 
+          # Sync 整个 staging build 到独立 prefix; --delete 只影响这个 prefix 内
+          aws s3 sync "$ART_DIR" "s3://${{ vars.S3_BUCKET }}/${DEPLOY_PREFIX}/" \
+            --delete \
+            --cache-control "public,max-age=300,must-revalidate"
+
+          # index.html no-cache (确保 staging URL 总是拿最新)
+          aws s3 cp "$ART_DIR/index.html" "s3://${{ vars.S3_BUCKET }}/${DEPLOY_PREFIX}/index.html" \
+            --cache-control "public,max-age=0,must-revalidate"
+
+          # 失效仅 staging 路径, 不影响 production
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} \
+            --paths "/${DEPLOY_PREFIX}/*" \
+            --query 'Invalidation.Id' --output text)
+
+          # AWS staging URL — Lighthouse 和 ZAP 用的就是这个
+          deploy_url="https://${{ vars.CF_DOMAIN_NAME }}/${DEPLOY_PREFIX}/"
           echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
 
           {
-            echo "### Web Staging Deploy"
+            echo "### Web Staging Deploy (AWS)"
             echo
             echo "- Artifact: \`web-release\`"
-            echo "- Alias: \`staging-${HEAD_SHA::7}\`"
+            echo "- SHA: \`${SHORT_SHA}\`"
+            echo "- Path: \`${DEPLOY_PREFIX}/\`"
+            echo "- CloudFront invalidation: \`$INVALIDATION_ID\`"
             echo "- Preview URL: $deploy_url"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # ===== Netlify staging deploy (FALLBACK - 后续 sprint 删除) =====
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          package-manager-cache: false
+      - run: npm install -g netlify-cli
+      - name: Netlify staging deploy (fallback)
+        continue-on-error: true   # AWS 是主, Netlify 失败不阻塞
+        run: |
+          set -euo pipefail
+          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+          netlify deploy \
+            --dir="web-dist" \
+            --alias="staging-${HEAD_SHA::7}" \
+            --no-build || echo "Netlify staging fallback failed (non-blocking)"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      - name: Show staging Netlify URL
+
+      - name: Show staging URLs
         run: |
           set -euo pipefail
 
-          if [[ -z "${DEPLOY_URL}" || "${DEPLOY_URL}" == "null" ]]; then
-            echo "Staging Netlify URL was not produced by the Netlify CLI output."
-            echo "::warning title=Staging Netlify URL unavailable::Netlify deploy completed, but no URL was returned."
+          if [[ -z "${DEPLOY_URL}" ]]; then
+            echo "::warning title=Staging URL unavailable::AWS staging deploy did not produce a URL."
             exit 0
           fi
 
-          echo "Staging Netlify URL: ${DEPLOY_URL}"
-          echo "::notice title=Staging Netlify URL::${DEPLOY_URL}"
+          echo "AWS staging URL: ${DEPLOY_URL}"
+          echo "::notice title=AWS staging URL::${DEPLOY_URL}"
         env:
           DEPLOY_URL: ${{ steps.deploy.outputs.deploy_url }}
 
