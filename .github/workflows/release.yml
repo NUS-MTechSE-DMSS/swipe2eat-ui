@@ -46,7 +46,11 @@ jobs:
           DART_DEFINES_JSON_BASE64: ${{ secrets.PROD_DART_DEFINES_JSON_BASE64 }}
       - run: flutter build web --release --dart-define-from-file="$RUNNER_TEMP/dart-defines.json"
 
-      # ===== AWS deploy (production root) =====
+      - name: Fix Flutter base href for prod subpath
+        run: |
+          sed -i 's|<base href="/">|<base href="/swipetoeat-portal/">|g' build/web/index.html
+
+      # ===== AWS deploy (production subpath: /swipetoeat-portal/) =====
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -57,23 +61,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          # production 根路径同步, 排除 staging/* 防止覆盖 staging 环境
-          aws s3 sync build/web "s3://${{ vars.S3_BUCKET }}/" \
+          aws s3 sync build/web "s3://${{ vars.S3_BUCKET }}/swipetoeat-portal/" \
             --delete \
-            --exclude "staging/*" \
             --cache-control "public,max-age=300,must-revalidate"
 
           # index.html 必须 no-cache, 否则用户拿到旧 index 指向已删除的 hash 文件
-          aws s3 cp build/web/index.html "s3://${{ vars.S3_BUCKET }}/index.html" \
+          aws s3 cp build/web/index.html "s3://${{ vars.S3_BUCKET }}/swipetoeat-portal/index.html" \
             --cache-control "public,max-age=0,must-revalidate"
 
-          # 触发 CloudFront 缓存失效 (只刷 production 路径, 不影响 staging/*)
+          # 触发 CloudFront 缓存失效
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
             --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} \
-            --paths "/index.html" "/" "/assets/*" "/canvaskit/*" "/icons/*" "/manifest.json" "/version.json" "/main.dart.js" "/flutter*.js" \
+            --paths "/swipetoeat-portal/*" \
             --query 'Invalidation.Id' --output text)
 
-          PROD_URL="https://${{ vars.CF_DOMAIN_NAME }}/"
+          PROD_URL="https://${{ vars.CF_DOMAIN_NAME }}/swipetoeat-portal/"
 
           {
             echo "### Web Production Deploy (AWS)"
